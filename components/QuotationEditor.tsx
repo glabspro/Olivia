@@ -113,11 +113,11 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-textSecondary dark:text-dark-textSecondary">Cant.</label>
-                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-gray-700 text-center`} />
+                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-gray-700 text-center py-3`} />
               </div>
               <div>
                 <label className="text-xs text-textSecondary dark:text-dark-textSecondary">P. Unitario</label>
-                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-gray-700 text-right`} />
+                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-gray-700 text-right py-3`} />
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -142,24 +142,26 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
         </button>
       </div>
 
-      <div className="mt-6 flex flex-col md:flex-row justify-between items-center gap-6 p-4 bg-surface dark:bg-dark-surface rounded-lg">
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <label htmlFor="margin-type" className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary">Margen:</label>
-          <select
-            id="margin-type"
-            value={marginType}
-            onChange={(e) => setMarginType(e.target.value as MarginType)}
-            className="h-12 rounded-l-md bg-white dark:bg-dark-background border border-gray-300 dark:border-gray-600 text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
-          >
-            <option value={MarginType.PERCENTAGE}>%</option>
-            <option value={MarginType.FIXED}>{currencySymbol}</option>
-          </select>
-          <input
-            type="number"
-            value={marginValue}
-            onChange={(e) => setMarginValue(parseFloat(e.target.value) || 0)}
-            className="w-full md:w-28 h-12 text-lg rounded-r-md bg-white dark:bg-dark-background border border-gray-300 dark:border-gray-600 text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
-          />
+      <div className="mt-6 space-y-4 md:space-y-0 md:flex md:justify-between md:items-center gap-6 p-4 bg-surface dark:bg-dark-surface rounded-lg">
+        <div className="w-full md:w-auto">
+          <label htmlFor="margin-type" className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary mb-2 block md:hidden">Margen:</label>
+          <div className="flex">
+            <select
+              id="margin-type"
+              value={marginType}
+              onChange={(e) => setMarginType(e.target.value as MarginType)}
+              className="h-14 rounded-l-md bg-white dark:bg-dark-background border border-gray-300 dark:border-gray-600 text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
+            >
+              <option value={MarginType.PERCENTAGE}>%</option>
+              <option value={MarginType.FIXED}>{currencySymbol}</option>
+            </select>
+            <input
+              type="number"
+              value={marginValue}
+              onChange={(e) => setMarginValue(parseFloat(e.target.value) || 0)}
+              className="w-full h-14 text-lg rounded-r-md bg-white dark:bg-dark-background border border-gray-300 dark:border-gray-600 text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
+            />
+          </div>
         </div>
         <div className="text-right w-full md:w-auto">
           <p className="text-textSecondary dark:text-dark-textSecondary">Subtotal: {currencySymbol} {baseSubtotal.toFixed(2)}</p>

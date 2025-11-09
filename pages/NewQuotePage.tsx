@@ -136,9 +136,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                             Empezar de nuevo
                         </button>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8 space-y-8 lg:space-y-0">
+                    <div className="flex flex-col lg:flex-row lg:gap-8">
                         {/* Editor Side */}
-                        <div className="lg:h-[calc(100vh-150px)] lg:overflow-y-auto pr-4">
+                        <div className="w-full lg:w-1/2 lg:h-[calc(100vh-160px)] lg:overflow-y-auto lg:pr-4 mb-8 lg:mb-0">
                             <QuotationEditor
                                 items={items}
                                 setItems={setItems}
@@ -150,7 +150,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                             />
                         </div>
                         {/* Preview and Actions Side */}
-                        <div className="lg:h-[calc(100vh-150px)] lg:overflow-y-auto">
+                        <div className="w-full lg:w-1/2 lg:h-[calc(100vh-160px)] lg:overflow-y-auto">
                             <QuotationPreview
                                 items={items}
                                 marginType={marginType}

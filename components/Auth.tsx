@@ -83,18 +83,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             Ingresa para potenciar tus ventas.
           </p>
           
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-8" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="companyName" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Nombre de tu empresa</label>
               <div className="relative">
-                 <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                 <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                  <input
                   id="companyName"
                   type="text"
                   placeholder="Ej: Soluciones Tech"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-surface dark:bg-dark-surface border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base"
+                  className="w-full pl-12 pr-4 py-4 bg-surface dark:bg-dark-surface border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base"
                   required
                 />
               </div>
@@ -119,7 +119,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     placeholder={selectedCountry?.placeholder || "Tu número"}
                     value={phone}
                     onChange={handlePhoneChange}
-                    className={`w-full py-3 bg-surface dark:bg-dark-surface border rounded-lg focus:ring-2 focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base ${phoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-primary dark:focus:ring-dark-primary'}`}
+                    className={`w-full py-4 bg-surface dark:bg-dark-surface border rounded-lg focus:ring-2 focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base ${phoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-primary dark:focus:ring-dark-primary'}`}
                     style={{paddingLeft: '6.5rem'}}
                     required
                   />

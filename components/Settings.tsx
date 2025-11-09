@@ -35,11 +35,11 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
     onSave(settings);
   };
 
-  const inputClasses = "w-full px-4 py-3 bg-surface dark:bg-dark-surface border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-textPrimary dark:text-dark-textPrimary text-base";
+  const inputClasses = "w-full px-4 py-4 bg-surface dark:bg-dark-surface border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-textPrimary dark:text-dark-textPrimary text-base";
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <label htmlFor="companyName" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Nombre de la Empresa</label>
           <input
@@ -62,9 +62,9 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
             <button 
                 type="button" 
                 onClick={() => logoInputRef.current?.click()} 
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-teal border border-accent-teal rounded-lg hover:bg-accent-teal/10 transition-colors"
+                className="flex items-center gap-2 px-6 py-3 text-base font-semibold text-accent-teal border border-accent-teal rounded-lg hover:bg-accent-teal/10 transition-colors"
             >
-              <Upload size={16} />
+              <Upload size={18} />
               Cambiar Logo
             </button>
           </div>
@@ -90,7 +90,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
               name="defaultMarginType"
               value={settings.defaultMarginType}
               onChange={handleInputChange}
-              className="rounded-l-md border-gray-300 dark:border-gray-600 shadow-sm h-12 bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary text-base"
+              className="rounded-l-md border-gray-300 dark:border-gray-600 shadow-sm h-14 bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary text-base"
             >
               <option value={MarginType.PERCENTAGE}>%</option>
               <option value={MarginType.FIXED}>{settings.currencySymbol}</option>
@@ -100,7 +100,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
               name="defaultMarginValue"
               value={settings.defaultMarginValue}
               onChange={handleMarginValueChange}
-              className="w-full h-12 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-base"
+              className="w-full h-14 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-base"
             />
           </div>
         </div>
@@ -109,7 +109,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
-          className="px-8 py-3 bg-primary dark:bg-dark-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity"
+          className="px-8 py-4 bg-primary dark:bg-dark-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity"
         >
           Guardar Cambios
         </button>

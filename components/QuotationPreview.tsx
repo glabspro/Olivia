@@ -155,7 +155,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                           <button
                               key={templateId}
                               onClick={() => setSelectedTemplate(templateId)}
-                              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+                              className={`px-4 py-3 sm:py-2 text-sm font-semibold rounded-md transition-colors ${
                                   selectedTemplate === templateId
                                       ? 'bg-primary text-white'
                                       : 'bg-gray-200 dark:bg-gray-700 text-textSecondary dark:text-dark-textSecondary hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -170,7 +170,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                  {ActionPanel}
                  <button
                     onClick={handleDownloadPDF}
-                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-accent-teal border-2 border-accent-teal rounded-lg hover:bg-accent-teal/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-4 text-sm font-semibold text-accent-teal border-2 border-accent-teal rounded-lg hover:bg-accent-teal/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={items.length === 0}
                   >
                     <Download size={16} />
