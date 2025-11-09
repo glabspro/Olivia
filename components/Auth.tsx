@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Building, Phone, Zap, FileText, Send } from 'lucide-react';
+import { Building, Phone, User as UserIcon } from 'lucide-react';
 import Logo from './Logo';
 
 interface AuthProps {
   onLogin: (companyName: string, phone: string) => void;
+  onRegister: (fullName: string, companyName: string, phone: string) => void;
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+
+  const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('51');
@@ -23,7 +27,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const selectedCountry = southAmericanCountries.find(c => c.code === countryCode);
 
   const validatePhone = (currentPhone: string, currentCode: string) => {
-    if (currentCode === '51' && currentPhone.length !== 9) {
+    if (currentCode === '51' && currentPhone.length > 0 && currentPhone.length !== 9) {
       setPhoneError('El número de Perú debe tener 9 dígitos.');
       return false;
     }
@@ -33,11 +37,26 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validatePhone(phone, countryCode) && companyName && phone) {
-      const fullPhone = `${countryCode}${phone}`;
-      onLogin(companyName, fullPhone);
-    } else if (!companyName || !phone) {
+    const isPhoneValid = validatePhone(phone, countryCode);
+    if (!isPhoneValid || !phone) {
+        if(!phone) setPhoneError('Este campo es obligatorio.');
+        return;
+    };
+
+    const fullPhone = `${countryCode}${phone}`;
+    
+    if (isRegisterMode) {
+      if (fullName && companyName && phone) {
+        onRegister(fullName, companyName, fullPhone);
+      } else {
+        setPhoneError('Por favor, completa todos los campos.');
+      }
+    } else {
+      if (companyName && phone) {
+        onLogin(companyName, fullPhone);
+      } else {
         setPhoneError('Por favor, completa ambos campos.');
+      }
     }
   };
   
@@ -46,14 +65,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setPhone(newPhone);
     validatePhone(newPhone, countryCode);
   };
-  
-  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newCode = e.target.value;
-    setCountryCode(newCode);
-    validatePhone(phone, newCode);
-  };
 
-  const inputBaseClasses = "w-full py-3 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
+  const inputBaseClasses = "w-full py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen p-4 bg-background dark:bg-dark-background">
@@ -64,32 +77,57 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     <Logo />
                 </div>
                 <p className="text-textSecondary dark:text-dark-textSecondary mt-2">
-                Ingresa para potenciar tus ventas.
+                  {isRegisterMode ? "Crea tu cuenta para empezar." : "Ingresa para potenciar tus ventas."}
                 </p>
             </div>
           
             <form className="space-y-6" onSubmit={handleSubmit}>
+                {isRegisterMode && (
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2">Nombre completo</label>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                        id="fullName"
+                        type="text"
+                        placeholder="Ej: Juan Pérez"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className={`${inputBaseClasses} pl-11 pr-4`}
+                        required
+                        />
+                    </div>
+                  </div>
+                )}
                 <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2">Nombre de tu empresa</label>
-                <div className="relative">
-                    <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                    id="companyName"
-                    type="text"
-                    placeholder="Ej: Soluciones Tech"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    className={`${inputBaseClasses} pl-11 pr-4`}
-                    required
-                    />
-                </div>
+                  <label htmlFor="companyName" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2">Nombre de tu empresa</label>
+                  <div className="relative">
+                      <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                      id="companyName"
+                      type="text"
+                      placeholder="Ej: Soluciones Tech"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className={`${inputBaseClasses} pl-11 pr-4`}
+                      required
+                      />
+                  </div>
                 </div>
                 <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2">Tu número de WhatsApp</label>
                     <div className="relative flex items-center">
-                        <div className="absolute left-0 top-0 bottom-0 flex items-center pl-3 border-r border-border dark:border-dark-border pr-3">
-                            <span className="text-lg">{selectedCountry?.flag}</span>
-                            <span className="ml-2 text-sm text-textSecondary dark:text-dark-textSecondary">+{countryCode}</span>
+                        <div className="absolute inset-y-0 left-0 flex items-center">
+                           <select 
+                             value={countryCode} 
+                             onChange={(e) => {
+                               setCountryCode(e.target.value);
+                               validatePhone(phone, e.target.value);
+                             }}
+                             className="bg-transparent h-full pl-3 pr-8 text-base focus:outline-none appearance-none cursor-pointer"
+                           >
+                              {southAmericanCountries.map(c => <option key={c.code} value={c.code}>{c.flag} +{c.code}</option>)}
+                           </select>
                         </div>
                         <input
                         id="phone"
@@ -97,8 +135,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                         placeholder={selectedCountry?.placeholder || "Tu número"}
                         value={phone}
                         onChange={handlePhoneChange}
-                        className={`${inputBaseClasses} ${phoneError ? 'border-red-500 focus:ring-red-500/50' : ''}`}
-                        style={{paddingLeft: '6.5rem'}}
+                        className={`${inputBaseClasses} pl-24 ${phoneError ? 'border-red-500 focus:ring-red-500/50' : ''}`}
                         required
                         />
                     </div>
@@ -106,13 +143,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 </div>
 
                 <button
-                type="submit"
-                className="w-full py-3 font-bold text-white bg-gradient-to-r from-primary to-secondary rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={!!phoneError}
+                  type="submit"
+                  className="w-full py-3 font-bold text-white bg-gradient-to-r from-primary to-violet-400 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                Ingresar
+                  {isRegisterMode ? 'Registrarse' : 'Ingresar'}
                 </button>
             </form>
+            <div className="mt-6 text-center text-sm">
+                <p className="text-textSecondary dark:text-dark-textSecondary">
+                    {isRegisterMode ? "¿Ya tienes una cuenta?" : "¿No tienes una cuenta?"}
+                    <button onClick={() => setIsRegisterMode(!isRegisterMode)} className="font-semibold text-primary hover:underline ml-1">
+                        {isRegisterMode ? "Ingresa aquí" : "Regístrate"}
+                    </button>
+                </p>
+            </div>
           </div>
       </div>
     </div>

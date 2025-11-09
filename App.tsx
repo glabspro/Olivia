@@ -36,11 +36,25 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (companyName: string, phone: string) => {
+    // In a real app, you'd fetch user data here
     setUser({
-      id: `user-${Date.now()}`,
+      id: `user-${phone}`, // Use phone for pseudo-unique ID
+      fullName: 'Usuario Existente', // Placeholder
       companyName: companyName,
       phone: phone,
     });
+  };
+
+  const handleRegister = (fullName: string, companyName: string, phone: string) => {
+    // In a real app, you'd post this to your backend
+    const newUser: User = {
+      id: `user-${phone}`,
+      fullName,
+      companyName,
+      phone,
+    };
+    setUser(newUser);
+    // You might also want to save default settings for the new user here
   };
 
   const handleLogout = () => {
@@ -75,7 +89,7 @@ const App: React.FC = () => {
           {renderActivePage()}
         </Layout>
       ) : (
-        <Auth onLogin={handleLogin} />
+        <Auth onLogin={handleLogin} onRegister={handleRegister} />
       )}
     </div>
   );

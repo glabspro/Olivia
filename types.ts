@@ -33,6 +33,7 @@ export interface Settings {
 
 export interface User {
   id: string;
+  fullName: string;
   companyName: string;
   phone: string;
   email?: string;
