@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building, Phone, User as UserIcon, Check } from 'lucide-react';
+import { Building, Phone, User as UserIcon, Sparkles, FileText, Send } from 'lucide-react';
 import Logo from './Logo';
 
 const AppVisual = () => (
@@ -24,13 +24,13 @@ const AppVisual = () => (
 
             {/* Floating App Icons */}
             <div className="absolute -top-8 -left-12 w-16 h-16 bg-accent-teal rounded-2xl shadow-lg flex items-center justify-center transform rotate-[-15deg]">
-                <Check className="w-8 h-8 text-white" />
+                <Sparkles className="w-8 h-8 text-white" />
             </div>
             <div className="absolute top-16 -left-16 w-16 h-16 bg-accent-coral rounded-2xl shadow-lg flex items-center justify-center transform rotate-[10deg]">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <Send className="w-8 h-8 text-white" />
             </div>
              <div className="absolute -top-4 -right-10 w-16 h-16 bg-accent-yellow rounded-2xl shadow-lg flex items-center justify-center transform rotate-[15deg]">
-                <UserIcon className="w-8 h-8 text-white" />
+                <FileText className="w-8 h-8 text-white" />
             </div>
         </div>
     </div>
@@ -41,6 +41,30 @@ interface AuthProps {
   onLogin: (companyName: string, phone: string) => void;
   onRegister: (fullName: string, companyName: string, phone: string) => void;
 }
+
+const FeatureList = () => (
+  <ul className="space-y-4">
+    <li className="flex items-start gap-3">
+      <Sparkles className="w-5 h-5 text-accent-teal mt-1 flex-shrink-0" />
+      <p className="text-textSecondary dark:text-dark-textSecondary">
+        <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">Extracción con IA.</span> Sube un PDF o imagen y deja que Olivia extraiga los productos por ti.
+      </p>
+    </li>
+    <li className="flex items-start gap-3">
+      <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+      <p className="text-textSecondary dark:text-dark-textSecondary">
+        <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">PDFs Profesionales.</span> Genera cotizaciones con tu marca y diseños elegantes en segundos.
+      </p>
+    </li>
+    <li className="flex items-start gap-3">
+      <Send className="w-5 h-5 text-accent-coral mt-1 flex-shrink-0" />
+      <p className="text-textSecondary dark:text-dark-textSecondary">
+        <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">Envío por WhatsApp.</span> Cierra tratos más rápido enviando tus cotizaciones directamente a tus clientes.
+      </p>
+    </li>
+  </ul>
+);
+
 
 const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -189,6 +213,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
               {isRegisterMode ? "¿Ya tienes una cuenta? Ingresa aquí" : "¿No tienes una cuenta? Regístrate"}
             </button>
           </div>
+           {/* Feature list for mobile */}
+          <div className="mt-12 pt-8 border-t border-border dark:border-dark-border lg:hidden">
+            <FeatureList />
+          </div>
         </div>
       </div>
 
@@ -205,26 +233,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
           <div className="w-full h-80 rounded-lg mb-8">
             <AppVisual />
           </div>
-          <ul className="space-y-4">
-            <li className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-accent-teal mt-1 flex-shrink-0" />
-              <p className="text-textSecondary dark:text-dark-textSecondary">
-                <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">Extracción con IA.</span> Sube un PDF o imagen y deja que Olivia extraiga los productos por ti.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <p className="text-textSecondary dark:text-dark-textSecondary">
-                <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">PDFs Profesionales.</span> Genera cotizaciones con tu marca y diseños elegantes en segundos.
-              </p>
-            </li>
-            <li className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-accent-coral mt-1 flex-shrink-0" />
-              <p className="text-textSecondary dark:text-dark-textSecondary">
-                <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">Envío por WhatsApp.</span> Cierra tratos más rápido enviando tus cotizaciones directamente a tus clientes.
-              </p>
-            </li>
-          </ul>
+          <FeatureList />
         </div>
       </div>
     </div>
