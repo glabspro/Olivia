@@ -151,20 +151,30 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
               </div>
               <div>
                  <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><Palette size={16} className="text-primary"/> Diseño</h3>
-                  <div className="flex flex-wrap gap-2">
-                      {Object.values(Template).map((templateId) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {Object.values(Template).map((templateId) => {
+                        const template = templateOptions[templateId];
+                        const isActive = selectedTemplate === templateId;
+                        return (
                           <button
                               key={templateId}
                               onClick={() => setSelectedTemplate(templateId)}
-                              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
-                                  selectedTemplate === templateId
-                                      ? 'bg-primary text-white shadow'
-                                      : 'bg-background dark:bg-dark-background text-textSecondary dark:text-dark-textSecondary hover:bg-gray-200 dark:hover:bg-dark-border'
-                              }`}
+                              className={`text-center transition-all duration-200 rounded-lg p-1 ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface dark:ring-offset-dark-surface' : 'ring-0'}`}
                           >
-                              {templateOptions[templateId].name}
+                            <div className={`w-full h-20 rounded-md border-2 p-2 flex flex-col justify-between overflow-hidden bg-white ${template.containerClasses}`}>
+                                <div className={`h-3 w-1/2 rounded-sm ${template.tableHeaderClasses}`}></div>
+                                <div className="space-y-1">
+                                    <div className="h-1.5 w-full bg-gray-300 rounded-full"></div>
+                                    <div className="h-1.5 w-3/4 bg-gray-300 rounded-full"></div>
+                                </div>
+                                <div className={`h-2 w-1/3 self-end rounded-sm ${template.headerClasses} opacity-50`}></div>
+                            </div>
+                            <span className={`block text-xs font-semibold mt-2 ${isActive ? 'text-primary dark:text-primary-dark' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
+                                {template.name}
+                            </span>
                           </button>
-                      ))}
+                        );
+                      })}
                   </div>
               </div>
               <div className="border-t border-border dark:border-dark-border pt-6 space-y-4">
