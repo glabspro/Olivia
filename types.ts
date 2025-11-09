@@ -23,12 +23,31 @@ export enum Theme {
   DARK = 'dark',
 }
 
+export interface PaymentOption {
+  id: string;
+  name: string;
+  details: string;
+}
+
 export interface Settings {
   companyName: string;
   companyLogo: string | null;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  companyWebsite?: string;
+  companyDocumentType?: 'RUC' | 'DNI' | '';
+  companyDocumentNumber?: string;
   currencySymbol: string;
   defaultMarginType: MarginType;
   defaultMarginValue: number;
+  defaultTemplate: Template;
+  paymentTerms: PaymentOption[];
+  paymentMethods: PaymentOption[];
+  quotationPrefix: string;
+  quotationNextNumber: number;
+  themeColor: string;
+  headerImage: string | null;
 }
 
 export interface User {

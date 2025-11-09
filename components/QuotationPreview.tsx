@@ -1,48 +1,5 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { QuotationItem, MarginType, Template } from '../types';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { Download, Edit3, Palette, User } from 'lucide-react';
-
-// Templates are designed to be theme-neutral (black/white) for professional PDF output
-const templateOptions = {
-    [Template.MODERN]: {
-        name: 'Moderno',
-        containerClasses: 'border-gray-300',
-        headerClasses: 'text-gray-800',
-        totalClasses: 'text-gray-900',
-        tableHeaderClasses: 'bg-gray-100',
-    },
-    [Template.CLASSIC]: {
-        name: 'Clásico',
-        containerClasses: 'border-gray-400 font-serif',
-        headerClasses: 'text-gray-800',
-        totalClasses: 'text-gray-800',
-        tableHeaderClasses: 'bg-gray-200',
-    },
-    [Template.MINIMALIST]: {
-        name: 'Minimalista',
-        containerClasses: 'border-gray-200',
-        headerClasses: 'text-gray-700 font-light',
-        totalClasses: 'text-gray-900',
-        tableHeaderClasses: 'border-b border-gray-200 bg-white',
-    },
-    [Template.ELEGANT]: {
-        name: 'Elegante',
-        containerClasses: 'border-blue-200 font-sans',
-        headerClasses: 'text-blue-700',
-        totalClasses: 'text-blue-700',
-        tableHeaderClasses: 'bg-blue-50',
-    },
-    [Template.BOLD]: {
-        name: 'Audaz',
-        containerClasses: 'border-red-300 font-bold',
-        headerClasses: 'text-red-800',
-        totalClasses: 'text-red-800',
-        tableHeaderClasses: 'bg-red-100',
-    },
-};
-
 
 interface QuotationPreviewProps {
   items: QuotationItem[];
@@ -50,14 +7,21 @@ interface QuotationPreviewProps {
   marginValue: number;
   currencySymbol?: string;
   clientName: string;
-  setClientName: (name: string) => void;
   clientPhone: string;
-  setClientPhone: (phone: string) => void;
   companyName: string;
   companyLogo: string | null;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  companyWebsite?: string;
+  companyDocumentType?: string;
+  companyDocumentNumber?: string;
   selectedTemplate: Template;
-  setSelectedTemplate: (template: Template) => void;
-  ActionPanel: React.ReactNode;
+  paymentTerms: string;
+  paymentMethods: string;
+  quotationNumber: string;
+  themeColor: string;
+  headerImage: string | null;
 }
 
 const QuotationPreview: React.FC<QuotationPreviewProps> = ({
@@ -66,49 +30,22 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
   marginValue,
   currencySymbol = 'S/',
   clientName,
-  setClientName,
   clientPhone,
-  setClientPhone,
   companyName,
   companyLogo,
+  companyAddress,
+  companyPhone,
+  companyEmail,
+  companyWebsite,
+  companyDocumentType,
+  companyDocumentNumber,
   selectedTemplate,
-  setSelectedTemplate,
-  ActionPanel,
+  paymentTerms,
+  paymentMethods,
+  quotationNumber,
+  themeColor = '#EC4899',
+  headerImage,
 }) => {
-  const previewRef = useRef<HTMLDivElement>(null);
-  const actionPanelRef = useRef<HTMLDivElement>(null);
-
-  const handleDownloadPDF = () => {
-    const previewElement = previewRef.current;
-    if (!previewElement) return;
-
-    const controlsToHide = actionPanelRef.current;
-    const originalDisplay = controlsToHide ? controlsToHide.style.display : '';
-    if (controlsToHide) controlsToHide.style.display = 'none';
-
-    html2canvas(previewElement, { 
-      scale: 2, 
-      useCORS: true, 
-      backgroundColor: '#ffffff',
-      ignoreElements: (element) => element.contains(actionPanelRef.current),
-    })
-    .then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Cotizacion-${clientName.replace(/ /g,"_") || 'cliente'}.pdf`);
-    })
-    .catch(err => {
-        console.error("Error generating PDF:", err);
-        alert("Hubo un problema al generar el PDF. Por favor, intente de nuevo.");
-    })
-    .finally(() => {
-        if (controlsToHide) controlsToHide.style.display = originalDisplay;
-    });
-  };
-
   const calculateFinalPrice = (item: QuotationItem): number => {
     const baseTotal = item.quantity * item.unitPrice;
     if (marginType === MarginType.PERCENTAGE) {
@@ -116,152 +53,174 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
     }
     return baseTotal;
   };
-  
+
   const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
   const marginAmount = total - baseSubtotal;
-  const currentTemplate = templateOptions[selectedTemplate];
-  const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-textPrimary dark:text-dark-textPrimary";
+  
+  const companyDocumentInfo = companyDocumentType && companyDocumentNumber ? `${companyDocumentType}: ${companyDocumentNumber}` : '';
+  const companyContactInfo = [companyAddress, companyPhone, companyEmail, companyWebsite].filter(Boolean);
 
-
-  return (
-    <div className="w-full bg-surface dark:bg-dark-surface rounded-lg p-4 md:p-6 border border-border dark:border-dark-border shadow-sm">
-      
-      {/* --- ACTION PANEL --- */}
-      <div className="action-panel-container mb-6" ref={actionPanelRef}>
-          <div className="space-y-6">
-              <div>
-                  <h3 className="text-md font-semibold text-accent-teal flex items-center gap-2 mb-3"><User size={16}/> Datos del Cliente</h3>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input 
-                          type="text"
-                          value={clientName}
-                          onChange={(e) => setClientName(e.target.value)}
-                          className={inputClasses}
-                          placeholder="Nombre del Cliente"
-                      />
-                      <input 
-                          type="text"
-                          value={clientPhone}
-                          onChange={(e) => setClientPhone(e.target.value)}
-                          className={inputClasses}
-                          placeholder="Teléfono (ej. 519...)"
-                      />
-                   </div>
-              </div>
-              <div>
-                 <h3 className="text-md font-semibold text-accent-coral flex items-center gap-2 mb-3"><Palette size={16}/> Diseño</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {Object.values(Template).map((templateId) => {
-                        const template = templateOptions[templateId];
-                        const isActive = selectedTemplate === templateId;
-                        return (
-                          <button
-                              key={templateId}
-                              onClick={() => setSelectedTemplate(templateId)}
-                              className={`text-center transition-all duration-200 rounded-lg p-1 ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface' : 'ring-0'}`}
-                          >
-                            <div className={`w-full h-20 rounded-md border-2 p-2 flex flex-col justify-between overflow-hidden bg-white ${template.containerClasses}`}>
-                                <div className={`h-3 w-1/2 rounded-sm ${template.tableHeaderClasses}`}></div>
-                                <div className="space-y-1">
-                                    <div className="h-1.5 w-full bg-gray-300 rounded-full"></div>
-                                    <div className="h-1.5 w-3/4 bg-gray-300 rounded-full"></div>
-                                </div>
-                                <div className={`h-2 w-1/3 self-end rounded-sm ${template.headerClasses} opacity-50`}></div>
-                            </div>
-                            <span className={`block text-xs font-semibold mt-2 ${isActive ? 'text-primary' : 'text-textSecondary'}`}>
-                                {template.name}
-                            </span>
-                          </button>
-                        );
-                      })}
-                  </div>
-              </div>
-              <div className="border-t border-border dark:border-dark-border pt-6 space-y-4">
-                 {ActionPanel}
-                 <button
-                    onClick={handleDownloadPDF}
-                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={items.length === 0}
-                  >
-                    <Download size={16} />
-                    Descargar PDF
-                  </button>
-              </div>
+  const renderTemplate = () => {
+    // Shared structure for professional templates
+    // Reduced font sizes and padding for a more compact design
+    const ProfessionalLayout = ({ children, header, footer, totals }: { children: React.ReactNode; header: React.ReactNode; footer: React.ReactNode; totals: React.ReactNode }) => (
+      <div className="bg-white p-7 font-sans text-gray-800 text-[9pt] leading-snug">
+        {header}
+        <section className="mb-6">
+          <div className="bg-gray-50 rounded-lg p-3">
+            <h3 className="font-bold text-gray-500 uppercase text-[8pt] tracking-wider mb-1">Cliente</h3>
+            <p className="font-semibold text-gray-800">{clientName || "Nombre del Cliente"}</p>
+            <p className="text-gray-600 text-[8.5pt]">{clientPhone || "Teléfono del Cliente"}</p>
           </div>
+        </section>
+        <main>{children}</main>
+        {totals}
+        {footer}
       </div>
+    );
+    
+    // Reduced padding in table
+    const DefaultTable = () => (
+      <table className="w-full text-[8.5pt]">
+        <thead style={{ backgroundColor: themeColor }}>
+          <tr>
+            <th className="p-2 text-left font-semibold text-white uppercase tracking-wider">Descripción</th>
+            <th className="p-2 text-center font-semibold text-white uppercase tracking-wider w-16">Cant.</th>
+            <th className="p-2 text-right font-semibold text-white uppercase tracking-wider w-28">P. Unit.</th>
+            <th className="p-2 text-right font-semibold text-white uppercase tracking-wider w-28">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => {
+            const finalPrice = calculateFinalPrice(item);
+            const finalUnitPrice = item.quantity > 0 ? finalPrice / item.quantity : 0;
+            return (
+              <tr key={item.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-100`}>
+                <td className="p-2 font-medium text-gray-800">{item.description}</td>
+                <td className="p-2 text-center text-gray-600">{item.quantity}</td>
+                <td className="p-2 text-right text-gray-600">{currencySymbol} {finalUnitPrice.toFixed(2)}</td>
+                <td className="p-2 text-right font-semibold text-gray-800">{currencySymbol} {finalPrice.toFixed(2)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
 
+    // Reduced margins and font sizes in totals
+    const DefaultTotals = () => (
+       <section className="flex justify-end mt-4">
+        <div className="w-full max-w-xs text-[9pt]">
+          <div className="flex justify-between py-1.5 text-gray-600 border-b border-gray-200"><p>Subtotal:</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
+          <div className="flex justify-between py-1.5 text-gray-600 border-b border-gray-200"><p>Margen ({marginType === MarginType.PERCENTAGE ? `${marginValue}%` : 'Fijo'}):</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
+          <div className="flex justify-between items-center py-2.5 mt-2 font-bold text-base rounded-lg px-3" style={{ backgroundColor: themeColor, color: 'white' }}>
+            <p>Total:</p>
+            <p>{currencySymbol} {total.toFixed(2)}</p>
+          </div>
+        </div>
+      </section>
+    );
 
-      {/* --- VISUAL PREVIEW --- */}
-      <div id="quotation-preview-container" className="bg-background dark:bg-dark-background p-2 sm:p-4 rounded-lg">
-        <div className={`border rounded-lg p-6 sm:p-8 bg-white ${currentTemplate.containerClasses}`} ref={previewRef}>
-            <header className="flex justify-between items-start pb-6 border-b">
-              <div className="flex flex-col">
-                <p className={`text-2xl font-bold p-1 -ml-1 ${currentTemplate.headerClasses}`}>
-                  {companyName || "Nombre de tu Empresa"}
-                </p>
-                <span className="text-sm text-gray-500">Fecha: {new Date().toLocaleDateString('es-PE')}</span>
+    // Reduced margins and font sizes in footer
+    const DefaultFooter = ({ className = "" }: { className?: string }) => (
+      <footer className={`mt-8 pt-4 border-t border-gray-200 text-[8pt] text-gray-600 ${className}`}>
+          {(paymentTerms || paymentMethods) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {paymentTerms && <div><h4 className="font-bold text-gray-700 mb-1 uppercase tracking-wider">Términos de Pago:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
+                 {paymentMethods && <div><h4 className="font-bold text-gray-700 mb-1 uppercase tracking-wider">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
               </div>
-              <div className="text-right">
-                <div className="h-20 w-20 bg-gray-100 rounded-md flex items-center justify-center">
-                  {companyLogo ? <img src={companyLogo} alt="Company Logo" className="h-full w-full object-contain" /> : <span className="text-xs text-center text-gray-500">Logo</span>}
+          )}
+          <div className="mt-4 text-center text-gray-500">
+            <p>{[companyName, ...companyContactInfo].filter(Boolean).join(' · ')}</p>
+          </div>
+      </footer>
+    );
+
+
+    switch (selectedTemplate) {
+      case Template.CLASSIC:
+      case Template.ELEGANT:
+      case Template.MINIMALIST:
+      case Template.MODERN:
+      default: // Using a single, highly-professional template as the base for all non-bold ones.
+        return (
+          // Reduced font sizes, padding and margins
+          <ProfessionalLayout
+            header={(
+              <header className="flex justify-between items-start mb-6 pb-3 border-b-2" style={{borderColor: themeColor}}>
+                <div>
+                  {companyLogo && <img src={companyLogo} alt="Logo" className="max-h-14 mb-3 object-contain" />}
+                  <h1 className="text-xl font-bold text-gray-900">{companyName || "Nombre de tu Empresa"}</h1>
+                  {companyDocumentInfo && <p className="text-[8.5pt] text-gray-500 font-semibold">{companyDocumentInfo}</p>}
+                  {companyAddress && <p className="text-[8.5pt] text-gray-500">{companyAddress}</p>}
+                </div>
+                <div className="text-right">
+                  <h2 className="text-2xl font-bold uppercase" style={{ color: themeColor }}>Cotización</h2>
+                  <p className="text-[9pt] mt-1"><span className="font-semibold text-gray-600">Nro:</span> {quotationNumber}</p>
+                  <p className="text-[9pt]"><span className="font-semibold text-gray-600">Fecha:</span> {new Date().toLocaleDateString('es-PE')}</p>
+                </div>
+              </header>
+            )}
+            totals={<DefaultTotals />}
+            footer={<DefaultFooter />}
+            children={<DefaultTable />}
+          />
+        );
+        
+      case Template.BOLD:
+        return (
+          <div className="bg-white font-sans text-gray-800 text-[9pt]">
+            <header 
+              className="text-white p-6 relative bg-cover bg-center" 
+              style={{ 
+                backgroundColor: themeColor,
+                backgroundImage: headerImage ? `url(${headerImage})` : 'none'
+              }}
+            >
+              <div className="absolute inset-0 bg-black/50"></div>
+              <div className="relative z-10 flex justify-between items-center">
+                <div>
+                  <h1 className="text-3xl font-bold">{companyName || "Empresa"}</h1>
+                  {companyDocumentInfo && <p className="text-[8.5pt] mt-1 opacity-90">{companyDocumentInfo}</p>}
+                  <p className="text-base mt-1 font-semibold">COTIZACIÓN</p>
+                </div>
+                <div className="text-right">
+                  {companyLogo && 
+                    <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center mb-2 ml-auto">
+                      <img src={companyLogo} alt="Logo" className="max-h-12 max-w-12 object-contain" />
+                    </div>
+                  }
+                  <p className="font-semibold">{quotationNumber}</p>
+                  <p className="opacity-90 text-[8.5pt]">{new Date().toLocaleDateString('es-PE')}</p>
                 </div>
               </div>
             </header>
+             <div className="p-7">
+                <section className="mb-6 bg-gray-50 rounded-lg p-3">
+                  <h3 className="font-bold text-gray-500 uppercase text-[8pt] tracking-wider mb-1">Para</h3>
+                  <p className="font-semibold text-gray-800 text-base">{clientName || "Nombre del Cliente"}</p>
+                  <p className="text-gray-600 text-[8.5pt]">{clientPhone || "Teléfono del Cliente"}</p>
+                </section>
+                
+                <DefaultTable />
+                
+                <section className="bg-gray-100 p-4 mt-4 flex justify-end rounded-lg">
+                  <div className="w-full max-w-xs text-[9pt]">
+                    <div className="flex justify-between py-1 text-gray-600"><p>Subtotal</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
+                    <div className="flex justify-between py-1 text-gray-600"><p>Margen</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
+                    <div className="flex justify-between py-1.5 mt-1.5 text-lg font-bold border-t-2 border-gray-300"><p>TOTAL</p><p style={{color: themeColor}}>{currencySymbol} {total.toFixed(2)}</p></div>
+                  </div>
+                </section>
+                 
+                <DefaultFooter className="!text-[8.5pt]" />
+             </div>
+          </div>
+        );
+    }
+  };
 
-            <section className="my-6 text-gray-700">
-              <h3 className="font-semibold text-gray-800 mb-2">Cotización para:</h3>
-              <p className="text-lg">{clientName || "Nombre del Cliente"}</p>
-              <p className="text-lg">{clientPhone || "Teléfono del Cliente"}</p>
-            </section>
-
-            <section>
-              <table className="w-full text-sm text-left text-gray-600">
-                <thead className={`text-xs text-gray-800 uppercase ${currentTemplate.tableHeaderClasses}`}>
-                  <tr>
-                    <th scope="col" className="px-4 py-3 font-medium">Descripción</th>
-                    <th scope="col" className="px-4 py-3 text-center font-medium">Cant.</th>
-                    <th scope="col" className="px-4 py-3 text-right font-medium">P. Unitario</th>
-                    <th scope="col" className="px-4 py-3 text-right font-medium">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => {
-                      const finalPrice = calculateFinalPrice(item);
-                      const finalUnitPrice = item.quantity > 0 ? finalPrice / item.quantity : 0;
-                      return (
-                        <tr key={item.id} className="border-b">
-                          <td className="px-4 py-3 font-medium text-gray-800">{item.description}</td>
-                          <td className="px-4 py-3 text-center">{item.quantity}</td>
-                          <td className="px-4 py-3 text-right">{currencySymbol} {finalUnitPrice.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-right">{currencySymbol} {finalPrice.toFixed(2)}</td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </section>
-
-            <section className="mt-6 flex justify-end">
-              <div className="w-full md:w-2/5 text-gray-800">
-                <div className="flex justify-between py-1 text-base">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span>{currencySymbol} {baseSubtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between py-1 text-base">
-                  <span className="text-gray-600">Margen ({marginType === MarginType.PERCENTAGE ? `${marginValue}%` : 'Fijo'}):</span>
-                  <span>{currencySymbol} {marginAmount.toFixed(2)}</span>
-                </div>
-                <div className={`flex justify-between font-bold text-lg mt-2 pt-2 border-t ${currentTemplate.totalClasses}`}>
-                  <span>Total:</span>
-                  <span>{currencySymbol} {total.toFixed(2)}</span>
-                </div>
-              </div>
-            </section>
-        </div>
-      </div>
-    </div>
-  );
+  return <div id="quotation-preview">{renderTemplate()}</div>;
 };
 
 export default QuotationPreview;
