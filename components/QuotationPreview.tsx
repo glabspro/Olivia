@@ -121,7 +121,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
   const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
   const marginAmount = total - baseSubtotal;
   const currentTemplate = templateOptions[selectedTemplate];
-  const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-textPrimary dark:text-dark-textPrimary";
+  const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary text-textPrimary dark:text-dark-textPrimary";
 
 
   return (
@@ -131,7 +131,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
       <div className="action-panel-container mb-6" ref={actionPanelRef}>
           <div className="space-y-6">
               <div>
-                  <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><User size={16} className="text-primary"/> Datos del Cliente</h3>
+                  <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><User size={16} className="text-primary dark:text-dark-primary"/> Datos del Cliente</h3>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <input 
                           type="text"
@@ -150,7 +150,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                    </div>
               </div>
               <div>
-                 <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><Palette size={16} className="text-primary"/> Diseño</h3>
+                 <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><Palette size={16} className="text-primary dark:text-dark-primary"/> Diseño</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {Object.values(Template).map((templateId) => {
                         const template = templateOptions[templateId];
@@ -159,7 +159,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                           <button
                               key={templateId}
                               onClick={() => setSelectedTemplate(templateId)}
-                              className={`text-center transition-all duration-200 rounded-lg p-1 ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface dark:ring-offset-dark-surface' : 'ring-0'}`}
+                              className={`text-center transition-all duration-200 rounded-lg p-1 ${isActive ? 'ring-2 ring-primary dark:ring-primary ring-offset-2 ring-offset-surface dark:ring-offset-dark-surface' : 'ring-0'}`}
                           >
                             <div className={`w-full h-20 rounded-md border-2 p-2 flex flex-col justify-between overflow-hidden bg-white ${template.containerClasses}`}>
                                 <div className={`h-3 w-1/2 rounded-sm ${template.tableHeaderClasses}`}></div>
@@ -169,7 +169,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                                 </div>
                                 <div className={`h-2 w-1/3 self-end rounded-sm ${template.headerClasses} opacity-50`}></div>
                             </div>
-                            <span className={`block text-xs font-semibold mt-2 ${isActive ? 'text-primary dark:text-primary-dark' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
+                            <span className={`block text-xs font-semibold mt-2 ${isActive ? 'text-primary dark:text-primary' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
                                 {template.name}
                             </span>
                           </button>
@@ -181,7 +181,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                  {ActionPanel}
                  <button
                     onClick={handleDownloadPDF}
-                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-primary dark:text-primary-dark bg-primary/10 dark:bg-primary-dark/10 rounded-lg hover:bg-primary/20 dark:hover:bg-primary-dark/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={items.length === 0}
                   >
                     <Download size={16} />

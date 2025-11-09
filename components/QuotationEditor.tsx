@@ -56,7 +56,7 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
   const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
 
-  const inputClasses = "w-full bg-transparent focus:ring-1 focus:ring-primary/50 rounded-md p-2 border-transparent focus:border-transparent focus:outline-none transition";
+  const inputClasses = "w-full bg-surface dark:bg-dark-surface border border-border dark:border-dark-border focus:ring-2 focus:ring-primary dark:focus:ring-primary rounded-md p-2 focus:border-transparent focus:outline-none transition";
 
   return (
     <div className="w-full bg-surface dark:bg-dark-surface rounded-lg p-4 md:p-6 border border-border dark:border-dark-border shadow-sm">
@@ -77,13 +77,13 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-background dark:hover:bg-dark-background">
                 <td className="px-4 py-1">
-                  <input type="text" value={item.description} placeholder="Nuevo producto" onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} className={inputClasses} />
+                  <input type="text" value={item.description} placeholder="Nuevo producto" onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} className={`${inputClasses} border-none`} />
                 </td>
                 <td className="px-4 py-1">
-                  <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-center`} />
+                  <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-center border-none`} />
                 </td>
                 <td className="px-4 py-1">
-                  <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-right`} />
+                  <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-right border-none`} />
                 </td>
                 <td className="px-4 py-2 text-right font-semibold text-textPrimary dark:text-dark-textPrimary">
                   {currencySymbol} {calculateFinalPrice(item).toFixed(2)}
@@ -107,17 +107,17 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
               type="text" 
               value={item.description} 
               onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} 
-              className="w-full font-semibold text-textPrimary dark:text-dark-textPrimary bg-transparent p-1 -ml-1 mb-2 focus:ring-1 focus:ring-primary/50 rounded"
+              className="w-full font-semibold text-textPrimary dark:text-dark-textPrimary bg-transparent p-1 -ml-1 mb-2 focus:ring-1 focus:ring-primary rounded"
               placeholder="Descripción del producto"
             />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-textSecondary dark:text-dark-textSecondary">Cant.</label>
-                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-center py-3 mt-1`} />
+                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-center py-3 mt-1`} />
               </div>
               <div>
                 <label className="text-xs text-textSecondary dark:text-dark-textSecondary">P. Unitario</label>
-                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-right py-3 mt-1`} />
+                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-right py-3 mt-1`} />
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-border dark:border-dark-border flex justify-between items-center">
@@ -135,7 +135,7 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
       <div className="mt-4 flex justify-start">
         <button
           onClick={addNewItem}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-secondary bg-secondary/10 rounded-lg hover:bg-secondary/20 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors"
         >
           <PlusCircle size={16} />
           Agregar Producto
@@ -150,7 +150,7 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
               id="margin-type"
               value={marginType}
               onChange={(e) => setMarginType(e.target.value as MarginType)}
-              className="h-14 rounded-l-md bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary focus:ring-primary/50"
+              className="h-14 rounded-l-md bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
             >
               <option value={MarginType.PERCENTAGE}>%</option>
               <option value={MarginType.FIXED}>{currencySymbol}</option>
@@ -159,7 +159,7 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
               type="number"
               value={marginValue}
               onChange={(e) => setMarginValue(parseFloat(e.target.value) || 0)}
-              className="w-full h-14 text-lg rounded-r-md bg-surface dark:bg-dark-surface border-y border-r border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary focus:ring-primary/50"
+              className="w-full h-14 text-lg rounded-r-md bg-surface dark:bg-dark-surface border-y border-r border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
             />
           </div>
         </div>

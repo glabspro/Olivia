@@ -18,20 +18,20 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
     return (
         <button
             onClick={() => setActivePage(id)}
-            className={`w-full flex ${isMobile ? 'flex-col items-center justify-center' : 'items-center gap-3'} px-3 py-3 text-sm font-semibold rounded-lg transition-all duration-200 relative ${
+            className={`w-full flex ${isMobile ? 'flex-col items-center justify-center h-full' : 'items-center gap-3'} px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 relative ${
             isActive
-                ? 'text-primary-dark dark:text-primary-dark'
-                : 'text-textSecondary dark:text-dark-textSecondary hover:bg-surface dark:hover:bg-dark-surface'
+                ? 'text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20'
+                : 'text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5'
             }`}
         >
-        {!isMobile && (
-             <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-primary transition-transform duration-300 ${isActive ? 'scale-y-100' : 'scale-y-0'}`}></div>
+        {!isMobile && isActive && (
+             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary dark:bg-dark-primary"></div>
         )}
         {isMobile && isActive && (
-             <div className="absolute top-0 h-1 w-8 rounded-b-full bg-primary transition-transform duration-300"></div>
+             <div className="absolute top-0 h-1 w-10 rounded-b-full bg-primary dark:bg-dark-primary"></div>
         )}
 
-        <Icon size={22} />
+        <Icon size={20} />
         <span className={isMobile ? 'text-xs mt-1' : ''}>{label}</span>
         </button>
     );
@@ -51,10 +51,10 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
     <div className="flex h-screen bg-background dark:bg-dark-background">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 bg-surface dark:bg-dark-surface flex-col border-r border-border dark:border-dark-border">
-         <div className="px-6 py-5">
+         <div className="px-6 py-5 border-b border-border dark:border-dark-border">
             <Logo />
          </div>
-         <nav className="flex-grow px-4 space-y-2">
+         <nav className="flex-grow px-4 py-4 space-y-1">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} />)}
          </nav>
       </aside>
@@ -63,16 +63,16 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
         <header className="bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border sticky top-0 z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-end items-center h-16">
-              <div className="flex items-center gap-4">
-                <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+              <div className="flex items-center gap-2">
+                <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-border">
                   {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
                 <div className="relative">
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)} 
-                    className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-dark-border"
                   >
-                    <div className="w-9 h-9 bg-gradient-to-br from-primary to-secondary text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm">
                       {user.companyName.charAt(0)}
                     </div>
                   </button>
@@ -87,13 +87,13 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                       </div>
                        <button 
                         onClick={() => setActivePage('settings')}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-textSecondary dark:text-dark-textSecondary hover:bg-gray-100 dark:hover:bg-dark-background/50"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-textSecondary dark:text-dark-textSecondary hover:bg-gray-100 dark:hover:bg-dark-border"
                       >
                         <SettingsIcon size={16} /> Configuración
                       </button>
                       <button 
                         onClick={onLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-dark-background/50"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-dark-border"
                       >
                         <LogOut size={16} /> Cerrar Sesión
                       </button>

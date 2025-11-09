@@ -102,7 +102,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                      </div>
 
                     {error && (
-                        <div className="w-full bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                        <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg relative mb-6" role="alert">
                             <strong className="font-bold">Error: </strong>
                             <span className="block sm:inline">{error}</span>
                         </div>
@@ -115,10 +115,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                             <span className="flex-shrink mx-4 text-sm text-textSecondary dark:text-dark-textSecondary">O</span>
                             <div className="flex-grow border-t border-border dark:border-dark-border"></div>
                         </div>
-                        <button
+                         <button
                             onClick={handleManualCreation}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 px-6 py-3 text-base font-semibold text-primary dark:text-primary-dark bg-primary/10 dark:bg-primary-dark/10 rounded-lg hover:bg-primary/20 dark:hover:bg-primary-dark/20 transition-colors disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-3 px-6 py-3 text-base font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors disabled:opacity-50"
                         >
                             <Edit size={18} />
                             Crear Cotización Manualmente
@@ -131,7 +131,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                 <div>
                      <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">Espacio de Trabajo</h2>
-                         <button onClick={resetState} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-textSecondary dark:text-dark-textSecondary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors">
+                         <button onClick={resetState} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-textSecondary dark:text-dark-textSecondary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-background dark:hover:bg-dark-border transition-colors">
                             <RefreshCw size={16} />
                             Empezar de nuevo
                         </button>

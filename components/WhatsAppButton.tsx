@@ -71,10 +71,10 @@ const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
       <button
         onClick={handleSendWhatsApp}
         disabled={!isEnabled}
-        className={`w-full flex items-center justify-center gap-3 px-6 py-4 text-white font-bold text-base rounded-xl shadow-md transition-all duration-300 disabled:cursor-not-allowed ${
+        className={`w-full flex items-center justify-center gap-3 px-6 py-4 text-white font-bold text-base rounded-xl shadow-lg transition-all duration-300 disabled:cursor-not-allowed ${
             sentSuccess
               ? 'bg-green-500'
-              : 'bg-gradient-to-r from-primary to-secondary hover:shadow-lg disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700'
+              : 'bg-primary dark:bg-dark-primary hover:opacity-90 disabled:bg-gray-400 dark:disabled:bg-gray-600'
           }`}
       >
         {buttonContent}

@@ -13,8 +13,8 @@ const HistoryPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col items-center justify-center h-96 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg shadow-sm">
-                    <div className="p-4 bg-primary/10 rounded-full mb-4">
-                        <History size={32} className="text-primary" />
+                    <div className="p-4 bg-primary/10 dark:bg-dark-primary/10 rounded-full mb-4">
+                        <History size={32} className="text-primary dark:text-dark-primary" />
                     </div>
                     <h3 className="text-xl font-semibold text-textPrimary dark:text-dark-textPrimary">Próximamente</h3>
                     <p className="text-textSecondary dark:text-dark-textSecondary mt-2 max-w-sm text-center">
