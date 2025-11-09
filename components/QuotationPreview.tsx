@@ -8,35 +8,35 @@ import { Download, Edit3, Palette, User } from 'lucide-react';
 const templateOptions = {
     [Template.MODERN]: {
         name: 'Moderno',
-        containerClasses: 'border-gray-800',
-        headerClasses: 'text-gray-900',
+        containerClasses: 'border-gray-300',
+        headerClasses: 'text-gray-800',
         totalClasses: 'text-gray-900',
         tableHeaderClasses: 'bg-gray-100',
     },
     [Template.CLASSIC]: {
         name: 'Clásico',
-        containerClasses: 'border-gray-700 font-serif',
+        containerClasses: 'border-gray-400 font-serif',
         headerClasses: 'text-gray-800',
         totalClasses: 'text-gray-800',
         tableHeaderClasses: 'bg-gray-200',
     },
     [Template.MINIMALIST]: {
         name: 'Minimalista',
-        containerClasses: 'border-gray-300',
+        containerClasses: 'border-gray-200',
         headerClasses: 'text-gray-700 font-light',
         totalClasses: 'text-gray-900',
         tableHeaderClasses: 'border-b border-gray-200 bg-white',
     },
     [Template.ELEGANT]: {
         name: 'Elegante',
-        containerClasses: 'border-blue-400 font-sans',
+        containerClasses: 'border-blue-200 font-sans',
         headerClasses: 'text-blue-700',
         totalClasses: 'text-blue-700',
         tableHeaderClasses: 'bg-blue-50',
     },
     [Template.BOLD]: {
         name: 'Audaz',
-        containerClasses: 'border-red-600 font-bold',
+        containerClasses: 'border-red-300 font-bold',
         headerClasses: 'text-red-800',
         totalClasses: 'text-red-800',
         tableHeaderClasses: 'bg-red-100',
@@ -121,7 +121,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
   const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
   const marginAmount = total - baseSubtotal;
   const currentTemplate = templateOptions[selectedTemplate];
-  const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary text-textPrimary dark:text-dark-textPrimary";
+  const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-textPrimary dark:text-dark-textPrimary";
 
 
   return (
@@ -131,7 +131,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
       <div className="action-panel-container mb-6" ref={actionPanelRef}>
           <div className="space-y-6">
               <div>
-                  <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><User size={16} className="text-primary dark:text-dark-primary"/> Datos del Cliente</h3>
+                  <h3 className="text-md font-semibold text-accent-teal flex items-center gap-2 mb-3"><User size={16}/> Datos del Cliente</h3>
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <input 
                           type="text"
@@ -150,7 +150,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                    </div>
               </div>
               <div>
-                 <h3 className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 mb-3"><Palette size={16} className="text-primary dark:text-dark-primary"/> Diseño</h3>
+                 <h3 className="text-md font-semibold text-accent-coral flex items-center gap-2 mb-3"><Palette size={16}/> Diseño</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {Object.values(Template).map((templateId) => {
                         const template = templateOptions[templateId];
@@ -159,7 +159,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                           <button
                               key={templateId}
                               onClick={() => setSelectedTemplate(templateId)}
-                              className={`text-center transition-all duration-200 rounded-lg p-1 ${isActive ? 'ring-2 ring-primary dark:ring-primary ring-offset-2 ring-offset-surface dark:ring-offset-dark-surface' : 'ring-0'}`}
+                              className={`text-center transition-all duration-200 rounded-lg p-1 ${isActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface' : 'ring-0'}`}
                           >
                             <div className={`w-full h-20 rounded-md border-2 p-2 flex flex-col justify-between overflow-hidden bg-white ${template.containerClasses}`}>
                                 <div className={`h-3 w-1/2 rounded-sm ${template.tableHeaderClasses}`}></div>
@@ -169,7 +169,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                                 </div>
                                 <div className={`h-2 w-1/3 self-end rounded-sm ${template.headerClasses} opacity-50`}></div>
                             </div>
-                            <span className={`block text-xs font-semibold mt-2 ${isActive ? 'text-primary dark:text-primary' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
+                            <span className={`block text-xs font-semibold mt-2 ${isActive ? 'text-primary' : 'text-textSecondary'}`}>
                                 {template.name}
                             </span>
                           </button>
@@ -181,7 +181,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                  {ActionPanel}
                  <button
                     onClick={handleDownloadPDF}
-                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={items.length === 0}
                   >
                     <Download size={16} />

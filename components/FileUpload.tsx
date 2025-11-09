@@ -49,7 +49,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, disabled }) => {
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`flex flex-col justify-center items-center w-full p-8 md:p-12 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-300 ${isDragging ? 'border-primary dark:border-dark-primary bg-pink-50/50 dark:bg-dark-surface' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
+        className={`flex flex-col justify-center items-center w-full p-8 md:p-12 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-300 ${isDragging ? 'border-primary dark:border-dark-primary bg-primary/10' : 'border-gray-300 dark:border-dark-border hover:border-primary/50'}`}
       >
         <UploadCloud className="w-12 h-12 text-textSecondary dark:text-dark-textSecondary mb-4" />
         <div className="text-center">

@@ -13,25 +13,18 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = false }: any) => {
+const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = false, colorClass }: any) => {
     const isActive = activePage === id;
     return (
         <button
             onClick={() => setActivePage(id)}
-            className={`w-full flex ${isMobile ? 'flex-col items-center justify-center h-full' : 'items-center gap-3'} px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 relative ${
+            className={`w-full flex ${isMobile ? 'flex-col items-center justify-center h-full' : 'items-center gap-3'} px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 relative ${
             isActive
-                ? 'text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20'
+                ? 'text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/10'
                 : 'text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5'
             }`}
         >
-        {!isMobile && isActive && (
-             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary dark:bg-dark-primary"></div>
-        )}
-        {isMobile && isActive && (
-             <div className="absolute top-0 h-1 w-10 rounded-b-full bg-primary dark:bg-dark-primary"></div>
-        )}
-
-        <Icon size={20} />
+        <Icon size={isMobile ? 24 : 20} className={`${isActive ? 'text-primary' : colorClass}`} />
         <span className={isMobile ? 'text-xs mt-1' : ''}>{label}</span>
         </button>
     );
@@ -42,13 +35,13 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const navItems = [
-    { id: 'new_quote', label: 'Nueva Cotización', icon: FilePlus },
-    { id: 'history', label: 'Historial', icon: History },
-    { id: 'settings', label: 'Configuración', icon: SlidersHorizontal },
+    { id: 'new_quote', label: 'Nueva Cotización', icon: FilePlus, colorClass: 'text-accent-teal' },
+    { id: 'history', label: 'Historial', icon: History, colorClass: 'text-accent-coral' },
+    { id: 'settings', label: 'Configuración', icon: SlidersHorizontal, colorClass: 'text-accent-yellow' },
   ];
 
   return (
-    <div className="flex h-screen bg-background dark:bg-dark-background">
+    <div className="flex h-screen bg-background text-textPrimary dark:bg-dark-background dark:text-dark-textPrimary">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 bg-surface dark:bg-dark-surface flex-col border-r border-border dark:border-dark-border">
          <div className="px-6 py-5 border-b border-border dark:border-dark-border">
@@ -62,15 +55,18 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border sticky top-0 z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-end items-center h-16">
+            <div className="flex justify-between items-center h-16">
+               <div className="lg:hidden">
+                 <Logo />
+               </div>
               <div className="flex items-center gap-2">
-                <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-border">
+                <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
                   {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
                 <div className="relative">
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)} 
-                    className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-dark-border"
+                    className="flex items-center gap-2 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
                   >
                     <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm">
                       {user.companyName.charAt(0)}
@@ -87,13 +83,13 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                       </div>
                        <button 
                         onClick={() => setActivePage('settings')}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-textSecondary dark:text-dark-textSecondary hover:bg-gray-100 dark:hover:bg-dark-border"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5"
                       >
                         <SettingsIcon size={16} /> Configuración
                       </button>
                       <button 
                         onClick={onLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-dark-border"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5"
                       >
                         <LogOut size={16} /> Cerrar Sesión
                       </button>

@@ -45,8 +45,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="max-w-2xl mx-auto">
                 <div className="mb-6">
-                    <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">Configuración</h2>
-                    <p className="text-textSecondary dark:text-dark-textSecondary mt-1">
+                    <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary relative pb-2">
+                        Configuración
+                        <span className="absolute bottom-0 left-0 h-1 w-16 bg-accent-yellow rounded-full"></span>
+                    </h2>
+                    <p className="text-textSecondary dark:text-dark-textSecondary mt-2">
                         Personaliza la información de tu empresa y los valores por defecto.
                     </p>
                 </div>
@@ -56,7 +59,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 </div>
                 
                 {saveMessage && (
-                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-textPrimary text-background dark:bg-dark-textPrimary dark:text-dark-background px-6 py-3 rounded-lg shadow-lg animate-bounce">
                         {saveMessage}
                     </div>
                 )}

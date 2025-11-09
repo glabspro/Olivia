@@ -74,7 +74,7 @@ const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
         className={`w-full flex items-center justify-center gap-3 px-6 py-4 text-white font-bold text-base rounded-xl shadow-lg transition-all duration-300 disabled:cursor-not-allowed ${
             sentSuccess
               ? 'bg-green-500'
-              : 'bg-primary dark:bg-dark-primary hover:opacity-90 disabled:bg-gray-400 dark:disabled:bg-gray-600'
+              : 'bg-primary hover:opacity-90 disabled:bg-gray-400 dark:disabled:bg-gray-600'
           }`}
       >
         {buttonContent}

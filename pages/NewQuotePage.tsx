@@ -118,9 +118,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                          <button
                             onClick={handleManualCreation}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 px-6 py-3 text-base font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-3 px-6 py-3 text-base font-semibold text-textPrimary dark:text-dark-textPrimary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
                         >
-                            <Edit size={18} />
+                            <Edit size={18} className="text-accent-teal" />
                             Crear Cotización Manualmente
                         </button>
                     </div>
@@ -131,7 +131,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                 <div>
                      <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">Espacio de Trabajo</h2>
-                         <button onClick={resetState} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-textSecondary dark:text-dark-textSecondary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-background dark:hover:bg-dark-border transition-colors">
+                         <button onClick={resetState} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-coral bg-accent-coral/10 rounded-lg hover:bg-accent-coral/20 transition-colors">
                             <RefreshCw size={16} />
                             Empezar de nuevo
                         </button>

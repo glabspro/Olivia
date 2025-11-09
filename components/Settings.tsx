@@ -40,7 +40,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
     onSave(settings);
   };
 
-  const inputClasses = "w-full px-4 py-3 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary text-textPrimary dark:text-dark-textPrimary text-base transition";
+  const inputClasses = "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-textPrimary dark:text-dark-textPrimary text-base transition";
   const labelClasses = "block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2";
 
   return (
@@ -68,7 +68,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
             <button 
                 type="button" 
                 onClick={() => logoInputRef.current?.click()} 
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-textSecondary dark:text-dark-textSecondary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-background dark:hover:bg-dark-border transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors"
             >
               <Upload size={16} />
               Cambiar Logo
@@ -96,7 +96,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
               name="defaultMarginType"
               value={settings.defaultMarginType}
               onChange={handleInputChange}
-              className="rounded-l-md border border-border dark:border-dark-border shadow-sm h-12 bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary focus:ring-2 focus:ring-primary dark:focus:ring-primary text-base"
+              className="rounded-l-md border border-gray-200 dark:border-dark-border shadow-sm h-12 bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-base"
             >
               <option value={MarginType.PERCENTAGE}>%</option>
               <option value={MarginType.FIXED}>{settings.currencySymbol}</option>
@@ -106,7 +106,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
               name="defaultMarginValue"
               value={settings.defaultMarginValue}
               onChange={handleMarginValueChange}
-              className="w-full h-12 px-3 py-2 border-y border-r border-border dark:border-dark-border rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-base"
+              className="w-full h-12 px-3 py-2 border-y border-r border-gray-200 dark:border-dark-border rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-base"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
-          className="px-6 py-3 bg-primary dark:bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-all"
+          className="px-6 py-3 bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-all"
         >
           Guardar Cambios
         </button>

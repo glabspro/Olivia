@@ -1,42 +1,39 @@
 import React, { useState } from 'react';
-import { Building, Phone, User as UserIcon, Sparkles, FileText, Send } from 'lucide-react';
+import { Sparkles, FileText, Send } from 'lucide-react';
 import Logo from './Logo';
 
 const AppVisual = () => (
-    <div className="w-full h-full bg-surface dark:bg-dark-surface rounded-2xl shadow-lg border border-border dark:border-dark-border flex items-center justify-center p-8 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_rgba(236,72,153,0.05),_transparent_40%)]"></div>
-        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_bottom_right,_rgba(20,184,166,0.05),_transparent_40%)]"></div>
-        
-        {/* Main Illustration Container */}
-        <div className="relative w-full h-full flex items-center justify-center">
-            {/* Base Card */}
-            <div className="w-full max-w-sm h-auto bg-white dark:bg-dark-surface/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 dark:border-dark-border/50 p-6 space-y-4">
-                <div className="flex justify-between items-center">
-                    <div className="w-24 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                </div>
-                <div className="flex gap-4">
-                    <div className="w-1/3 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                    <div className="w-1/3 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                    <div className="w-1/3 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                </div>
+    <div className="w-full h-full bg-white rounded-2xl shadow-lg border border-border flex items-center justify-center p-8 relative overflow-hidden">
+        {/* Main Workspace Mockup */}
+        <div className="relative w-full h-auto bg-white rounded-xl shadow-xl border border-border p-4 space-y-2">
+            <div className="flex items-center gap-1.5 p-1">
+                <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+                <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
+                <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
             </div>
+            <div className="p-2 space-y-3">
+                <div className="h-4 bg-gray-100 rounded-full w-3/4"></div>
+                <div className="h-3 bg-gray-100 rounded-full w-1/2"></div>
+                <div className="h-20 bg-gray-50 rounded-lg mt-4"></div>
+                <div className="h-3 bg-gray-100 rounded-full w-full"></div>
+                <div className="h-3 bg-gray-100 rounded-full w-5/6"></div>
+            </div>
+        </div>
 
-            {/* Floating App Icons */}
-            <div className="absolute -top-8 -left-12 w-16 h-16 bg-accent-teal rounded-2xl shadow-lg flex items-center justify-center transform rotate-[-15deg]">
-                <Sparkles className="w-8 h-8 text-white" />
-            </div>
-            <div className="absolute top-16 -left-16 w-16 h-16 bg-accent-coral rounded-2xl shadow-lg flex items-center justify-center transform rotate-[10deg]">
-                <Send className="w-8 h-8 text-white" />
-            </div>
-             <div className="absolute -top-4 -right-10 w-16 h-16 bg-accent-yellow rounded-2xl shadow-lg flex items-center justify-center transform rotate-[15deg]">
-                <FileText className="w-8 h-8 text-white" />
-            </div>
+        {/* Floating Icons */}
+        <div className="absolute top-10 -left-5 w-16 h-16 bg-accent-teal rounded-2xl shadow-lg flex items-center justify-center transform -rotate-12">
+            <Sparkles className="w-8 h-8 text-white"/>
+        </div>
+        <div className="absolute top-1/2 -right-6 w-16 h-16 bg-accent-coral rounded-2xl shadow-lg flex items-center justify-center transform rotate-12">
+            <Send className="w-8 h-8 text-white"/>
+        </div>
+        <div className="absolute bottom-12 -left-4 w-16 h-16 bg-accent-yellow rounded-2xl shadow-lg flex items-center justify-center transform rotate-6">
+            <FileText className="w-8 h-8 text-white"/>
         </div>
     </div>
 );
 
-// Fix: Define the AuthProps interface based on its usage in App.tsx.
+
 interface AuthProps {
   onLogin: (companyName: string, phone: string) => void;
   onRegister: (fullName: string, companyName: string, phone: string) => void;
@@ -51,7 +48,7 @@ const FeatureList = () => (
       </p>
     </li>
     <li className="flex items-start gap-3">
-      <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+      <FileText className="w-5 h-5 text-accent-yellow mt-1 flex-shrink-0" />
       <p className="text-textSecondary dark:text-dark-textSecondary">
         <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">PDFs Profesionales.</span> Genera cotizaciones con tu marca y diseños elegantes en segundos.
       </p>
@@ -125,12 +122,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
     validatePhone(newPhone, countryCode);
   };
 
-  const inputBaseClasses = "w-full px-4 py-3 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
+  const inputBaseClasses = "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
   const labelClasses = "block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2";
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background">
-      {/* Column 1: Form (takes full width on mobile, half on desktop) */}
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background text-textPrimary dark:text-dark-textPrimary">
+      {/* Column 1: Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
@@ -200,7 +197,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
 
               <button
                 type="submit"
-                className="w-full py-3 font-bold text-white bg-primary dark:bg-dark-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isRegisterMode ? 'Crear cuenta' : 'Ingresar'}
               </button>
@@ -208,23 +205,21 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
           <div className="mt-6 text-center text-sm">
             <button 
               onClick={() => setIsRegisterMode(!isRegisterMode)} 
-              className="w-full py-3 font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/30 transition-colors"
+              className="w-full py-3 font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/10 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors"
             >
               {isRegisterMode ? "¿Ya tienes una cuenta? Ingresa aquí" : "¿No tienes una cuenta? Regístrate"}
             </button>
           </div>
-           {/* Feature list for mobile */}
-          <div className="mt-12 pt-8 border-t border-border dark:border-dark-border lg:hidden">
+          <div className="lg:hidden mt-12">
             <FeatureList />
           </div>
         </div>
       </div>
 
-      {/* Column 2: Marketing (hidden on mobile, half on desktop) */}
-      <div className="w-full lg:w-1/2 bg-surface dark:bg-dark-surface p-8 sm:p-12 flex-col justify-center relative overflow-hidden order-1 lg:order-2 hidden lg:flex">
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(236,72,153,0.02),_transparent_30%)]"></div>
+      {/* Column 2: Marketing */}
+      <div className="w-full lg:w-1/2 bg-white dark:bg-dark-surface p-8 sm:p-12 flex-col justify-center relative overflow-hidden order-1 lg:order-2 hidden lg:flex">
         <div className="w-full max-w-md mx-auto z-10">
-           <div className="mb-8 hidden lg:block">
+          <div className="mb-8">
             <Logo />
           </div>
           <h2 className="text-4xl font-bold text-textPrimary dark:text-dark-textPrimary leading-tight mb-6">
