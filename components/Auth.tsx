@@ -2,31 +2,45 @@ import React, { useState } from 'react';
 import { Building, Phone, User as UserIcon, Check } from 'lucide-react';
 import Logo from './Logo';
 
-interface AuthProps {
-  onLogin: (companyName: string, phone: string) => void;
-  onRegister: (fullName: string, companyName: string, phone: string) => void;
-}
-
-
 const AppVisual = () => (
     <div className="w-full h-full bg-surface dark:bg-dark-surface rounded-2xl shadow-lg border border-border dark:border-dark-border flex items-center justify-center p-8 relative overflow-hidden">
-        <div className="absolute -top-16 -left-16 w-48 h-48 bg-primary/10 rounded-full blur-2xl"></div>
-        <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-accent-teal/10 rounded-full blur-2xl"></div>
-
-        <div className="w-full h-full border border-dashed border-gray-300/50 dark:border-gray-700/50 rounded-lg flex flex-col items-center justify-center gap-4 text-center z-10 p-4">
-             <div className="flex -space-x-4">
-                <div className="w-20 h-28 bg-accent-coral rounded-lg shadow-md transform -rotate-12 border-2 border-white/50"></div>
-                <div className="w-20 h-28 bg-accent-yellow rounded-lg shadow-md transform rotate-6 border-2 border-white/50 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_rgba(236,72,153,0.05),_transparent_40%)]"></div>
+        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_bottom_right,_rgba(20,184,166,0.05),_transparent_40%)]"></div>
+        
+        {/* Main Illustration Container */}
+        <div className="relative w-full h-full flex items-center justify-center">
+            {/* Base Card */}
+            <div className="w-full max-w-sm h-auto bg-white dark:bg-dark-surface/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 dark:border-dark-border/50 p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                    <div className="w-24 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                 </div>
-                <div className="w-20 h-28 bg-accent-teal rounded-lg shadow-md transform rotate-12 border-2 border-white/50"></div>
+                <div className="flex gap-4">
+                    <div className="w-1/3 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                    <div className="w-1/3 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                    <div className="w-1/3 h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                </div>
             </div>
-            <p className="font-bold text-lg mt-4 text-textPrimary dark:text-dark-textPrimary">Crea Cotizaciones Profesionales</p>
-            <p className="text-sm text-textSecondary dark:text-dark-textSecondary max-w-xs">Sube un archivo, ajusta tu margen y envía un PDF profesional a tus clientes en segundos.</p>
+
+            {/* Floating App Icons */}
+            <div className="absolute -top-8 -left-12 w-16 h-16 bg-accent-teal rounded-2xl shadow-lg flex items-center justify-center transform rotate-[-15deg]">
+                <Check className="w-8 h-8 text-white" />
+            </div>
+            <div className="absolute top-16 -left-16 w-16 h-16 bg-accent-coral rounded-2xl shadow-lg flex items-center justify-center transform rotate-[10deg]">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+             <div className="absolute -top-4 -right-10 w-16 h-16 bg-accent-yellow rounded-2xl shadow-lg flex items-center justify-center transform rotate-[15deg]">
+                <UserIcon className="w-8 h-8 text-white" />
+            </div>
         </div>
     </div>
 );
 
+// Fix: Define the AuthProps interface based on its usage in App.tsx.
+interface AuthProps {
+  onLogin: (companyName: string, phone: string) => void;
+  onRegister: (fullName: string, companyName: string, phone: string) => void;
+}
 
 const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -91,11 +105,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
   const labelClasses = "block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2";
 
   return (
-    <div className="flex min-h-screen bg-background dark:bg-dark-background">
-      {/* Left Column: Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background">
+      {/* Column 1: Form (takes full width on mobile, half on desktop) */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
-          <div className="mb-8">
+          <div className="mb-8 lg:hidden">
             <Logo />
           </div>
           <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
@@ -162,25 +176,29 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
 
               <button
                 type="submit"
-                className="w-full py-3 font-bold text-white bg-primary dark:bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-3 font-bold text-white bg-primary dark:bg-dark-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isRegisterMode ? 'Crear cuenta' : 'Ingresar'}
               </button>
           </form>
           <div className="mt-6 text-center text-sm">
-              <p className="text-textSecondary dark:text-dark-textSecondary">
-                  {isRegisterMode ? "¿Ya tienes una cuenta?" : "¿No tienes una cuenta?"}
-                  <button onClick={() => setIsRegisterMode(!isRegisterMode)} className="font-semibold text-primary dark:text-primary hover:underline ml-1">
-                      {isRegisterMode ? "Ingresa aquí" : "Regístrate"}
-                  </button>
-              </p>
+            <button 
+              onClick={() => setIsRegisterMode(!isRegisterMode)} 
+              className="w-full py-3 font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/20 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/30 transition-colors"
+            >
+              {isRegisterMode ? "¿Ya tienes una cuenta? Ingresa aquí" : "¿No tienes una cuenta? Regístrate"}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Right Column: Marketing */}
-      <div className="hidden lg:flex w-1/2 bg-surface dark:bg-dark-surface p-12 flex-col justify-center relative overflow-hidden">
+      {/* Column 2: Marketing (hidden on mobile, half on desktop) */}
+      <div className="w-full lg:w-1/2 bg-surface dark:bg-dark-surface p-8 sm:p-12 flex-col justify-center relative overflow-hidden order-1 lg:order-2 hidden lg:flex">
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_center,_rgba(236,72,153,0.02),_transparent_30%)]"></div>
         <div className="w-full max-w-md mx-auto z-10">
+           <div className="mb-8 hidden lg:block">
+            <Logo />
+          </div>
           <h2 className="text-4xl font-bold text-textPrimary dark:text-dark-textPrimary leading-tight mb-6">
             Potencia tus ventas con una gestión de cotizaciones todo-en-uno.
           </h2>
@@ -195,13 +213,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegister }) => {
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-accent-coral mt-1 flex-shrink-0" />
+              <Check className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
               <p className="text-textSecondary dark:text-dark-textSecondary">
                 <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">PDFs Profesionales.</span> Genera cotizaciones con tu marca y diseños elegantes en segundos.
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+              <Check className="w-5 h-5 text-accent-coral mt-1 flex-shrink-0" />
               <p className="text-textSecondary dark:text-dark-textSecondary">
                 <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">Envío por WhatsApp.</span> Cierra tratos más rápido enviando tus cotizaciones directamente a tus clientes.
               </p>
