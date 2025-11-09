@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Settings, MarginType } from '../types';
 import { Upload } from 'lucide-react';
 
@@ -10,6 +10,11 @@ interface SettingsProps {
 const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
   const [settings, setSettings] = useState<Settings>(currentSettings);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    setSettings(currentSettings);
+  }, [currentSettings]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,13 +40,14 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
     onSave(settings);
   };
 
-  const inputClasses = "w-full px-4 py-4 bg-surface dark:bg-dark-surface border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-textPrimary dark:text-dark-textPrimary text-base";
+  const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-textPrimary dark:text-dark-textPrimary text-base transition";
+  const labelClasses = "block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2";
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-8">
         <div>
-          <label htmlFor="companyName" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Nombre de la Empresa</label>
+          <label htmlFor="companyName" className={labelClasses}>Nombre de la Empresa</label>
           <input
             type="text"
             id="companyName"
@@ -53,25 +59,25 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Logo de la Empresa</label>
+          <label className={labelClasses}>Logo de la Empresa</label>
           <div className="flex items-center gap-4">
-              <div className="h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+              <div className="h-16 w-16 bg-background dark:bg-dark-background rounded-md flex items-center justify-center overflow-hidden border border-border dark:border-dark-border">
               {settings.companyLogo ? <img src={settings.companyLogo} alt="Company Logo" className="h-full w-full object-contain" /> : <span className="text-xs text-center text-textSecondary dark:text-dark-textSecondary">Logo</span>}
             </div>
             <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*"/>
             <button 
                 type="button" 
                 onClick={() => logoInputRef.current?.click()} 
-                className="flex items-center gap-2 px-6 py-3 text-base font-semibold text-accent-teal border border-accent-teal rounded-lg hover:bg-accent-teal/10 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-textSecondary dark:text-dark-textSecondary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
             >
-              <Upload size={18} />
+              <Upload size={16} />
               Cambiar Logo
             </button>
           </div>
         </div>
 
         <div>
-          <label htmlFor="currencySymbol" className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Símbolo de Moneda</label>
+          <label htmlFor="currencySymbol" className={labelClasses}>Símbolo de Moneda</label>
           <input
             type="text"
             id="currencySymbol"
@@ -84,13 +90,13 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Margen por Defecto</label>
+          <label className={labelClasses}>Margen por Defecto</label>
           <div className="flex items-center">
             <select
               name="defaultMarginType"
               value={settings.defaultMarginType}
               onChange={handleInputChange}
-              className="rounded-l-md border-gray-300 dark:border-gray-600 shadow-sm h-14 bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary text-base"
+              className="rounded-l-md border-border dark:border-dark-border shadow-sm h-12 bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary focus:border-primary focus:ring-primary/50 text-base"
             >
               <option value={MarginType.PERCENTAGE}>%</option>
               <option value={MarginType.FIXED}>{settings.currencySymbol}</option>
@@ -100,7 +106,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
               name="defaultMarginValue"
               value={settings.defaultMarginValue}
               onChange={handleMarginValueChange}
-              className="w-full h-14 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-base"
+              className="w-full h-12 px-3 py-2 border-y border-r border-border dark:border-dark-border rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 bg-surface dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-base"
             />
           </div>
         </div>
@@ -109,7 +115,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
-          className="px-8 py-4 bg-primary dark:bg-dark-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-opacity"
+          className="px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all"
         >
           Guardar Cambios
         </button>

@@ -56,15 +56,15 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
   const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
 
-  const inputClasses = "w-full bg-transparent focus:ring-1 focus:ring-primary dark:focus:ring-dark-primary rounded-md p-2 border-transparent focus:border-transparent focus:outline-none";
+  const inputClasses = "w-full bg-transparent focus:ring-1 focus:ring-primary/50 rounded-md p-2 border-transparent focus:border-transparent focus:outline-none transition";
 
   return (
-    <div className="w-full bg-background dark:bg-dark-surface rounded-lg p-4 md:p-6 border border-gray-200 dark:border-gray-700">
+    <div className="w-full bg-surface dark:bg-dark-surface rounded-lg p-4 md:p-6 border border-border dark:border-dark-border shadow-sm">
       
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm text-left text-textSecondary dark:text-dark-textSecondary">
-          <thead className="text-xs text-textPrimary dark:text-dark-textPrimary uppercase border-b border-gray-200 dark:border-gray-700">
+          <thead className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase">
             <tr>
               <th scope="col" className="px-4 py-3 font-semibold">Descripción</th>
               <th scope="col" className="px-4 py-3 text-center font-semibold w-24">Cant.</th>
@@ -73,9 +73,9 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
               <th scope="col" className="px-4 py-3 text-center font-semibold w-16"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border dark:divide-dark-border">
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/20">
+              <tr key={item.id} className="hover:bg-background dark:hover:bg-dark-background">
                 <td className="px-4 py-1">
                   <input type="text" value={item.description} placeholder="Nuevo producto" onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} className={inputClasses} />
                 </td>
@@ -102,25 +102,25 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
       {/* Mobile Cards */}
       <div className="block md:hidden space-y-4">
         {items.map(item => (
-          <div key={item.id} className="bg-surface dark:bg-dark-surface rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div key={item.id} className="bg-background dark:bg-dark-background rounded-lg p-4 border border-border dark:border-dark-border">
             <input 
               type="text" 
               value={item.description} 
               onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} 
-              className="w-full font-semibold text-textPrimary dark:text-dark-textPrimary bg-transparent p-1 -ml-1 mb-2 focus:ring-1 focus:ring-primary rounded"
+              className="w-full font-semibold text-textPrimary dark:text-dark-textPrimary bg-transparent p-1 -ml-1 mb-2 focus:ring-1 focus:ring-primary/50 rounded"
               placeholder="Descripción del producto"
             />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-textSecondary dark:text-dark-textSecondary">Cant.</label>
-                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-gray-700 text-center py-3`} />
+                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-center py-3 mt-1`} />
               </div>
               <div>
                 <label className="text-xs text-textSecondary dark:text-dark-textSecondary">P. Unitario</label>
-                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-gray-50 dark:bg-dark-background border border-gray-200 dark:border-gray-700 text-right py-3`} />
+                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-right py-3 mt-1`} />
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <div className="mt-3 pt-3 border-t border-border dark:border-dark-border flex justify-between items-center">
                 <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary">
                   Total Item: {currencySymbol} {calculateFinalPrice(item).toFixed(2)}
                 </span>
@@ -135,22 +135,22 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
       <div className="mt-4 flex justify-start">
         <button
           onClick={addNewItem}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-secondary bg-secondary/10 rounded-lg hover:bg-secondary/20 transition-colors"
         >
           <PlusCircle size={16} />
           Agregar Producto
         </button>
       </div>
 
-      <div className="mt-6 space-y-4 md:space-y-0 md:flex md:justify-between md:items-center gap-6 p-4 bg-surface dark:bg-dark-surface rounded-lg">
+      <div className="mt-6 space-y-4 md:space-y-0 md:flex md:justify-between md:items-center gap-6 p-4 bg-background dark:bg-dark-background rounded-lg border border-border dark:border-dark-border">
         <div className="w-full md:w-auto">
-          <label htmlFor="margin-type" className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary mb-2 block md:hidden">Margen:</label>
+          <label htmlFor="margin-type" className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary mb-2 block">Ajustar Margen:</label>
           <div className="flex">
             <select
               id="margin-type"
               value={marginType}
               onChange={(e) => setMarginType(e.target.value as MarginType)}
-              className="h-14 rounded-l-md bg-white dark:bg-dark-background border border-gray-300 dark:border-gray-600 text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
+              className="h-14 rounded-l-md bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary focus:ring-primary/50"
             >
               <option value={MarginType.PERCENTAGE}>%</option>
               <option value={MarginType.FIXED}>{currencySymbol}</option>
@@ -159,7 +159,7 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
               type="number"
               value={marginValue}
               onChange={(e) => setMarginValue(parseFloat(e.target.value) || 0)}
-              className="w-full h-14 text-lg rounded-r-md bg-white dark:bg-dark-background border border-gray-300 dark:border-gray-600 text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
+              className="w-full h-14 text-lg rounded-r-md bg-surface dark:bg-dark-surface border-y border-r border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary focus:ring-primary/50"
             />
           </div>
         </div>

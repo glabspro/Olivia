@@ -44,20 +44,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="max-w-2xl mx-auto">
-                <div className="mb-6 relative">
-                    <div className="absolute -left-2 top-1 bottom-1 w-1 bg-accent-yellow rounded-full"></div>
-                    <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary ml-2">Configuración</h2>
-                    <p className="text-textSecondary dark:text-dark-textSecondary mt-1 ml-2">
+                <div className="mb-6">
+                    <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">Configuración</h2>
+                    <p className="text-textSecondary dark:text-dark-textSecondary mt-1">
                         Personaliza la información de tu empresa y los valores por defecto.
                     </p>
                 </div>
 
-                <div className="bg-background dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <div className="bg-surface dark:bg-dark-surface rounded-lg border border-border dark:border-dark-border p-6 shadow-sm">
                     <AppSettings currentSettings={settings} onSave={handleSaveSettings} />
                 </div>
                 
                 {saveMessage && (
-                    <div className="mt-6 text-center text-green-600 dark:text-green-400 font-semibold">
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
                         {saveMessage}
                     </div>
                 )}
