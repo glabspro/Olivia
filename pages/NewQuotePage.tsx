@@ -34,6 +34,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const [whatsAppMessage, setWhatsAppMessage] = useState('');
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [sentSuccess, setSentSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
     const [settings, setSettings] = useState<Settings>({
@@ -134,7 +136,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
     useEffect(() => {
         if(clientName && finalTotal > 0) {
-            const message = `Hola ${clientName}, te envío la cotización ${currentQuotationNumber} de ${settings.companyName}.\n\nEl total es de ${settings.currencySymbol} ${finalTotal.toFixed(2)}.\n\nQuedo a tu disposición para cualquier consulta. ¡Saludos!`;
+            const message = `Hola ${clientName}, te comparto la cotización ${currentQuotationNumber} de ${settings.companyName} por un total de ${settings.currencySymbol} ${finalTotal.toFixed(2)}. Adjunto el PDF con el detalle. Quedo a tu disposición para cualquier consulta. ¡Saludos!`;
             setWhatsAppMessage(message);
         } else {
             setWhatsAppMessage('');
@@ -161,13 +163,16 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         setIsLoading(true);
         setError(null);
         try {
-            const extractedItems = await extractItemsFromFile(file);
+            const { items: extractedItems, clientName: extractedClientName } = await extractItemsFromFile(file);
             if (extractedItems.length === 0) {
                 setError("No se encontraron productos en el archivo. Por favor, intenta con un documento más claro o crea la cotización manualmente.");
                 setIsLoading(false);
                 return;
             }
             setItems(extractedItems);
+            if (extractedClientName) {
+                setClientName(extractedClientName);
+            }
             setMarginType(settings.defaultMarginType);
             setMarginValue(settings.defaultMarginValue);
             setStep(2);
@@ -239,24 +244,96 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         });
     };
 
-    const handleSendWhatsApp = () => {
-        if (!clientPhone || !whatsAppMessage) {
-            alert("Por favor, ingresa el número de teléfono del cliente y un mensaje.");
-            return;
+    const handleSendToWebhook = async () => {
+        if (!clientPhone || isSending || sentSuccess) return;
+
+        setIsSending(true);
+
+        try {
+            const previewElement = pdfContainerRef.current;
+            if (!previewElement) throw new Error("Preview element not found");
+
+            const canvas = await html2canvas(previewElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+            
+            const pdfBase64 = pdf.output('datauristring').split(',')[1];
+            
+            finalizeAndIncrementQuoteNumber();
+
+            const baseSubtotalCalc = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+            const totalWithMarginCalc = marginType === MarginType.FIXED ? baseSubtotalCalc + marginValue : baseSubtotalCalc * (1 + marginValue / 100);
+            
+            let subtotalForTax, igvAmount;
+            if (taxType === TaxType.INCLUDED) {
+                subtotalForTax = totalWithMarginCalc / (1 + taxRate / 100);
+                igvAmount = totalWithMarginCalc - subtotalForTax;
+            } else {
+                subtotalForTax = totalWithMarginCalc;
+                igvAmount = subtotalForTax * (taxRate / 100);
+            }
+
+            const payload = {
+                client: { name: clientName, phone: clientPhone.replace(/\D/g, '') },
+                company: {
+                    name: settings.companyName,
+                    document: `${settings.companyDocumentType || ''} ${settings.companyDocumentNumber || ''}`.trim(),
+                },
+                quote: {
+                    number: currentQuotationNumber,
+                    items: items,
+                    subtotal: subtotalForTax,
+                    tax: igvAmount,
+                    total: finalTotal,
+                    currency: settings.currencySymbol,
+                    terms: finalPaymentTerms,
+                    methods: finalPaymentMethods,
+                    message: whatsAppMessage
+                },
+                pdfBase64: pdfBase64
+            };
+
+            console.log("--- SIMULANDO ENVÍO A N8N WEBHOOK ---");
+            console.log("URL: https://n8n.example.com/webhook/send-quote");
+            console.log("Payload:", payload);
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setIsSending(false);
+            setSentSuccess(true);
+            setTimeout(() => setSentSuccess(false), 3000);
+
+        } catch (err) {
+            console.error("Error sending to webhook:", err);
+            alert("Hubo un problema al preparar los datos para el envío. Por favor, intente de nuevo.");
+            setIsSending(false);
         }
-        finalizeAndIncrementQuoteNumber(); // Increment number on send as well
-        const phoneNumber = clientPhone.replace(/\D/g, '');
-        const encodedMessage = encodeURIComponent(whatsAppMessage);
-        const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-        window.open(url, '_blank');
     };
     
     const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-textPrimary dark:text-dark-textPrimary";
     const textareaClasses = `${inputClasses} min-h-[100px] resize-y`;
 
+    const sendButtonEnabled = items.length > 0 && clientName && clientPhone && !isSending && !sentSuccess;
+    let buttonContent;
+    if (sentSuccess) {
+        buttonContent = '¡Enviado con Éxito!';
+    } else if (isSending) {
+        buttonContent = (
+            <>
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                Enviando...
+            </>
+        );
+    } else {
+        buttonContent = 'Enviar';
+    }
+
+
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full">
-            {isLoading && <Spinner message="Analizando documento con IA..." />}
+            {isLoading && <Spinner message="Procesando documento en nuestro servidor..." />}
             
             {step === 1 && (
                 <div className="max-w-xl mx-auto">
@@ -398,7 +475,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                              <div className="space-y-4">
                                 <div className="bg-green-500/10 p-4 rounded-lg space-y-3">
                                     <label htmlFor="whatsapp-message" className="text-sm font-semibold text-green-800 dark:text-green-300 flex items-center gap-2">
-                                        <MessageSquare size={16}/> Asistente de Envío por WhatsApp
+                                        <MessageSquare size={16}/> Asistente de Envío (vía n8n)
                                     </label>
                                     <textarea 
                                         id="whatsapp-message"
@@ -408,11 +485,15 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                         placeholder="Mensaje para el cliente..."
                                     />
                                     <button
-                                        onClick={handleSendWhatsApp}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                        disabled={items.length === 0 || !clientName || !clientPhone}
+                                        onClick={handleSendToWebhook}
+                                        className={`w-full flex items-center justify-center gap-3 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-colors duration-300 ${
+                                            sentSuccess 
+                                            ? 'bg-accent-teal' 
+                                            : 'bg-green-500 hover:bg-green-600'
+                                        } disabled:opacity-60 disabled:cursor-not-allowed`}
+                                        disabled={!sendButtonEnabled}
                                     >
-                                        Enviar
+                                        {buttonContent}
                                     </button>
                                 </div>
                                 

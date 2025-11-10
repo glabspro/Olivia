@@ -5,6 +5,11 @@ export interface QuotationItem {
   unitPrice: number;
 }
 
+export interface ExtractedData {
+  items: QuotationItem[];
+  clientName?: string;
+}
+
 export enum MarginType {
   PERCENTAGE = 'percentage',
   FIXED = 'fixed',

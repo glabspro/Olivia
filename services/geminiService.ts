@@ -1,73 +1,84 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
 import { QuotationItem } from '../types';
 
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
-    reader.onerror = (error) => reject(error);
+// Define la estructura de los datos que se esperan del flujo de n8n
+interface N8nResponseData {
+  cliente?: string;
+  productos?: any[];
+  // ...otros campos que pueda devolver tu flujo
+}
+
+interface N8nWebhookResponse {
+  success: boolean;
+  data?: N8nResponseData;
+  error?: string;
+  // ...otros metadatos que pueda devolver tu flujo
+}
+
+export interface ExtractedData {
+  items: QuotationItem[];
+  clientName?: string;
+}
+
+
+// -----------------------------------------------------------------------------
+// ¡IMPORTANTE! Reemplaza la siguiente URL con la URL de tu webhook de n8n.
+// La obtienes del nodo "Webhook" en el flujo que te proporcioné.
+// -----------------------------------------------------------------------------
+const N8N_WEBHOOK_URL = 'https://webhook.red51.site/webhook/process-quote-ai';
+
+
+export const extractItemsFromFile = async (file: File): Promise<ExtractedData> => {
+  // FIX: This check for a placeholder URL was causing a TypeScript error because the URL is already configured,
+  // making the comparison always false. The check has been removed.
+  
+  console.log(`Iniciando subida al webhook de n8n: ${N8N_WEBHOOK_URL}`);
+  console.log(`Detalles del archivo a enviar:`, {
+    name: file.name,
+    size: file.size,
+    type: file.type,
   });
-};
-
-export const extractItemsFromFile = async (file: File): Promise<QuotationItem[]> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-  }
-
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const base64Data = await fileToBase64(file);
-
-  const imagePart = {
-    inlineData: {
-      mimeType: file.type,
-      data: base64Data,
-    },
-  };
-
-  const textPart = {
-    text: `Eres un asistente experto en extracción de datos. Analiza el documento adjunto. Extrae todos los productos o servicios, identificando descripción, cantidad y precio unitario. Devuelve los datos como un arreglo JSON de objetos con las claves 'description' (string), 'quantity' (number), y 'unitPrice' (number). Los valores numéricos deben ser números, no texto. Si no encuentras un valor, usa 0. Si no encuentras ningún producto, devuelve un arreglo vacío [].`,
-  };
+  
+  const formData = new FormData();
+  // El nombre 'file' es crucial. n8n lo buscará con este nombre.
+  formData.append('file', file, file.name);
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: { parts: [textPart, imagePart] },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              description: { type: Type.STRING },
-              quantity: { type: Type.NUMBER },
-              unitPrice: { type: Type.NUMBER },
-            },
-            required: ["description", "quantity", "unitPrice"],
-          },
-        },
-      },
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      body: formData,
     });
 
-    const jsonString = response.text.trim();
-    const extractedData = JSON.parse(jsonString);
-
-    // Validate and add a unique ID to each item
-    if (Array.isArray(extractedData)) {
-      return extractedData.map((item, index) => ({
-        ...item,
-        id: `item-${Date.now()}-${index}`,
-        quantity: typeof item.quantity === 'number' ? item.quantity : 1,
-        unitPrice: typeof item.unitPrice === 'number' ? item.unitPrice : 0,
-        description: typeof item.description === 'string' ? item.description : 'Sin descripción'
-      }));
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("La respuesta del webhook de n8n no fue exitosa:", response.status, errorBody);
+      throw new Error(`Error del servicio de procesamiento: ${response.statusText}`);
     }
-    return [];
+
+    const result: N8nWebhookResponse = await response.json();
+    console.log("Datos recibidos desde n8n:", result);
+
+    if (result.success && result.data) {
+      const items = (result.data.productos || []).map((item: any, index: number) => ({
+        id: `item-${Date.now()}-${index}`,
+        description: typeof item.descripcion === 'string' ? item.descripcion : 'Sin descripción',
+        quantity: typeof item.cantidad === 'number' ? item.cantidad : 1,
+        unitPrice: typeof item.precio_unitario === 'number' ? item.precio_unitario : 0,
+      }));
+
+      return {
+        items,
+        clientName: result.data.cliente || '',
+      };
+    } else {
+      console.warn("La extracción de n8n no fue exitosa o los datos no tienen el formato esperado.", result);
+      throw new Error(result.error || "La IA no pudo procesar la información del documento.");
+    }
 
   } catch (error) {
-    console.error("Error extracting data with Gemini:", error);
-    throw new Error("No se pudieron extraer los datos del archivo. Intenta con un documento más claro.");
+    console.error("Error al llamar al webhook de n8n:", error);
+    if (error instanceof Error) {
+        throw new Error(error.message);
+    }
+    throw new Error("No se pudieron extraer los datos. El servicio de procesamiento no está disponible o no respondió correctamente.");
   }
 };
