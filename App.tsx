@@ -5,8 +5,9 @@ import Layout from './components/Dashboard';
 import NewQuotePage from './pages/NewQuotePage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
+import CompleteProfilePage from './pages/CompleteProfilePage';
 import { supabase, getProfile } from './services/supabaseClient';
-import { Session } from '@supabase/supabase-js';
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
 
 const ConfigurationError = () => (
@@ -28,20 +29,51 @@ const ConfigurationError = () => (
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
   const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'settings'>('new_quote');
 
+  const fetchAndSetProfile = async (supabaseUser: SupabaseUser) => {
+    const profileData = await getProfile(supabaseUser);
+    setProfile(profileData);
+    return profileData;
+  };
+
   useEffect(() => {
-    // Check for existing theme preference
     const savedTheme = localStorage.getItem('olivia_theme') as Theme;
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setTheme(savedTheme || (prefersDark ? Theme.DARK : Theme.LIGHT));
+
+    if (!supabase) {
+        setLoading(false);
+        return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        if (session?.user) {
+            fetchAndSetProfile(session.user).finally(() => setLoading(false));
+        } else {
+            setLoading(false);
+        }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        setLoading(true);
+        await fetchAndSetProfile(session.user);
+        setLoading(false);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   useEffect(() => {
-    // Apply theme to the document
     if (theme === Theme.DARK) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('olivia_theme', Theme.DARK);
@@ -51,96 +83,29 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
-  useEffect(() => {
-    // Return early if supabase is not configured
-    if (!supabase) {
-        setLoading(false);
-        return;
-    }
-
-    // Supabase auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setLoading(true);
-      setSession(session);
-      if (session?.user) {
-        const profile = await getProfile(session.user.id);
-        setUser(profile);
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-            setSession(session);
-        }
-        setLoading(false);
-    });
-
-    return () => {
-        subscription?.unsubscribe();
-    };
-  }, []);
-
-
   const toggleTheme = () => {
     setTheme(prevTheme => prevTheme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT);
   };
-  
-  const handleAdminLogin = () => {
-    console.log("Admin login bypass activated.");
-    const adminUser: User = {
-      id: 'admin-user-local',
-      fullName: 'Administrador del Sistema',
-      companyName: 'Olivia SaaS HQ',
-      phone: '51944894541',
-      is_admin: true,
-    };
-    setUser(adminUser);
-    // Create a mock session object to satisfy the condition for rendering the layout
-    setSession({
-        access_token: 'admin-local-token',
-        token_type: 'bearer',
-        user: {
-            id: 'admin-user-local',
-            app_metadata: {},
-            user_metadata: {},
-            aud: 'authenticated',
-            created_at: new Date().toISOString(),
-        },
-    } as any);
-    setLoading(false);
-  };
 
   const handleLogout = async () => {
-    // Handle local admin logout
-    if (user?.is_admin && user.id === 'admin-user-local') {
-        setUser(null);
-        setSession(null);
-        setActivePage('new_quote');
-        return;
-    }
-    // Handle Supabase user logout
     if (!supabase) return;
     await supabase.auth.signOut();
-    setUser(null);
+    setProfile(null);
     setSession(null);
     setActivePage('new_quote');
   };
 
   const renderActivePage = () => {
-    if (!user) return null; // Should not happen if layout is rendered
+    if (!profile) return null;
     switch (activePage) {
       case 'new_quote':
-        return <NewQuotePage user={user} />;
+        return <NewQuotePage user={profile} />;
       case 'settings':
-        return <SettingsPage user={user} />;
+        return <SettingsPage user={profile} />;
       case 'history':
         return <HistoryPage />;
       default:
-        return <NewQuotePage user={user} />;
+        return <NewQuotePage user={profile} />;
     }
   };
 
@@ -152,11 +117,23 @@ const App: React.FC = () => {
     return <ConfigurationError />;
   }
 
-  return (
-    <div className="min-h-screen bg-background dark:bg-dark-background text-textPrimary dark:text-dark-textPrimary font-sans">
-      {session && user ? (
+  // Main render logic
+  if (session && profile) {
+      // If profile exists but is incomplete (new user), force profile completion
+      if (!profile.companyName || !profile.fullName) {
+          return <CompleteProfilePage 
+              user={session.user} 
+              onProfileUpdated={async () => {
+                  setLoading(true);
+                  await fetchAndSetProfile(session.user);
+                  setLoading(false);
+              }}
+          />
+      }
+      // Otherwise, show the main dashboard
+      return (
         <Layout 
-          user={user} 
+          user={profile} 
           onLogout={handleLogout} 
           theme={theme} 
           toggleTheme={toggleTheme}
@@ -165,11 +142,11 @@ const App: React.FC = () => {
         >
           {renderActivePage()}
         </Layout>
-      ) : (
-        <Auth onAdminLogin={handleAdminLogin} />
-      )}
-    </div>
-  );
+      );
+  }
+
+  // If no session, show Auth page
+  return <Auth />;
 };
 
 export default App;

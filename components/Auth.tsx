@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, FileText, Send, KeyRound, Phone } from 'lucide-react';
+import { Sparkles, FileText, Send, Mail } from 'lucide-react';
 import Logo from './Logo';
 import { supabase } from '../services/supabaseClient';
 import Spinner from './Spinner';
-
-// ¡IMPORTANTE! Este es el "número mágico" para el bypass de administrador.
-// Si el usuario ingresa este número, se saltará el flujo de Supabase.
-const ADMIN_PHONE_NUMBER = '51944894541';
 
 const AppVisual = () => (
     <div className="w-full h-full bg-white rounded-2xl shadow-lg border border-border flex items-center justify-center p-8 relative overflow-hidden">
@@ -62,142 +58,37 @@ const FeatureList = () => (
   </ul>
 );
 
-interface AuthProps {
-  onAdminLogin: () => void;
-}
-
-const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
-
-  const [fullName, setFullName] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [countryCode, setCountryCode] = useState('51');
-  
+const Auth: React.FC = () => {
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const southAmericanCountries = [
-    { code: '51', name: 'Peru', flag: '🇵🇪', placeholder: '944 894 541' },
-    { code: '54', name: 'Argentina', flag: '🇦🇷', placeholder: '9 11 2345-6789' },
-    { code: '55', name: 'Brazil', flag: '🇧🇷', placeholder: '(21) 99999-9999' },
-    { code: '56', name: 'Chile', flag: '🇨🇱', placeholder: '9 8765 4321' },
-    { code: '57', name: 'Colombia', flag: '🇨🇴', placeholder: '300 1234567' },
-  ];
-  
-  const selectedCountry = southAmericanCountries.find(c => c.code === countryCode);
-
-  const handleRequestOtp = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setMessage('');
-    if (!phone) {
-      setError('El número de teléfono es obligatorio.');
-      return;
-    }
-    
-    // Aseguramos el formato E.164 con el '+'
-    const fullPhoneWithPlus = `+${countryCode}${phone.replace(/\s/g, '')}`;
-    const fullPhone = `${countryCode}${phone.replace(/\s/g, '')}`;
-
-    if (fullPhone === ADMIN_PHONE_NUMBER) {
-      console.log("Acceso de administrador detectado. Saltando Supabase.");
-      onAdminLogin();
-      return;
-    }
-
     setLoading(true);
+
     try {
       if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
-      
-      const { error } = await supabase.functions.invoke('request-whatsapp-otp', {
-        body: { phone: fullPhoneWithPlus },
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin, // Redirects back to your app
+        },
       });
 
       if (error) throw error;
+      setMessage('¡Listo! Revisa tu correo electrónico para encontrar el enlace de acceso.');
 
-      setMessage(`Te hemos enviado un código de acceso a ${fullPhoneWithPlus}.`);
-      setStep('otp');
     } catch (err: any) {
-      console.error("--- ERROR AL INVOCAR 'request-whatsapp-otp' ---");
-      console.error("Este es el objeto de error completo:", err);
-      console.error("-------------------------------------------");
-      
-      let userFriendlyError = 'No se pudo enviar el código. Intenta de nuevo más tarde.';
-      if (err.message.includes("Function not found")) {
-        userFriendlyError = 'Error: La función "request-whatsapp-otp" no se encontró. Asegúrate de que esté desplegada correctamente en Supabase.';
-      } else if (err.context?.json?.error) {
-        userFriendlyError = err.context.json.error;
-      } else if (err.message) {
-          userFriendlyError = `Ocurrió un problema: ${err.message}. Revisa la consola del navegador para más detalles técnicos.`;
-      }
-      setError(userFriendlyError);
+      console.error("Error en el inicio de sesión:", err);
+      setError(err.error_description || err.message || 'No se pudo enviar el enlace. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setMessage('');
-    if (!otp) {
-      setError('Por favor, ingresa el código.');
-      return;
-    }
-    setLoading(true);
-    
-    const fullPhoneWithPlus = `+${countryCode}${phone.replace(/\s/g, '')}`;
-    try {
-      if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
-
-      const { data, error: functionError } = await supabase.functions.invoke('verify-whatsapp-otp', {
-        body: {
-          phone: fullPhoneWithPlus,
-          code: otp,
-          fullName: isRegisterMode ? fullName : undefined,
-          companyName: isRegisterMode ? companyName : undefined,
-        },
-      });
-      
-      if (functionError) throw functionError;
-      if (data.error) throw new Error(data.error);
-
-      if (data.session && data.session.access_token) {
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token || '', // Nuestra función no provee un refresh token, pero la librería lo espera
-        });
-        if (sessionError) throw sessionError;
-      } else {
-        throw new Error('No se pudo establecer la sesión. La respuesta del servidor es inválida.');
-      }
-      
-    } catch (err: any) {
-      console.error("--- ERROR AL INVOCAR 'verify-whatsapp-otp' ---");
-      console.error("Este es el objeto de error completo:", err);
-      console.error("-------------------------------------------");
-
-      let userFriendlyError = 'No se pudo verificar el código. Intenta de nuevo.';
-      if (err.message.includes("Function not found")) {
-        userFriendlyError = 'Error: La función "verify-whatsapp-otp" no se encontró. Asegúrate de que esté desplegada correctamente en Supabase.';
-      } else if (err.context?.json?.error) {
-        userFriendlyError = err.context.json.error;
-      } else if (err.message) {
-          userFriendlyError = `Ocurrió un problema: ${err.message}. Revisa la consola del navegador para más detalles técnicos.`;
-      }
-      setError(userFriendlyError);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPhone = e.target.value.replace(/\D/g, '');
-    setPhone(newPhone);
   };
   
   const inputBaseClasses = "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
@@ -211,75 +102,32 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden"><Logo /></div>
           
-          {step === 'phone' ? (
-            <>
-              <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
-                {isRegisterMode ? 'Crea tu cuenta gratis' : 'Bienvenido de vuelta'}
-              </h1>
-              <p className="text-textSecondary dark:text-dark-textSecondary mb-8">
-                Ingresa tu número de WhatsApp para {isRegisterMode ? 'empezar' : 'continuar'}.
-              </p>
-              
-              <form className="space-y-6" onSubmit={handleRequestOtp}>
-                  {isRegisterMode && (
-                    <>
-                    <div>
-                      <label htmlFor="fullName" className={labelClasses}>Nombre completo</label>
-                      <input id="fullName" type="text" placeholder="Ej: Juan Pérez" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputBaseClasses} required />
-                    </div>
-                    <div>
-                      <label htmlFor="companyName" className={labelClasses}>Nombre de tu empresa</label>
-                      <input id="companyName" type="text" placeholder="Ej: Soluciones Tech" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={inputBaseClasses} required />
-                    </div>
-                    </>
-                  )}
-                  <div>
-                      <label htmlFor="phone" className={labelClasses}>Tu número de WhatsApp</label>
-                      <div className="relative flex items-center">
-                          <div className="absolute inset-y-0 left-0 flex items-center">
-                              <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="bg-transparent h-full pl-3 pr-8 text-base focus:outline-none appearance-none cursor-pointer text-textSecondary dark:text-dark-textSecondary">
-                                {southAmericanCountries.map(c => <option key={c.code} value={c.code} className="bg-surface dark:bg-dark-surface">{c.flag} +{c.code}</option>)}
-                              </select>
-                          </div>
-                          <input id="phone" type="tel" placeholder={selectedCountry?.placeholder || "Tu número"} value={phone} onChange={handlePhoneChange} className={`${inputBaseClasses} pl-28 ${error ? 'border-red-500 focus:ring-red-500' : ''}`} required />
-                      </div>
-                  </div>
-                  <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
-                    <div className="flex items-center justify-center gap-2">
-                        <Send size={18}/> Enviar código de acceso
-                    </div>
-                  </button>
-              </form>
-              <div className="mt-6 text-center text-sm">
-                <button onClick={() => setIsRegisterMode(!isRegisterMode)} className="w-full py-3 font-semibold text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/10 rounded-lg hover:bg-primary/20 dark:hover:bg-dark-primary/20 transition-colors">
-                  {isRegisterMode ? "¿Ya tienes una cuenta? Ingresa aquí" : "¿No tienes una cuenta? Regístrate"}
-                </button>
+          <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
+            Accede a tu cuenta
+          </h1>
+          <p className="text-textSecondary dark:text-dark-textSecondary mb-8">
+            Ingresa tu correo para recibir un enlace de acceso mágico. Sin contraseñas.
+          </p>
+          
+          <form className="space-y-6" onSubmit={handleLogin}>
+            <div>
+              <label htmlFor="email" className={labelClasses}>Tu correo electrónico</label>
+              <input 
+                id="email" 
+                type="email" 
+                placeholder="ej: tu@empresa.com" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className={inputBaseClasses} 
+                required 
+              />
+            </div>
+            <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
+              <div className="flex items-center justify-center gap-2">
+                  <Mail size={18}/> Enviar enlace de acceso
               </div>
-            </>
-          ) : ( // step === 'otp'
-            <>
-              <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">Verifica tu número</h1>
-              <p className="text-textSecondary dark:text-dark-textSecondary mb-8">
-                Ingresa el código que te enviamos a <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">+{countryCode}{phone}</span>.
-              </p>
-              <form className="space-y-6" onSubmit={handleVerifyOtp}>
-                <div>
-                  <label htmlFor="otp" className={labelClasses}>Código de 6 dígitos</label>
-                  <input id="otp" type="text" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').substring(0,6))} className={`${inputBaseClasses} text-center tracking-[0.5em] text-xl font-bold`} maxLength={6} required />
-                </div>
-                <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
-                    <div className="flex items-center justify-center gap-2">
-                        <KeyRound size={18}/> Verificar e Ingresar
-                    </div>
-                </button>
-              </form>
-               <div className="mt-6 text-center text-sm">
-                <button onClick={() => setStep('phone')} className="font-semibold text-primary dark:text-dark-primary hover:underline">
-                  ¿Número incorrecto? Volver
-                </button>
-              </div>
-            </>
-          )}
+            </button>
+          </form>
 
           {error && <p className="mt-4 text-center text-sm text-red-600 bg-red-500/10 p-3 rounded-lg">{error}</p>}
           {message && <p className="mt-4 text-center text-sm text-green-600 bg-green-500/10 p-3 rounded-lg">{message}</p>}

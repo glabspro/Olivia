@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from '../types';
 
 // -----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ const createSupabaseClient = (): SupabaseClient | null => {
 
 export const supabase = createSupabaseClient();
 
-export const getProfile = async (userId: string): Promise<User | null> => {
+export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
     if (!supabase) {
         console.error("El cliente de Supabase no está inicializado. No se puede obtener el perfil.");
         return null;
@@ -41,9 +41,22 @@ export const getProfile = async (userId: string): Promise<User | null> => {
     const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, company_name, phone, is_admin')
-        .eq('id', userId)
+        .eq('id', supabaseUser.id)
         .single();
 
+    // If there's an error and the user just signed up, a profile might not exist yet.
+    // We can return a partial profile based on the auth user data.
+    if (error && error.code === 'PGRST116') { // "PGRST116": "Searched for a single row, but found 0 rows"
+      console.warn("Profile not found for new user, returning partial profile.");
+      return {
+        id: supabaseUser.id,
+        fullName: '', // Will be filled in by CompleteProfilePage
+        companyName: '', // Will be filled in by CompleteProfilePage
+        phone: supabaseUser.phone || '',
+        email: supabaseUser.email,
+      };
+    }
+    
     if (error) {
         console.error("Error fetching profile:", error);
         return null;
@@ -53,7 +66,8 @@ export const getProfile = async (userId: string): Promise<User | null> => {
         id: data.id,
         fullName: data.full_name,
         companyName: data.company_name,
-        phone: data.phone,
+        phone: data.phone || supabaseUser.phone || '',
         is_admin: data.is_admin,
+        email: supabaseUser.email,
     };
 };
