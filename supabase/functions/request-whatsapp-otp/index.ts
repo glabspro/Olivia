@@ -1,7 +1,7 @@
 // /supabase/functions/request-whatsapp-otp/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { crypto } from "https://deno.land/std@0.159.0/crypto/mod.ts";
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4'
+import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 
 declare const Deno: any;
 

@@ -1,8 +1,8 @@
 // /supabase/functions/verify-whatsapp-otp/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { crypto } from "https://deno.land/std@0.159.0/crypto/mod.ts";
-import { sign } from 'https://deno.land/x/djwt@v2.2/mod.ts'
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4'
+import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
+import { create, getNumericDate } from 'https://deno.land/x/djwt@v3.0.2/mod.ts'
 
 declare const Deno: any;
 
@@ -20,7 +20,6 @@ async function hashText(text: string): Promise<string> {
 }
 
 serve(async (req) => {
-  // Manejo de la petición pre-vuelo (preflight) de CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -31,13 +30,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'El teléfono y el código son requeridos' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !serviceRoleKey) {
+        console.error("Secrets de Supabase no encontrados. Asegúrate de configurar SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY.");
+        return new Response(JSON.stringify({ error: 'Configuración del servidor incompleta.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
     
+    console.log(`[verify-otp] Iniciando verificación para el teléfono: ${phone}`);
     const { data: otpData, error: otpError } = await supabase
       .from('otp_codes').select('code_hash, expires_at').eq('phone', phone)
       .order('created_at', { ascending: false }).limit(1).single();
 
     if (otpError || !otpData) {
+      console.warn(`[verify-otp] No se encontró OTP o hubo un error para ${phone}:`, otpError);
       return new Response(JSON.stringify({ error: 'Código incorrecto o no solicitado.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
@@ -49,35 +56,47 @@ serve(async (req) => {
     if (receivedCodeHash !== otpData.code_hash) {
       return new Response(JSON.stringify({ error: 'Código incorrecto.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    console.log(`[verify-otp] Código verificado con éxito para ${phone}. Buscando/creando usuario.`);
 
-    const { data: { user }, error: getUserError } = await supabase.auth.admin.getUserByPhone(phone.substring(1));
+    const phoneWithoutPlus = phone.substring(1);
+    const { data: { user }, error: getUserError } = await supabase.auth.admin.getUserByPhone(phoneWithoutPlus);
     
     let targetUser = user;
 
     if (getUserError || !targetUser) {
-      // FIX: The createUser function requires the phone number WITHOUT the leading '+'.
-      // The `phone` variable from the request body is in E.164 format (e.g., "+51...").
-      const phoneForCreate = phone.substring(1);
-      
-      const { data: newUserData, error: createUserError } = await supabase.auth.admin.createUser({ phone: phoneForCreate, phone_confirm: true });
+      console.log(`[verify-otp] Usuario no encontrado para ${phone}, creando uno nuevo.`);
+      const { data: newUserData, error: createUserError } = await supabase.auth.admin.createUser({ phone: phoneWithoutPlus, phone_confirm: true });
       if (createUserError) {
-          console.error("SUPABASE CREATE USER ERROR:", createUserError);
+          console.error("[verify-otp] SUPABASE CREATE USER ERROR:", createUserError);
           return new Response(JSON.stringify({ error: `No se pudo crear el usuario. Razón: ${createUserError.message}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       targetUser = newUserData.user;
       await supabase.from('profiles').update({ full_name: fullName, company_name: companyName }).eq('id', targetUser.id);
+      console.log(`[verify-otp] Nuevo usuario creado con ID: ${targetUser.id}`);
     }
     
     const jwtSecret = Deno.env.get('SUPABASE_JWT_SECRET');
-    if (!jwtSecret) throw new Error("SUPABASE_JWT_SECRET no está configurado en los secretos de la función.");
+    if (!jwtSecret) {
+        console.error("SUPABASE_JWT_SECRET no está configurado en los secretos de la función.");
+        throw new Error("Configuración de autenticación incompleta.");
+    }
+    
+    const key = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(jwtSecret),
+        { name: "HMAC", hash: "SHA-256" },
+        true,
+        ["sign", "verify"],
+    );
 
-    const customToken = await sign({ 
+    const customToken = await create({ alg: "HS256", typ: "JWT" }, { 
         sub: targetUser.id,
         phone: targetUser.phone, 
         aud: 'authenticated', 
         role: 'authenticated',
-        exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7)
-    }, jwtSecret, 'HS256');
+        exp: getNumericDate(60 * 60 * 24 * 7) // 7 días de validez
+    }, key);
+    console.log(`[verify-otp] JWT generado para el usuario ${targetUser.id}.`);
 
     await supabase.from('otp_codes').delete().eq('phone', phone);
     
@@ -87,7 +106,7 @@ serve(async (req) => {
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (e) {
-    console.error("FATAL ERROR in verify-whatsapp-otp:", e);
+    console.error("[verify-otp] FATAL ERROR:", e);
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
