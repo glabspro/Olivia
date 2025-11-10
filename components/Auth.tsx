@@ -98,7 +98,9 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       setError('El número de teléfono es obligatorio.');
       return;
     }
-
+    
+    // Aseguramos el formato E.164 con el '+'
+    const fullPhoneWithPlus = `+${countryCode}${phone.replace(/\s/g, '')}`;
     const fullPhone = `${countryCode}${phone.replace(/\s/g, '')}`;
 
     if (fullPhone === ADMIN_PHONE_NUMBER) {
@@ -112,16 +114,17 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
       
       const { error } = await supabase.functions.invoke('request-whatsapp-otp', {
-        body: { phone: fullPhone },
+        body: { phone: fullPhoneWithPlus },
       });
 
       if (error) throw error;
 
-      setMessage(`Te hemos enviado un código de acceso a +${fullPhone}.`);
+      setMessage(`Te hemos enviado un código de acceso a ${fullPhoneWithPlus}.`);
       setStep('otp');
     } catch (err: any) {
       console.error("Error invoking request-whatsapp-otp:", err);
-      setError(err.message || 'No se pudo enviar el código. Revisa la consola de la función.');
+      const functionError = err.context?.json?.error || err.message;
+      setError(functionError || 'No se pudo enviar el código. Revisa los logs de la función en Supabase.');
     } finally {
       setLoading(false);
     }
@@ -136,14 +139,14 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       return;
     }
     setLoading(true);
-
-    const fullPhone = `${countryCode}${phone.replace(/\s/g, '')}`;
+    
+    const fullPhoneWithPlus = `+${countryCode}${phone.replace(/\s/g, '')}`;
     try {
       if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
 
       const { data, error: functionError } = await supabase.functions.invoke('verify-whatsapp-otp', {
         body: {
-          phone: fullPhone,
+          phone: fullPhoneWithPlus,
           code: otp,
           fullName: isRegisterMode ? fullName : undefined,
           companyName: isRegisterMode ? companyName : undefined,
@@ -153,10 +156,10 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       if (functionError) throw functionError;
       if (data.error) throw new Error(data.error);
 
-      if (data.session) {
+      if (data.session && data.session.access_token) {
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
+          refresh_token: data.session.refresh_token || '', // Nuestra función no provee un refresh token, pero la librería lo espera
         });
         if (sessionError) throw sessionError;
       } else {
@@ -164,8 +167,11 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       }
       
     } catch (err: any) {
-      console.error("Error invoking verify-whatsapp-otp:", err);
-      setError(err.message || 'El código es incorrecto o ha expirado.');
+      console.error("Error al verificar el código:", err);
+      // Las Edge Functions devuelven el error específico en el cuerpo de la respuesta.
+      // El cliente de Supabase lo anida en el objeto de error.
+      const functionError = err.context?.json?.error || err.message;
+      setError(functionError || 'El código es incorrecto o ha expirado. Revisa los logs de la función en Supabase.');
     } finally {
       setLoading(false);
     }
