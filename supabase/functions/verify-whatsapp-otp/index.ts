@@ -55,7 +55,11 @@ serve(async (req) => {
     let targetUser = user;
 
     if (getUserError || !targetUser) {
-      const { data: newUserData, error: createUserError } = await supabase.auth.admin.createUser({ phone, phone_confirm: true });
+      // FIX: The createUser function requires the phone number WITHOUT the leading '+'.
+      // The `phone` variable from the request body is in E.164 format (e.g., "+51...").
+      const phoneForCreate = phone.substring(1);
+      
+      const { data: newUserData, error: createUserError } = await supabase.auth.admin.createUser({ phone: phoneForCreate, phone_confirm: true });
       if (createUserError) {
           console.error("SUPABASE CREATE USER ERROR:", createUserError);
           return new Response(JSON.stringify({ error: `No se pudo crear el usuario. Razón: ${createUserError.message}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
