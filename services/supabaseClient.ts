@@ -40,7 +40,7 @@ export const getProfile = async (userId: string): Promise<User | null> => {
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, company_name, phone')
+        .select('id, full_name, company_name, phone, is_admin')
         .eq('id', userId)
         .single();
 
@@ -54,5 +54,6 @@ export const getProfile = async (userId: string): Promise<User | null> => {
         fullName: data.full_name,
         companyName: data.company_name,
         phone: data.phone,
+        is_admin: data.is_admin,
     };
 };

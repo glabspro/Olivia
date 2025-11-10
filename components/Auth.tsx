@@ -95,13 +95,12 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
     setError('');
     setMessage('');
     if (!phone) {
-        setError('El número de teléfono es obligatorio.');
-        return;
+      setError('El número de teléfono es obligatorio.');
+      return;
     }
 
     const fullPhone = `${countryCode}${phone.replace(/\s/g, '')}`;
 
-    // Admin Bypass Check
     if (fullPhone === ADMIN_PHONE_NUMBER) {
       console.log("Acceso de administrador detectado. Saltando Supabase.");
       onAdminLogin();
@@ -110,16 +109,21 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
 
     setLoading(true);
     try {
-        const { error } = await supabase.auth.signInWithOtp({ phone: fullPhone });
-        if (error) throw error;
-        
-        setMessage(`Te hemos enviado un código de acceso a ${fullPhone}.`);
-        setStep('otp');
+      if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
+      
+      const { error } = await supabase.functions.invoke('request-whatsapp-otp', {
+        body: { phone: fullPhone },
+      });
+
+      if (error) throw error;
+
+      setMessage(`Te hemos enviado un código de acceso a +${fullPhone}.`);
+      setStep('otp');
     } catch (err: any) {
-        console.error("Error requesting OTP:", err);
-        setError(err.message || 'No se pudo enviar el código. Inténtalo de nuevo.');
+      console.error("Error invoking request-whatsapp-otp:", err);
+      setError(err.message || 'No se pudo enviar el código. Revisa la consola de la función.');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -128,33 +132,42 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
     setError('');
     setMessage('');
     if (!otp) {
-        setError('Por favor, ingresa el código.');
-        return;
+      setError('Por favor, ingresa el código.');
+      return;
     }
     setLoading(true);
 
     const fullPhone = `${countryCode}${phone.replace(/\s/g, '')}`;
     try {
-        const { data, error } = await supabase.auth.verifyOtp({ phone: fullPhone, token: otp, type: 'sms' });
+      if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
 
-        if (error) throw error;
-        
-        // If it's a new user (first login), update their profile with company/full name
-        if (data.session && isRegisterMode) {
-             const { error: profileError } = await supabase
-                .from('profiles')
-                .update({ company_name: companyName, full_name: fullName })
-                .eq('id', data.user.id);
-            if (profileError) {
-                console.warn("Could not update profile for new user:", profileError);
-            }
-        }
-        // onAuthStateChange in App.tsx will handle the login
+      const { data, error: functionError } = await supabase.functions.invoke('verify-whatsapp-otp', {
+        body: {
+          phone: fullPhone,
+          code: otp,
+          fullName: isRegisterMode ? fullName : undefined,
+          companyName: isRegisterMode ? companyName : undefined,
+        },
+      });
+      
+      if (functionError) throw functionError;
+      if (data.error) throw new Error(data.error);
+
+      if (data.session) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        if (sessionError) throw sessionError;
+      } else {
+        throw new Error('No se pudo establecer la sesión. La respuesta del servidor es inválida.');
+      }
+      
     } catch (err: any) {
-        console.error("Error verifying OTP:", err);
-        setError(err.error_description || err.message || 'El código es incorrecto o ha expirado.');
+      console.error("Error invoking verify-whatsapp-otp:", err);
+      setError(err.message || 'El código es incorrecto o ha expirado.');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
   
