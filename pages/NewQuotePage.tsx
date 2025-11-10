@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { QuotationItem, MarginType, Template, Settings, User, PaymentOption, TaxType } from '../types';
-import FileUpload from '../components/FileUpload';
 import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent } from 'lucide-react';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -37,6 +36,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const [isSending, setIsSending] = useState(false);
     const [sentSuccess, setSentSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
     
     const [settings, setSettings] = useState<Settings>({
         companyName: user.companyName,
@@ -312,6 +312,29 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         }
     };
     
+    // --- Drag and Drop Handlers ---
+    const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault(); e.stopPropagation(); setIsDragging(true);
+    };
+    const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    };
+    const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault(); e.stopPropagation();
+    };
+    const handleDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFileUpload(e.dataTransfer.files[0]);
+        }
+    }, [handleFileUpload]);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleFileUpload(e.target.files[0]);
+        }
+    };
+
+
     const inputClasses = "w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-textPrimary dark:text-dark-textPrimary";
     const textareaClasses = `${inputClasses} min-h-[100px] resize-y`;
 
@@ -336,33 +359,48 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             {isLoading && <Spinner message="Procesando documento en nuestro servidor..." />}
             
             {step === 1 && (
-                <div className="max-w-xl mx-auto">
-                     <div className="text-center mb-8">
+                <div className="max-w-4xl mx-auto">
+                     <div className="text-center mb-10">
                         <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">Crea una Nueva Cotización</h2>
-                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Empieza subiendo un documento o creando uno desde cero.</p>
+                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Elige cómo quieres empezar. Importa un documento para que la IA haga el trabajo, o empieza desde cero.</p>
                      </div>
 
                     {error && (
-                        <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                        <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg relative mb-8" role="alert">
                             <strong className="font-bold">Error: </strong>
                             <span className="block sm:inline">{error}</span>
                         </div>
                     )}
                     
-                    <div className="space-y-6">
-                        <FileUpload onFileUpload={handleFileUpload} disabled={isLoading} />
-                        <div className="relative flex items-center">
-                            <div className="flex-grow border-t border-border dark:border-dark-border"></div>
-                            <span className="flex-shrink mx-4 text-sm text-textSecondary dark:text-dark-textSecondary">O</span>
-                            <div className="flex-grow border-t border-border dark:border-dark-border"></div>
-                        </div>
-                         <button
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Card 1: Import */}
+                        <label 
+                            htmlFor="file-upload"
+                            onDragEnter={handleDragEnter}
+                            onDragLeave={handleDragLeave}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            className={`flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1 ${isDragging ? 'border-primary dark:border-dark-primary shadow-lg scale-105' : 'border-dashed border-border dark:border-dark-border'}`}
+                        >
+                            <div className="p-4 bg-primary/10 rounded-full mb-4 transition-transform group-hover:scale-110">
+                                <FileUp size={32} className="text-primary" />
+                            </div>
+                            <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Importar desde Documento</h3>
+                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary mt-1">Ideal para digitalizar cotizaciones. La IA extraerá los productos por ti.</p>
+                            <input id="file-upload" type="file" className="sr-only" onChange={handleFileChange} disabled={isLoading} accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx"/>
+                        </label>
+                        
+                        {/* Card 2: Manual */}
+                        <button
                             onClick={handleManualCreation}
                             disabled={isLoading}
-                            className="w-full flex items-center justify-center gap-3 px-6 py-3 text-base font-semibold text-textPrimary dark:text-dark-textPrimary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
+                            className="flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 border-border dark:border-dark-border transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 disabled:opacity-50"
                         >
-                            <Edit size={18} className="text-accent-teal" />
-                            Crear Cotización Manualmente
+                            <div className="p-4 bg-accent-teal/10 rounded-full mb-4 transition-transform group-hover:scale-110">
+                                <Edit size={32} className="text-accent-teal" />
+                            </div>
+                            <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Crear desde Cero</h3>
+                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary mt-1">Perfecto para cuando tienes la lista de productos y quieres control total.</p>
                         </button>
                     </div>
                 </div>

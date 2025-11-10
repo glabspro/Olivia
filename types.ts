@@ -68,4 +68,5 @@ export interface User {
   companyName: string;
   phone: string;
   email?: string;
+  is_admin?: boolean;
 }
