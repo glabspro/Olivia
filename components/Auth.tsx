@@ -122,9 +122,19 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       setMessage(`Te hemos enviado un código de acceso a ${fullPhoneWithPlus}.`);
       setStep('otp');
     } catch (err: any) {
-      console.error("Error invoking request-whatsapp-otp:", err);
-      const functionError = err.context?.json?.error || err.message;
-      setError(functionError || 'No se pudo enviar el código. Revisa los logs de la función en Supabase.');
+      console.error("--- ERROR AL INVOCAR 'request-whatsapp-otp' ---");
+      console.error("Este es el objeto de error completo:", err);
+      console.error("-------------------------------------------");
+      
+      let userFriendlyError = 'No se pudo enviar el código. Intenta de nuevo más tarde.';
+      if (err.message.includes("Function not found")) {
+        userFriendlyError = 'Error: La función "request-whatsapp-otp" no se encontró. Asegúrate de que esté desplegada correctamente en Supabase.';
+      } else if (err.context?.json?.error) {
+        userFriendlyError = err.context.json.error;
+      } else if (err.message) {
+          userFriendlyError = `Ocurrió un problema: ${err.message}. Revisa la consola del navegador para más detalles técnicos.`;
+      }
+      setError(userFriendlyError);
     } finally {
       setLoading(false);
     }
@@ -167,11 +177,19 @@ const Auth: React.FC<AuthProps> = ({ onAdminLogin }) => {
       }
       
     } catch (err: any) {
-      console.error("Error al verificar el código:", err);
-      // Las Edge Functions devuelven el error específico en el cuerpo de la respuesta.
-      // El cliente de Supabase lo anida en el objeto de error.
-      const functionError = err.context?.json?.error || err.message;
-      setError(functionError || 'El código es incorrecto o ha expirado. Revisa los logs de la función en Supabase.');
+      console.error("--- ERROR AL INVOCAR 'verify-whatsapp-otp' ---");
+      console.error("Este es el objeto de error completo:", err);
+      console.error("-------------------------------------------");
+
+      let userFriendlyError = 'No se pudo verificar el código. Intenta de nuevo.';
+      if (err.message.includes("Function not found")) {
+        userFriendlyError = 'Error: La función "verify-whatsapp-otp" no se encontró. Asegúrate de que esté desplegada correctamente en Supabase.';
+      } else if (err.context?.json?.error) {
+        userFriendlyError = err.context.json.error;
+      } else if (err.message) {
+          userFriendlyError = `Ocurrió un problema: ${err.message}. Revisa la consola del navegador para más detalles técnicos.`;
+      }
+      setError(userFriendlyError);
     } finally {
       setLoading(false);
     }
