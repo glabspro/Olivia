@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QuotationItem, MarginType, Template, Settings, User, PaymentOption } from '../types';
+import { QuotationItem, MarginType, Template, Settings, User, PaymentOption, TaxType } from '../types';
 import FileUpload from '../components/FileUpload';
 import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info } from 'lucide-react';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -27,6 +27,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const [customTerm, setCustomTerm] = useState('');
     const [selectedMethodId, setSelectedMethodId] = useState<string>('');
     const [customMethod, setCustomMethod] = useState('');
+
+    const [taxType, setTaxType] = useState<TaxType>(TaxType.INCLUDED);
+    const [taxRate, setTaxRate] = useState<number>(18);
 
     const [whatsAppMessage, setWhatsAppMessage] = useState('');
 
@@ -52,11 +55,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         quotationNextNumber: 1,
         themeColor: '#EC4899',
         headerImage: null,
+        taxType: TaxType.INCLUDED,
+        taxRate: 18,
     });
     
     const pdfContainerRef = useRef<HTMLDivElement>(null);
     const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-    const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
+    const totalWithMargin = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
+    const finalTotal = taxType === TaxType.ADDED ? totalWithMargin * (1 + taxRate / 100) : totalWithMargin;
     const currentQuotationNumber = `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(4, '0')}`;
 
 
@@ -92,12 +98,16 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                         headerImage: null,
                         paymentTerms: [],
                         paymentMethods: [],
+                        taxType: TaxType.INCLUDED,
+                        taxRate: 18,
                     },
                     ...parsedSettings,
                 };
                 setSettings(completeSettings);
                 setMarginType(completeSettings.defaultMarginType);
                 setMarginValue(completeSettings.defaultMarginValue);
+                setTaxType(completeSettings.taxType);
+                setTaxRate(completeSettings.taxRate);
 
                 if (completeSettings.paymentTerms.length > 0) {
                     setSelectedTermId(completeSettings.paymentTerms[0].id);
@@ -123,13 +133,13 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         : settings.paymentMethods.find(m => m.id === selectedMethodId)?.details || '';
 
     useEffect(() => {
-        if(clientName && total > 0) {
-            const message = `Hola ${clientName}, te envío la cotización ${currentQuotationNumber} de ${settings.companyName}.\n\nEl total es de ${settings.currencySymbol} ${total.toFixed(2)}.\n\nQuedo a tu disposición para cualquier consulta. ¡Saludos!`;
+        if(clientName && finalTotal > 0) {
+            const message = `Hola ${clientName}, te envío la cotización ${currentQuotationNumber} de ${settings.companyName}.\n\nEl total es de ${settings.currencySymbol} ${finalTotal.toFixed(2)}.\n\nQuedo a tu disposición para cualquier consulta. ¡Saludos!`;
             setWhatsAppMessage(message);
         } else {
             setWhatsAppMessage('');
         }
-    }, [clientName, total, settings.companyName, settings.currencySymbol, currentQuotationNumber]);
+    }, [clientName, finalTotal, settings.companyName, settings.currencySymbol, currentQuotationNumber]);
 
     const finalizeAndIncrementQuoteNumber = () => {
         if (hasBeenFinalized) return;
@@ -181,6 +191,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         setItems([]);
         setMarginType(settings.defaultMarginType);
         setMarginValue(settings.defaultMarginValue);
+        setTaxType(settings.taxType);
+        setTaxRate(settings.taxRate);
         setClientName('');
         setClientPhone('');
         
@@ -303,6 +315,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                 marginValue={marginValue}
                                 setMarginValue={setMarginValue}
                                 currencySymbol={settings.currencySymbol}
+                                taxType={taxType}
+                                taxRate={taxRate}
                             />
                         </div>
 
@@ -368,9 +382,19 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                             </div>
                         </div>
 
+                        <div>
+                             <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4 flex items-center gap-2"><Percent size={20} className="text-accent-coral"/> 4. Ajusta los Impuestos</h3>
+                            <div>
+                                <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2">Configuración de IGV (para esta cotización)</label>
+                                 <select value={taxType} onChange={(e) => setTaxType(e.target.value as TaxType)} className={inputClasses}>
+                                    <option value={TaxType.INCLUDED}>Los precios ya incluyen IGV ({taxRate}%)</option>
+                                    <option value={TaxType.ADDED}>Añadir IGV ({taxRate}%) al subtotal</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <div>
-                            <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4">4. Genera y Envía</h3>
+                            <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4">5. Genera y Envía</h3>
                              <div className="space-y-4">
                                 <div className="bg-green-500/10 p-4 rounded-lg space-y-3">
                                     <label htmlFor="whatsapp-message" className="text-sm font-semibold text-green-800 dark:text-green-300 flex items-center gap-2">
@@ -428,6 +452,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                 quotationNumber={currentQuotationNumber}
                                 themeColor={settings.themeColor}
                                 headerImage={settings.headerImage}
+                                taxType={taxType}
+                                taxRate={taxRate}
                             />
                         </div>
                     </div>

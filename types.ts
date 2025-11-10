@@ -23,6 +23,11 @@ export enum Theme {
   DARK = 'dark',
 }
 
+export enum TaxType {
+  INCLUDED = 'included',
+  ADDED = 'added',
+}
+
 export interface PaymentOption {
   id: string;
   name: string;
@@ -48,6 +53,8 @@ export interface Settings {
   quotationNextNumber: number;
   themeColor: string;
   headerImage: string | null;
+  taxType: TaxType;
+  taxRate: number;
 }
 
 export interface User {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { QuotationItem, MarginType, Template } from '../types';
+import { QuotationItem, MarginType, Template, TaxType } from '../types';
 
 interface QuotationPreviewProps {
   items: QuotationItem[];
@@ -22,6 +22,8 @@ interface QuotationPreviewProps {
   quotationNumber: string;
   themeColor: string;
   headerImage: string | null;
+  taxType: TaxType;
+  taxRate: number;
 }
 
 const QuotationPreview: React.FC<QuotationPreviewProps> = ({
@@ -45,6 +47,8 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
   quotationNumber,
   themeColor = '#EC4899',
   headerImage,
+  taxType,
+  taxRate,
 }) => {
   const calculateFinalPrice = (item: QuotationItem): number => {
     const baseTotal = item.quantity * item.unitPrice;
@@ -60,10 +64,21 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
       return itemTotal / item.quantity;
   }
 
-  const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
-  const marginAmount = total - baseSubtotal;
+  const totalWithMargin = items.reduce((acc, item) => acc + calculateFinalPrice(item), 0);
   
+  let subtotal, igvAmount, finalTotal;
+  const taxRateDecimal = taxRate / 100;
+
+  if (taxType === TaxType.INCLUDED) {
+      finalTotal = totalWithMargin;
+      subtotal = finalTotal / (1 + taxRateDecimal);
+      igvAmount = finalTotal - subtotal;
+  } else { // TaxType.ADDED
+      subtotal = totalWithMargin;
+      igvAmount = subtotal * taxRateDecimal;
+      finalTotal = subtotal + igvAmount;
+  }
+
   const companyDocumentInfo = companyDocumentType && companyDocumentNumber ? `${companyDocumentType}: ${companyDocumentNumber}` : '';
   const companyContactInfo = [companyAddress, companyPhone, companyEmail, companyWebsite].filter(Boolean);
 
@@ -126,22 +141,22 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         <main><ItemsTable /></main>
         <section className="flex justify-end mt-6">
             <div className="w-full max-w-[300px] text-[8.5pt]">
-                <div className="flex justify-between py-1.5 border-b border-gray-100 text-gray-600"><p>Subtotal:</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
-                <div className="flex justify-between py-1.5 border-b border-gray-100 text-gray-600"><p>Margen ({marginType === MarginType.PERCENTAGE ? `${marginValue}%` : 'Fijo'}):</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
+                <div className="flex justify-between py-1.5 border-b border-gray-100 text-gray-600"><p>Subtotal:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
+                <div className="flex justify-between py-1.5 border-b border-gray-100 text-gray-600"><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
                 <div className="flex justify-between items-center pt-2 mt-1 font-bold text-base" style={{ borderTop: `2px solid ${themeColor}` }}>
                     <p>Total:</p>
-                    <p style={{ color: themeColor }}>{currencySymbol} {total.toFixed(2)}</p>
+                    <p style={{ color: themeColor }}>{currencySymbol} {finalTotal.toFixed(2)}</p>
                 </div>
             </div>
         </section>
-        <footer className="mt-8 pt-4 border-t border-gray-100 text-[8pt] text-gray-500">
+        <footer className="mt-6 pt-3 border-t border-gray-100 text-[7.5pt] text-gray-500">
             {(paymentTerms || paymentMethods) && (
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                    {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-1 uppercase tracking-wider text-[7.5pt]">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
-                    {paymentMethods && <div><h4 className="font-semibold text-gray-600 mb-1 uppercase tracking-wider text-[7.5pt]">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-0.5 uppercase tracking-wider text-[7pt]">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
+                    {paymentMethods && <div><h4 className="font-semibold text-gray-600 mb-0.5 uppercase tracking-wider text-[7pt]">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
                 </div>
             )}
-            <div className="mt-4 text-center text-gray-400 text-[7.5pt]">
+            <div className="mt-4 text-center text-gray-400 text-[7pt]">
                 <p className="font-bold text-gray-600">{companyName}</p>
                 <p>{companyContactInfo.join(' · ')}</p>
             </div>
@@ -174,19 +189,19 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         <main><ItemsTable borders="all" headerBgColor="#E5E7EB" headerTextColor="#374151" rowBorderColor="border-gray-300" /></main>
         <section className="flex justify-end mt-6">
             <div className="w-full max-w-[280px] text-[9pt]">
-              <div className="flex justify-between py-1 border-b border-gray-200"><p>Subtotal:</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
-              <div className="flex justify-between py-1 border-b border-gray-200"><p>Margen:</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
-              <div className="flex justify-between py-2 mt-1 font-bold text-base border-t-2 border-gray-400"><p>Total:</p><p>{currencySymbol} {total.toFixed(2)}</p></div>
+              <div className="flex justify-between py-1 border-b border-gray-200"><p>Subtotal:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
+              <div className="flex justify-between py-1 border-b border-gray-200"><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
+              <div className="flex justify-between py-2 mt-1 font-bold text-base border-t-2 border-gray-400"><p>Total:</p><p>{currencySymbol} {finalTotal.toFixed(2)}</p></div>
             </div>
         </section>
-        <footer className="mt-8 pt-4 border-t-2 border-gray-300 text-[8pt] text-gray-600">
+        <footer className="mt-6 pt-3 border-t-2 border-gray-300 text-[7.5pt] text-gray-600">
              {(paymentTerms || paymentMethods) && (
-                <div className="grid grid-cols-2 gap-6 mb-4">
-                    {paymentTerms && <div><h4 className="font-bold mb-1">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
-                    {paymentMethods && <div><h4 className="font-bold mb-1">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                    {paymentTerms && <div><h4 className="font-bold mb-0.5">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
+                    {paymentMethods && <div><h4 className="font-bold mb-0.5">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
                 </div>
             )}
-            <p className="mt-4 text-center text-gray-500 text-[7.5pt]">Gracias por su preferencia.</p>
+            <p className="mt-4 text-center text-gray-500 text-[7pt]">Gracias por su preferencia.</p>
         </footer>
       </div>
     );
@@ -237,14 +252,14 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         </main>
         <section className="flex justify-end mt-8">
             <div className="w-full max-w-[240px] text-[8.5pt]">
-                <div className="flex justify-between py-1 text-gray-600"><p>Subtotal</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
-                <div className="flex justify-between py-1 text-gray-600"><p>Margen</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
-                <div className="flex justify-between pt-2 mt-2 font-bold text-base border-t border-gray-300"><p>Total</p><p>{currencySymbol} {total.toFixed(2)}</p></div>
+                <div className="flex justify-between py-1 text-gray-600"><p>Subtotal</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
+                <div className="flex justify-between py-1 text-gray-600"><p>IGV ({taxRate}%)</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
+                <div className="flex justify-between pt-2 mt-2 font-bold text-base border-t border-gray-300"><p>Total</p><p>{currencySymbol} {finalTotal.toFixed(2)}</p></div>
             </div>
         </section>
-        <footer className="mt-12 pt-4 border-t border-gray-200 text-xs text-gray-500">
+        <footer className="mt-10 pt-3 border-t border-gray-200 text-[7pt] text-gray-500">
           {(paymentTerms || paymentMethods) && (
-            <div className="mb-4 whitespace-pre-wrap">
+            <div className="mb-3 whitespace-pre-wrap">
               {paymentTerms && <p><span className="font-semibold">Términos:</span> {paymentTerms}</p>}
               {paymentMethods && <p><span className="font-semibold">Pagos:</span> {paymentMethods}</p>}
             </div>
@@ -277,23 +292,23 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             
             <section className="flex justify-end mt-10">
                 <div className="w-full max-w-[280px] text-[8.5pt]">
-                    <div className="flex justify-between py-1.5 text-gray-600"><p>Subtotal:</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
-                    <div className="flex justify-between py-1.5 text-gray-600 border-b border-gray-100"><p>Margen:</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
+                    <div className="flex justify-between py-1.5 text-gray-600"><p>Subtotal:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
+                    <div className="flex justify-between py-1.5 text-gray-600 border-b border-gray-100"><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
                     <div className="flex justify-between items-center pt-3 mt-3 font-semibold text-lg" style={{color: themeColor}}>
                         <p>Total:</p>
-                        <p>{currencySymbol} {total.toFixed(2)}</p>
+                        <p>{currencySymbol} {finalTotal.toFixed(2)}</p>
                     </div>
                 </div>
             </section>
-            <footer className="mt-12 pt-6 text-[8pt] text-gray-500">
-                <div className="w-full h-px mb-6" style={{background: `linear-gradient(90deg, transparent, ${themeColor}, transparent)`}}></div>
+            <footer className="mt-10 pt-4 text-[7.5pt] text-gray-500">
+                <div className="w-full h-px mb-4" style={{background: `linear-gradient(90deg, transparent, ${themeColor}, transparent)`}}></div>
                 {(paymentTerms || paymentMethods) && (
-                    <div className="grid grid-cols-2 gap-8 mb-6">
-                        {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-1 tracking-wider text-[7.5pt]">TÉRMINOS Y CONDICIONES</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
-                        {paymentMethods && <div><h4 className="font-semibold text-gray-600 mb-1 tracking-wider text-[7.5pt]">MÉTODOS DE PAGO</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
+                    <div className="grid grid-cols-2 gap-6 mb-4">
+                        {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-0.5 tracking-wider text-[7pt]">TÉRMINOS Y CONDICIONES</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
+                        {paymentMethods && <div><h4 className="font-semibold text-gray-600 mb-0.5 tracking-wider text-[7pt]">MÉTODOS DE PAGO</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
                     </div>
                 )}
-                <div className="text-center text-gray-400 text-[7.5pt]">
+                <div className="text-center text-gray-400 text-[7pt]">
                     <p>{companyContactInfo.join(' · ')}</p>
                 </div>
             </footer>
@@ -336,21 +351,21 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             <section className="mt-8">
               <div className="flex justify-end">
                 <div className="w-full max-w-sm p-6 rounded-lg text-gray-800" style={{backgroundColor: `${themeColor}1A`}}>
-                  <div className="flex justify-between py-1 text-sm"><p>Subtotal</p><p>{currencySymbol} {baseSubtotal.toFixed(2)}</p></div>
-                  <div className="flex justify-between py-1 text-sm"><p>Margen</p><p>{currencySymbol} {marginAmount.toFixed(2)}</p></div>
+                  <div className="flex justify-between py-1 text-sm"><p>Subtotal</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
+                  <div className="flex justify-between py-1 text-sm"><p>IGV ({taxRate}%)</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
                   <div className="flex justify-between py-2 text-xl font-black mt-2 border-t-2" style={{borderColor: `${themeColor}80`, color: themeColor}}>
                     <p>TOTAL</p>
-                    <p>{currencySymbol} {total.toFixed(2)}</p>
+                    <p>{currencySymbol} {finalTotal.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
             </section>
              
-            <footer className="mt-8 pt-4 border-t border-gray-100 text-[8pt] text-gray-500">
+            <footer className="mt-6 pt-3 border-t border-gray-100 text-[7.5pt] text-gray-500">
                 {(paymentTerms || paymentMethods) && (
-                    <div className="grid grid-cols-2 gap-6 mb-6">
-                        {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-1 uppercase tracking-wider text-[7.5pt]">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
-                        {paymentMethods && <div><h4 className="font-semibold text-gray-600 mb-1 uppercase tracking-wider text-[7.5pt]">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-0.5 uppercase tracking-wider text-[7pt]">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
+                        {paymentMethods && <div><h4 className="font-semibold text-gray-600 mb-0.5 uppercase tracking-wider text-[7pt]">Métodos de Pago:</h4><p className="whitespace-pre-wrap">{paymentMethods}</p></div>}
                     </div>
                 )}
             </footer>

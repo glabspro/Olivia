@@ -1,5 +1,5 @@
 import React from 'react';
-import { QuotationItem, MarginType } from '../types';
+import { QuotationItem, MarginType, TaxType } from '../types';
 import { Trash2, PlusCircle } from 'lucide-react';
 
 interface QuotationEditorProps {
@@ -10,6 +10,8 @@ interface QuotationEditorProps {
   marginValue: number;
   setMarginValue: (value: number) => void;
   currencySymbol?: string;
+  taxType: TaxType;
+  taxRate: number;
 }
 
 const QuotationEditor: React.FC<QuotationEditorProps> = ({
@@ -20,6 +22,8 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
   marginValue,
   setMarginValue,
   currencySymbol = 'S/',
+  taxType,
+  taxRate,
 }) => {
   const handleItemChange = (id: string, field: keyof Omit<QuotationItem, 'id'>, value: string | number) => {
     const newItems = items.map((item) => {
@@ -54,7 +58,20 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
   };
   
   const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const total = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
+  const totalWithMargin = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
+  
+  let subtotalForTax, igvAmount, finalTotal;
+
+  if (taxType === TaxType.INCLUDED) {
+    finalTotal = totalWithMargin;
+    subtotalForTax = finalTotal / (1 + taxRate / 100);
+    igvAmount = finalTotal - subtotalForTax;
+  } else { // TaxType.ADDED
+    subtotalForTax = totalWithMargin;
+    igvAmount = subtotalForTax * (taxRate / 100);
+    finalTotal = subtotalForTax + igvAmount;
+  }
+
 
   const inputClasses = "w-full bg-transparent focus:ring-1 focus:ring-primary rounded-md p-2 focus:outline-none transition";
 
@@ -142,7 +159,7 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
         </button>
       </div>
 
-      <div className="mt-6 space-y-4 md:space-y-0 md:flex md:justify-between md:items-center gap-6 p-4 bg-background dark:bg-dark-background rounded-lg border border-border dark:border-dark-border">
+      <div className="mt-6 space-y-4 md:space-y-0 md:flex md:justify-between md:items-start gap-6 p-4 bg-background dark:bg-dark-background rounded-lg border border-border dark:border-dark-border">
         <div className="w-full md:w-auto">
           <label htmlFor="margin-type" className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary mb-2 block">Ajustar Margen:</label>
           <div className="flex">
@@ -163,9 +180,10 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
             />
           </div>
         </div>
-        <div className="text-right w-full md:w-auto">
-          <p className="text-textSecondary dark:text-dark-textSecondary">Subtotal: {currencySymbol} {baseSubtotal.toFixed(2)}</p>
-          <p className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">Total: {currencySymbol} {total.toFixed(2)}</p>
+        <div className="text-right w-full md:w-auto flex-shrink-0">
+          <p className="text-sm text-textSecondary dark:text-dark-textSecondary">Subtotal: {currencySymbol} {subtotalForTax.toFixed(2)}</p>
+          <p className="text-sm text-textSecondary dark:text-dark-textSecondary">IGV ({taxRate}%): {currencySymbol} {igvAmount.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary mt-1">Total: {currencySymbol} {finalTotal.toFixed(2)}</p>
         </div>
       </div>
     </div>

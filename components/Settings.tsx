@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, MarginType, Template, PaymentOption } from '../types';
-import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Settings, MarginType, Template, PaymentOption, TaxType } from '../types';
+import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent } from 'lucide-react';
 
 interface SettingsProps {
   currentSettings: Settings;
@@ -388,6 +388,23 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
                     onChange={handleInputChange}
                     className="w-full px-2.5 py-1.5 border-y border-r border-gray-200 dark:border-dark-border rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-sm"
                     />
+                </div>
+            </div>
+             <div className="space-y-3">
+                 <h3 className="text-lg font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 border-b border-border dark:border-dark-border pb-2">
+                    <Percent size={18} className="text-accent-coral" />
+                    Impuestos
+                </h3>
+                <div>
+                    <label htmlFor="taxType" className={labelClasses}>Configuración de IGV por defecto</label>
+                    <select id="taxType" name="taxType" value={settings.taxType} onChange={handleInputChange} className={inputClasses}>
+                        <option value={TaxType.INCLUDED}>Los precios incluyen IGV</option>
+                        <option value={TaxType.ADDED}>Añadir IGV al subtotal</option>
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="taxRate" className={labelClasses}>Tasa de IGV (%)</label>
+                    <input type="number" id="taxRate" name="taxRate" value={settings.taxRate} onChange={handleInputChange} className={inputClasses}/>
                 </div>
             </div>
         </div>

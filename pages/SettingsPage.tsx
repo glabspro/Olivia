@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Settings as SettingsType, MarginType, Template, QuotationItem } from '../types';
+import { User, Settings as SettingsType, MarginType, Template, QuotationItem, TaxType } from '../types';
 import AppSettings from '../components/Settings';
 import QuotationPreview from '../components/QuotationPreview';
 import jsPDF from 'jspdf';
@@ -38,6 +38,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         quotationNextNumber: 1,
         themeColor: '#EC4899',
         headerImage: null,
+        taxType: TaxType.INCLUDED,
+        taxRate: 18,
     });
     const [saveMessage, setSaveMessage] = useState('');
     const previewRef = useRef<HTMLDivElement>(null);
@@ -71,6 +73,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         companyDocumentNumber: '',
                         themeColor: '#EC4899',
                         headerImage: null,
+                        taxType: TaxType.INCLUDED,
+                        taxRate: 18,
                     },
                     ...parsedSettings,
                 };
@@ -175,6 +179,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         quotationNumber={sampleQuotationNumber}
                                         themeColor={settings.themeColor}
                                         headerImage={settings.headerImage}
+                                        taxType={settings.taxType}
+                                        taxRate={settings.taxRate}
                                     />
                                  </div>
                             </div>
