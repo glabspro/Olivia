@@ -5,8 +5,8 @@ import { crypto } from "https://deno.land/std@0.159.0/crypto/mod.ts";
 
 declare const Deno: any;
 
-// ¡IMPORTANTE! Reemplaza con la URL de producción de tu webhook de n8n
-const N8N_WEBHOOK_URL = 'URL_DE_PRODUCCION_DE_TU_WEBHOOK_N8N';
+// URL del webhook de n8n para enviar el código OTP por WhatsApp
+const N8N_WEBHOOK_URL = 'https://webhook.red51.site/webhook/olivia-send-otp';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
