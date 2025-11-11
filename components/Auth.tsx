@@ -84,9 +84,6 @@ const Auth: React.FC = () => {
 
     const n8nWebhookUrl = 'https://webhook.red51.site/webhook/olivia-send-otp';
 
-    // FIX: This check for a placeholder URL was causing a TypeScript error because the URL is already configured,
-    // making the comparison always false. The check has been removed.
-
     try {
       const fullPhoneNumber = `${countryCode.replace('+', '')}${phone}`;
       const response = await fetch(n8nWebhookUrl, {
@@ -98,7 +95,23 @@ const Auth: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('El servicio de mensajería no está disponible. Intenta más tarde.');
+        let errorMessage = 'El servicio de mensajería no está disponible. Intenta más tarde.';
+        try {
+            // Intenta leer la respuesta de error como JSON, que es como n8n suele responder.
+            const errorData = await response.json();
+            if (errorData && errorData.message) {
+                 // Si n8n devuelve un error estructurado, úsalo.
+                errorMessage = `Error del servidor: ${errorData.message}`;
+            } else {
+                // Si no es JSON o no tiene el formato esperado, usa el texto plano.
+                const errorText = await response.text();
+                errorMessage = `Error ${response.status}: ${errorText || response.statusText}`;
+            }
+        } catch (e) {
+            // Si la respuesta no es JSON, usa el status text.
+            errorMessage = `El servidor respondió con un error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
       
       setMessage('¡Código enviado! Revisa tu WhatsApp.');
