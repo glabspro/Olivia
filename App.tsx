@@ -5,7 +5,6 @@ import Layout from './components/Dashboard';
 import NewQuotePage from './pages/NewQuotePage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
-import CompleteProfilePage from './pages/CompleteProfilePage';
 import { supabase, getProfile } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
@@ -117,20 +116,7 @@ const App: React.FC = () => {
     return <ConfigurationError />;
   }
 
-  // Main render logic
   if (session && profile) {
-      // If profile exists but is incomplete (new user), force profile completion
-      if (!profile.companyName || !profile.fullName) {
-          return <CompleteProfilePage 
-              user={session.user} 
-              onProfileUpdated={async () => {
-                  setLoading(true);
-                  await fetchAndSetProfile(session.user);
-                  setLoading(false);
-              }}
-          />
-      }
-      // Otherwise, show the main dashboard
       return (
         <Layout 
           user={profile} 

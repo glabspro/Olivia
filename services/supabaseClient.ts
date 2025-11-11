@@ -44,21 +44,10 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         .eq('id', supabaseUser.id)
         .single();
 
-    // If there's an error and the user just signed up, a profile might not exist yet.
-    // We can return a partial profile based on the auth user data.
-    if (error && error.code === 'PGRST116') { // "PGRST116": "Searched for a single row, but found 0 rows"
-      console.warn("Profile not found for new user, returning partial profile.");
-      return {
-        id: supabaseUser.id,
-        fullName: '', // Will be filled in by CompleteProfilePage
-        companyName: '', // Will be filled in by CompleteProfilePage
-        phone: supabaseUser.phone || '',
-        email: supabaseUser.email,
-      };
-    }
-    
     if (error) {
         console.error("Error fetching profile:", error);
+        // Unlike email auth, with phone auth, a profile should always exist
+        // because the verify function creates it. If it doesn't, it's a genuine error.
         return null;
     }
 
