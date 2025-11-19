@@ -398,22 +398,22 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     if (sentSuccess) {
         buttonContent = (
             <>
-                <CheckCircle size={20} />
+                <CheckCircle size={24} />
                 ¡Enviado con Éxito!
             </>
         );
     } else if (isSending) {
         buttonContent = (
             <>
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
                 Enviando...
             </>
         );
     } else {
         buttonContent = (
             <>
-                <MessageSquare size={20} />
-                Enviar por WhatsApp
+                <MessageSquare size={24} />
+                Generar y Enviar por WhatsApp
             </>
         );
     }
@@ -664,7 +664,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                     <button
                                         onClick={handleSendToWebhook}
                                         disabled={!sendButtonEnabled}
-                                        className={`w-full flex items-center justify-center gap-2 px-4 py-3.5 text-white font-bold rounded-lg shadow transition-all hover:shadow-lg hover:-translate-y-0.5 ${sentSuccess ? 'bg-green-600' : 'bg-[#25D366] hover:bg-[#20BA5A] disabled:bg-gray-300 dark:disabled:bg-gray-700'}`}
+                                        className={`group w-full flex items-center justify-center gap-3 px-4 py-4 text-white font-bold text-lg rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${sentSuccess ? 'bg-green-600' : 'bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:brightness-110 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-800 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none'}`}
                                     >
                                         {buttonContent}
                                     </button>

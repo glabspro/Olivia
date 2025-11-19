@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
-import { Sparkles, FileText, Send, ArrowRight } from 'lucide-react';
+import { Sparkles, FileText, Send, ArrowRight, UserPlus, Briefcase, User, Phone } from 'lucide-react';
 import Logo from './Logo';
 import Spinner from './Spinner';
+import { getUserByPhone, registerNewUser } from '../services/supabaseClient';
+import { User as AppUser } from '../types';
 
 // This is a minimal, non-functional component for visual mockups.
 const AppVisual = () => (
@@ -46,55 +48,94 @@ const FeatureList = () => (
 
 const countries = [
   { code: 'PE', name: 'Perú', dial_code: '+51', flag: '🇵🇪' },
-  { code: 'AR', name: 'Argentina', dial_code: '+54', flag: '🇦🇷' },
-  { code: 'BO', name: 'Bolivia', dial_code: '+591', flag: '🇧🇴' },
-  { code: 'BR', name: 'Brasil', dial_code: '+55', flag: '🇧🇷' },
-  { code: 'CL', name: 'Chile', dial_code: '+56', flag: '🇨🇱' },
-  { code: 'CO', name: 'Colombia', dial_code: '+57', flag: '🇨🇴' },
-  { code: 'CR', name: 'Costa Rica', dial_code: '+506', flag: '🇨🇷' },
-  { code: 'CU', name: 'Cuba', dial_code: '+53', flag: '🇨🇺' },
-  { code: 'EC', name: 'Ecuador', dial_code: '+593', flag: '🇪🇨' },
-  { code: 'SV', name: 'El Salvador', dial_code: '+503', flag: '🇸🇻' },
-  { code: 'GT', name: 'Guatemala', dial_code: '+502', flag: '🇬🇹' },
-  { code: 'HN', name: 'Honduras', dial_code: '+504', flag: '🇭🇳' },
   { code: 'MX', name: 'México', dial_code: '+52', flag: '🇲🇽' },
-  { code: 'NI', name: 'Nicaragua', dial_code: '+505', flag: '🇳🇮' },
-  { code: 'PA', name: 'Panamá', dial_code: '+507', flag: '🇵🇦' },
-  { code: 'PY', name: 'Paraguay', dial_code: '+595', flag: '🇵🇾' },
-  { code: 'PR', name: 'Puerto Rico', dial_code: '+1', flag: '🇵🇷' },
-  { code: 'DO', name: 'Rep. Dominicana', dial_code: '+1', flag: '🇩🇴' },
-  { code: 'UY', name: 'Uruguay', dial_code: '+598', flag: '🇺🇾' },
-  { code: 'VE', name: 'Venezuela', dial_code: '+58', flag: '🇻🇪' },
+  { code: 'CO', name: 'Colombia', dial_code: '+57', flag: '🇨🇴' },
+  { code: 'CL', name: 'Chile', dial_code: '+56', flag: '🇨🇱' },
+  { code: 'AR', name: 'Argentina', dial_code: '+54', flag: '🇦🇷' },
 ];
 
 interface AuthProps {
-  onLogin: (phone: string) => void;
+  onLogin: (user: AppUser) => void;
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+  const [step, setStep] = useState<'check_phone' | 'register'>('check_phone');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+51');
+  
+  // Registration Fields
+  const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
+  // Helper to get full international number
+  const getFullPhone = () => {
+      const cleanNumber = phone.replace(/\D/g, '');
+      const cleanCode = countryCode.replace('+', '');
+      return `${cleanCode}${cleanNumber}`;
+  };
+
+  const handleCheckPhone = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Validación simple: 9 dígitos
     const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length !== 9) {
-        setError('Por favor ingresa un número válido de 9 dígitos para continuar.');
+    if (cleanPhone.length < 7) { // Basic validation
+        setError('Por favor ingresa un número válido.');
         setLoading(false);
         return;
     }
+    
+    const fullPhone = getFullPhone();
 
-    // Simular retraso de red para mejor UX
-    setTimeout(() => {
+    try {
+        const existingUser = await getUserByPhone(fullPhone); 
+        
+        if (existingUser) {
+            // Login successful
+            onLogin(existingUser);
+        } else {
+            // User not found, go to registration
+            setStep('register');
+        }
+    } catch (err) {
+        console.error(err);
+        setError('Hubo un problema de conexión. Intenta de nuevo.');
+    } finally {
         setLoading(false);
-        onLogin(phone);
-    }, 1000);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError('');
+      
+      if(!fullName.trim() || !companyName.trim()) {
+          setError('Todos los campos son obligatorios');
+          return;
+      }
+
+      setLoading(true);
+
+      try {
+          const fullPhone = getFullPhone();
+          const newUser = await registerNewUser({
+              fullName,
+              companyName,
+              phone: fullPhone
+          });
+          
+          // Login with the new user
+          onLogin(newUser);
+      } catch (err: any) {
+          console.error(err);
+          setError(err.message || 'Error al registrar usuario.');
+      } finally {
+          setLoading(false);
+      }
   };
 
   const inputBaseClasses = "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
@@ -102,54 +143,106 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background text-textPrimary dark:text-dark-textPrimary">
-      {loading && <Spinner message="Ingresando..." />}
+      {loading && <Spinner message={step === 'check_phone' ? "Verificando..." : "Creando tu cuenta..."} />}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden"><Logo /></div>
           
-          <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
-            Bienvenido a Olivia
-          </h1>
-          <p className="text-textSecondary dark:text-dark-textSecondary mb-8">
-            Ingresa tu número de celular para acceder a tu cuenta (Demo).
-          </p>
-          
-            <form className="space-y-6" onSubmit={handlePhoneSubmit}>
-              <div>
-                <label htmlFor="phone" className={labelClasses}>Tu número de celular</label>
-                <div className="flex">
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className={`${inputBaseClasses} w-auto rounded-r-none pr-8 appearance-none`}
-                    aria-label="Código de país"
-                  >
-                    {countries.map(country => (
-                      <option key={country.code} value={country.dial_code}>
-                        {country.flag} {country.dial_code}
-                      </option>
-                    ))}
-                  </select>
-                  <input 
-                    id="phone" 
-                    type="tel" 
-                    placeholder="987 654 321" 
-                    value={phone} 
-                    onChange={(e) => setPhone(e.target.value)} 
-                    className={`${inputBaseClasses} rounded-l-none`} 
-                    required 
-                  />
+          {step === 'check_phone' ? (
+              <>
+                <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
+                    Bienvenido a Olivia
+                </h1>
+                <p className="text-lg font-medium mb-8 bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 p-5 rounded-xl text-center shadow-sm text-gray-600 dark:text-gray-300">
+                    Ingresa tu número de celular para <span className="text-blue-600 dark:text-blue-400 font-bold">acceder</span> o <span className="text-primary dark:text-dark-primary font-bold">crear tu cuenta</span>.
+                </p>
+                
+                <form className="space-y-6" onSubmit={handleCheckPhone}>
+                    <div>
+                        <label htmlFor="phone" className={labelClasses}>Tu número de celular</label>
+                        <div className="flex">
+                        <select
+                            value={countryCode}
+                            onChange={(e) => setCountryCode(e.target.value)}
+                            className={`${inputBaseClasses} w-auto rounded-r-none pr-8 appearance-none border-r-0 bg-gray-50 dark:bg-white/5 cursor-pointer`}
+                            aria-label="Código de país"
+                        >
+                            {countries.map(country => (
+                            <option key={country.code} value={country.dial_code}>
+                                {country.flag} {country.dial_code}
+                            </option>
+                            ))}
+                        </select>
+                        <input 
+                            id="phone" 
+                            type="tel" 
+                            placeholder="987 654 321" 
+                            value={phone} 
+                            onChange={(e) => setPhone(e.target.value)} 
+                            className={`${inputBaseClasses} rounded-l-none`} 
+                            required 
+                        />
+                        </div>
+                    </div>
+                    <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
+                        <div className="flex items-center justify-center gap-2">
+                            Continuar
+                            <ArrowRight size={18} />
+                        </div>
+                    </button>
+                </form>
+              </>
+          ) : (
+              <>
+                <div className="mb-4">
+                    <button onClick={() => setStep('check_phone')} className="text-sm text-textSecondary hover:text-primary flex items-center gap-1"><ArrowRight className="rotate-180" size={14}/> Volver</button>
                 </div>
-              </div>
-              <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
-                <div className="flex items-center justify-center gap-2">
-                    Ingresar
-                    <ArrowRight size={18} />
-                </div>
-              </button>
-            </form>
+                
+                <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
+                    Crea tu cuenta
+                </h1>
+                <p className="text-textSecondary dark:text-dark-textSecondary mb-6">
+                    ¡Es rápido! Completa estos datos para empezar.
+                </p>
 
-          {error && <p className="mt-4 text-center text-sm text-red-600 bg-red-500/10 p-3 rounded-lg">{error}</p>}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 flex items-center gap-3 border border-blue-100 dark:border-blue-900/30">
+                    <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full">
+                        <Phone size={16} className="text-blue-600 dark:text-blue-300"/>
+                    </div>
+                    <div>
+                        <p className="text-xs text-textSecondary dark:text-dark-textSecondary">Registrando número:</p>
+                        <p className="font-bold text-textPrimary dark:text-dark-textPrimary">{countryCode} {phone}</p>
+                    </div>
+                </div>
+                
+                <form className="space-y-5" onSubmit={handleRegister}>
+                    <div>
+                        <label className={labelClasses}>Nombre Completo</label>
+                        <div className="relative">
+                             <User className="absolute left-3 top-3.5 text-gray-400" size={18}/>
+                             <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={`${inputBaseClasses} pl-10`} placeholder="Ej. Juan Pérez" required/>
+                        </div>
+                    </div>
+                    <div>
+                        <label className={labelClasses}>Nombre de tu Negocio</label>
+                        <div className="relative">
+                             <Briefcase className="absolute left-3 top-3.5 text-gray-400" size={18}/>
+                             <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className={`${inputBaseClasses} pl-10`} placeholder="Ej. Bodega Juan" required/>
+                        </div>
+                    </div>
+                    <div className="pt-2">
+                        <button type="submit" className="w-full py-3 font-bold text-white bg-accent-teal rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
+                            <div className="flex items-center justify-center gap-2">
+                                <UserPlus size={18} />
+                                Registrarme
+                            </div>
+                        </button>
+                    </div>
+                </form>
+              </>
+          )}
+
+          {error && <p className="mt-4 text-center text-sm text-red-600 bg-red-500/10 p-3 rounded-lg animate-pulse">{error}</p>}
 
           <div className="lg:hidden mt-12"><FeatureList /></div>
         </div>

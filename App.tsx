@@ -35,8 +35,10 @@ const App: React.FC = () => {
         return;
     }
 
+    // Check existing session
+    // Nota: Como estamos usando un login híbrido (simulado para simplificar pero guardando en BD), 
+    // dependemos principalmente del estado local 'profile' si no hay Auth de Supabase real activo.
     supabase.auth.getSession().then(({ data: { session } }) => {
-        // Only set session if it exists and we haven't manually set a simulated one
         if (session) {
             setSession(session);
             if (session?.user) {
@@ -45,22 +47,16 @@ const App: React.FC = () => {
                 setLoading(false);
             }
         } else {
+            // Check if we have a persisted "simulated" session in localStorage for better UX on refresh
+            const savedProfile = localStorage.getItem('olivia_simulated_profile');
+            if(savedProfile) {
+                setProfile(JSON.parse(savedProfile));
+                setSession({ access_token: 'simulated' } as any);
+            }
             setLoading(false);
         }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      // If we are simulating, we might want to ignore null session updates from supabase
-      // But for now, standard behavior
-      if (session) {
-        setSession(session);
-        setLoading(true);
-        await fetchAndSetProfile(session.user);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription?.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -81,33 +77,28 @@ const App: React.FC = () => {
     if (supabase) {
         await supabase.auth.signOut();
     }
+    localStorage.removeItem('olivia_simulated_profile');
     setProfile(null);
     setSession(null);
     setActivePage('history');
   };
 
-  const handleSimulatedLogin = (phone: string) => {
-      const simulatedUser: User = {
-          id: `simulated-user-${phone}`,
-          fullName: 'Usuario Demo',
-          companyName: 'Mi Empresa S.A.C.',
-          phone: phone,
-          email: 'demo@olivia.com',
-          is_admin: false
-      };
-
-      // Construct a minimal simulated session object
+  const handleLogin = (user: User) => {
+      // Persist simple login
+      localStorage.setItem('olivia_simulated_profile', JSON.stringify(user));
+      
+      // Create a dummy session object to satisfy the types
       const simulatedSession: Session = {
           access_token: 'simulated-token',
           refresh_token: 'simulated-refresh-token',
           expires_in: 3600,
           token_type: 'bearer',
           user: {
-              id: simulatedUser.id,
+              id: user.id,
               aud: 'authenticated',
               role: 'authenticated',
-              email: simulatedUser.email,
-              phone: simulatedUser.phone,
+              email: user.email,
+              phone: user.phone,
               app_metadata: {},
               user_metadata: {},
               created_at: new Date().toISOString(),
@@ -116,7 +107,7 @@ const App: React.FC = () => {
       };
 
       setSession(simulatedSession);
-      setProfile(simulatedUser);
+      setProfile(user);
   };
 
   const renderActivePage = () => {
@@ -156,8 +147,8 @@ const App: React.FC = () => {
       );
   }
 
-  // If no session, show Auth page with simulated login callback
-  return <Auth onLogin={handleSimulatedLogin} />;
+  // If no session, show Auth page
+  return <Auth onLogin={handleLogin} />;
 };
 
 export default App;

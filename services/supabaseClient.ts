@@ -6,10 +6,12 @@ import { User, QuotationItem, SavedQuotation, DbClient, DbProduct } from '../typ
 // ¡IMPORTANTE! Reemplaza estos valores con las credenciales de tu proyecto de Supabase.
 // Las encuentras en "Project Settings" > "API".
 // -----------------------------------------------------------------------------
-const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co'; // Updated URL
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA'; // Updated Anon Key
+const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co'; 
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA';
 
-// Esta función comprueba si las credenciales son válidas y no marcadores de posición
+// URL del Webhook de n8n para registro de nuevos usuarios
+const N8N_REGISTRATION_WEBHOOK = 'https://webhook.red51.site/webhook/new-user-olivia';
+
 const areCredentialsValid = (url?: string, key?: string): boolean => {
     if (!url || url === 'YOUR_SUPABASE_URL' || !key || key === 'YOUR_supabase_ANON_KEY') {
         return false;
@@ -17,7 +19,6 @@ const areCredentialsValid = (url?: string, key?: string): boolean => {
     return url.startsWith('http');
 };
 
-// Crea condicionalmente el cliente de Supabase para evitar errores en el arranque
 const createSupabaseClient = (): SupabaseClient | null => {
     if (areCredentialsValid(supabaseUrl, supabaseAnonKey)) {
         try {
@@ -27,17 +28,129 @@ const createSupabaseClient = (): SupabaseClient | null => {
             return null;
         }
     }
-    console.warn("Advertencia: Las credenciales de Supabase no están configuradas. Por favor, edita services/supabaseClient.ts");
     return null;
 };
 
 export const supabase = createSupabaseClient();
 
-export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
-    if (!supabase) {
-        console.error("El cliente de Supabase no está inicializado. No se puede obtener el perfil.");
+// --- Helper: Seed Initial Data for Onboarding ---
+const seedInitialData = async (userId: string) => {
+    if (!supabase) return;
+    
+    try {
+        // Insert default products
+        await supabase.from('products').insert([
+            { user_id: userId, name: 'Servicio de Consultoría', unit_price: 100.00, currency: 'S/' },
+            { user_id: userId, name: 'Producto Ejemplo (Premium)', unit_price: 250.00, currency: 'S/' }
+        ]);
+        
+        // Insert default client
+        await supabase.from('clients').insert([
+            { user_id: userId, name: 'Cliente de Prueba', phone: '999999999', email: 'cliente@ejemplo.com' }
+        ]);
+    } catch (e) {
+        console.warn("Initial data seeding failed (non-critical):", e);
+    }
+}
+
+// --- User & Auth Functions ---
+
+export const getUserByPhone = async (phone: string): Promise<User | null> => {
+    if (!supabase) return null;
+
+    // Normalizamos el teléfono (solo números)
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    // Buscamos en la tabla profiles directamente
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('phone', cleanPhone)
+        .maybeSingle();
+
+    if (error) {
+        if(error.message.includes('does not exist')) {
+             console.error("CRITICAL ERROR: The 'profiles' table does not exist in Supabase. Please run the SQL setup script.");
+        } else {
+             console.error("Error checking user:", error);
+        }
         return null;
     }
+
+    if (data) {
+        return {
+            id: data.id,
+            fullName: data.full_name,
+            companyName: data.company_name,
+            phone: data.phone,
+            is_admin: data.is_admin,
+            email: data.email
+        };
+    }
+
+    return null;
+};
+
+export const registerNewUser = async (userData: { fullName: string, companyName: string, phone: string }): Promise<User> => {
+    if (!supabase) throw new Error("Supabase not configured");
+    
+    const cleanPhone = userData.phone.replace(/\D/g, '');
+    const newId = crypto.randomUUID(); // Generamos un ID único manualmente
+
+    // 1. Guardar en Supabase
+    const { error } = await supabase
+        .from('profiles')
+        .insert({
+            id: newId,
+            full_name: userData.fullName,
+            company_name: userData.companyName,
+            phone: cleanPhone,
+            is_admin: false
+        });
+
+    if (error) {
+        // Si el error es por duplicado (código 23505 en Postgres), asumimos que ya existe y lo devolvemos
+        // Esto hace el registro "idempotente" y evita errores si el usuario da doble click
+        if (error.code === '23505' || error.message.includes('unique constraint')) {
+            console.log("Usuario ya existe, procediendo a login...");
+            const existingUser = await getUserByPhone(cleanPhone);
+            if (existingUser) return existingUser;
+        }
+        throw new Error(`Error creando perfil: ${error.message}`);
+    }
+    
+    // 2. Seed Initial Data (Non-blocking but awaited for better UX on first load)
+    await seedInitialData(newId);
+
+    // 3. Notificar a n8n (Disparar Webhook de Bienvenida)
+    try {
+        // Enviamos los datos al Webhook para procesar con Evolution API
+        fetch(N8N_REGISTRATION_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userData.fullName,
+                phone: cleanPhone,
+                business_name: userData.companyName,
+                event: 'new_registration',
+                date: new Date().toISOString()
+            })
+        }).catch(err => console.error("Error notificando a n8n (silencioso):", err));
+    } catch (e) {
+        console.error("Error trigger webhook:", e);
+    }
+
+    return {
+        id: newId,
+        fullName: userData.fullName,
+        companyName: userData.companyName,
+        phone: cleanPhone,
+        is_admin: false
+    };
+};
+
+export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
+    if (!supabase) return null;
 
     const { data, error } = await supabase
         .from('profiles')
@@ -45,11 +158,7 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         .eq('id', supabaseUser.id)
         .single();
 
-    if (error) {
-        // Log the full error object properly
-        console.error("Error fetching profile:", JSON.stringify(error, null, 2));
-        return null;
-    }
+    if (error) return null;
 
     return {
         id: data.id,
@@ -70,21 +179,14 @@ export const saveQuotation = async (
 ) => {
     if (!supabase) throw new Error("Supabase no configurado");
 
-    // 1. Buscar o Crear Cliente
     let clientId: string;
 
-    // Use maybeSingle() to avoid throwing error if 0 rows are found
     const { data: existingClient, error: searchError } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', userId)
         .eq('name', clientData.name)
         .maybeSingle();
-
-    if (searchError) {
-        console.error("Error searching for client:", JSON.stringify(searchError, null, 2));
-        // We continue and try to create it, or you might want to throw here depending on severity
-    }
 
     if (existingClient) {
         clientId = existingClient.id;
@@ -100,11 +202,10 @@ export const saveQuotation = async (
             .select('id')
             .single();
         
-        if (clientError) throw new Error(`Error creando cliente: ${clientError.message || JSON.stringify(clientError)}`);
+        if (clientError) throw new Error(`Error creando cliente: ${clientError.message}`);
         clientId = newClient.id;
     }
 
-    // 2. Crear Cotización
     const { data: newQuote, error: quoteError } = await supabase
         .from('quotations')
         .insert({
@@ -118,9 +219,8 @@ export const saveQuotation = async (
         .select('id')
         .single();
 
-    if (quoteError) throw new Error(`Error guardando cotización: ${quoteError.message || JSON.stringify(quoteError)}`);
+    if (quoteError) throw new Error(`Error guardando cotización: ${quoteError.message}`);
 
-    // 3. Crear Items de la Cotización (Detalle)
     const itemsToInsert = quoteData.items.map(item => ({
         quotation_id: newQuote.id,
         description: item.description,
@@ -133,9 +233,8 @@ export const saveQuotation = async (
         .from('quotation_items')
         .insert(itemsToInsert);
 
-    if (itemsError) throw new Error(`Error guardando items: ${itemsError.message || JSON.stringify(itemsError)}`);
+    if (itemsError) throw new Error(`Error guardando items: ${itemsError.message}`);
 
-    // 4. Guardar/Actualizar Catálogo de Productos (Upsert)
     const productsToUpsert = quoteData.items.map(item => ({
         user_id: userId,
         name: item.description,
@@ -147,10 +246,7 @@ export const saveQuotation = async (
         .from('products')
         .upsert(productsToUpsert, { onConflict: 'user_id, name' });
 
-    if (productsError) {
-        // Log warning but don't fail the whole operation
-        console.warn("Error actualizando catálogo de productos:", JSON.stringify(productsError, null, 2));
-    }
+    if (productsError) console.warn("Error actualizando catálogo:", productsError);
 
     return newQuote.id;
 };
@@ -178,7 +274,7 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error("Error fetching quotations:", JSON.stringify(error, null, 2));
+        console.error("Error fetching quotations:", error);
         return [];
     }
 
@@ -208,10 +304,7 @@ export const getClients = async (userId: string): Promise<DbClient[]> => {
         .eq('user_id', userId)
         .order('name', { ascending: true });
     
-    if (error) {
-        console.error("Error fetching clients:", JSON.stringify(error, null, 2));
-        return [];
-    }
+    if (error) return [];
     return data || [];
 }
 
@@ -220,7 +313,6 @@ export const saveClient = async (userId: string, client: Omit<DbClient, 'id'> & 
     
     let error;
     if (client.id) {
-        // Update
         const { error: updateError } = await supabase
             .from('clients')
             .update({
@@ -233,7 +325,6 @@ export const saveClient = async (userId: string, client: Omit<DbClient, 'id'> & 
             .eq('user_id', userId);
         error = updateError;
     } else {
-        // Insert
         const { error: insertError } = await supabase
             .from('clients')
             .insert({
@@ -246,18 +337,13 @@ export const saveClient = async (userId: string, client: Omit<DbClient, 'id'> & 
         error = insertError;
     }
 
-    if (error) throw new Error(error.message || JSON.stringify(error));
+    if (error) throw new Error(error.message);
 }
 
 export const deleteClient = async (id: string) => {
     if (!supabase) throw new Error("No Supabase client");
-
-    const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id);
-    
-    if (error) throw new Error(error.message || JSON.stringify(error));
+    const { error } = await supabase.from('clients').delete().eq('id', id);
+    if (error) throw new Error(error.message);
 }
 
 // --- Product Management Functions ---
@@ -270,10 +356,7 @@ export const getProducts = async (userId: string): Promise<DbProduct[]> => {
         .eq('user_id', userId)
         .order('name', { ascending: true });
     
-    if (error) {
-        console.error("Error fetching products:", JSON.stringify(error, null, 2));
-        return [];
-    }
+    if (error) return [];
     return data || [];
 }
 
@@ -282,7 +365,6 @@ export const saveProduct = async (userId: string, product: Omit<DbProduct, 'id'>
     
     let error;
     if (product.id) {
-        // Update
         const { error: updateError } = await supabase
             .from('products')
             .update({
@@ -294,7 +376,6 @@ export const saveProduct = async (userId: string, product: Omit<DbProduct, 'id'>
             .eq('user_id', userId);
         error = updateError;
     } else {
-        // Insert
         const { error: insertError } = await supabase
             .from('products')
             .insert({
@@ -306,16 +387,11 @@ export const saveProduct = async (userId: string, product: Omit<DbProduct, 'id'>
         error = insertError;
     }
 
-    if (error) throw new Error(error.message || JSON.stringify(error));
+    if (error) throw new Error(error.message);
 }
 
 export const deleteProduct = async (id: string) => {
     if (!supabase) throw new Error("No Supabase client");
-
-    const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-    
-    if (error) throw new Error(error.message || JSON.stringify(error));
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) throw new Error(error.message);
 }
