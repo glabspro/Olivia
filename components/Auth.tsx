@@ -138,7 +138,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     onChange={(e) => setPhone(e.target.value)} 
                     className={`${inputBaseClasses} rounded-l-none`} 
                     required 
-                    maxLength={9}
                   />
                 </div>
               </div>

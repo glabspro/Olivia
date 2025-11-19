@@ -51,8 +51,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         defaultMarginType: MarginType.PERCENTAGE,
         defaultMarginValue: 20,
         defaultTemplate: Template.MODERN,
-        paymentTerms: [],
-        paymentMethods: [],
+        paymentTerms: [
+            { id: 'term-cash', name: 'Contado', details: 'Pago al 100% contra entrega del producto o servicio.' },
+            { id: 'term-credit', name: 'Crédito 15 Días', details: 'Crédito a 15 días calendario. Requiere orden de compra aprobada.' }
+        ],
+        paymentMethods: [
+            { id: 'method-bcp', name: 'Transferencia BCP', details: 'Banco de Crédito del Perú (BCP)\nCuenta Soles: 191-XXXXXXXX-0-XX\nCCI: 002-191-XXXXXXXXXXXX-XX\nTitular: Mi Empresa S.A.C.' },
+            { id: 'method-wallet', name: 'Yape / Plin', details: 'Número: 999 999 999\nTitular: Nombre del Titular\n(Enviar constancia al WhatsApp)' }
+        ],
         quotationPrefix: 'COT-',
         quotationNextNumber: 1,
         themeColor: '#EC4899',
@@ -98,8 +104,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                         companyDocumentNumber: '',
                         themeColor: '#EC4899',
                         headerImage: null,
-                        paymentTerms: [],
-                        paymentMethods: [],
+                        paymentTerms: [
+                            { id: 'term-cash', name: 'Contado', details: 'Pago al 100% contra entrega del producto o servicio.' },
+                            { id: 'term-credit', name: 'Crédito 15 Días', details: 'Crédito a 15 días calendario. Requiere orden de compra aprobada.' }
+                        ],
+                        paymentMethods: [
+                            { id: 'method-bcp', name: 'Transferencia BCP', details: 'Banco de Crédito del Perú (BCP)\nCuenta Soles: 191-XXXXXXXX-0-XX\nCCI: 002-191-XXXXXXXXXXXX-XX\nTitular: Mi Empresa S.A.C.' },
+                            { id: 'method-wallet', name: 'Yape / Plin', details: 'Número: 999 999 999\nTitular: Nombre del Titular\n(Enviar constancia al WhatsApp)' }
+                        ],
                         taxType: TaxType.INCLUDED,
                         taxRate: 18,
                     },

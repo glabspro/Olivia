@@ -10,23 +10,6 @@ import { supabase, getProfile } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
 
-const ConfigurationError = () => (
-    <div className="flex items-center justify-center min-h-screen bg-red-50 text-red-800 p-4">
-        <div className="text-center max-w-2xl bg-white border border-red-200 p-8 rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold mb-4">Error de Configuración de Supabase</h1>
-            <p className="mb-4">La aplicación no pudo conectarse a la base de datos porque las credenciales no están configuradas.</p>
-            <div className="text-sm text-left bg-gray-100 p-4 rounded-md">
-                <p>Por favor, abre el archivo <code className="font-mono bg-red-100 text-red-900 px-1 py-0.5 rounded">services/supabaseClient.ts</code> y reemplaza los valores de:</p>
-                <ul className="list-disc list-inside mt-2">
-                    <li><code className="font-mono bg-red-100 text-red-900 px-1 py-0.5 rounded">YOUR_SUPABASE_URL</code></li>
-                    <li><code className="font-mono bg-red-100 text-red-900 px-1 py-0.5 rounded">YOUR_SUPABASE_ANON_KEY</code></li>
-                </ul>
-                <p className="mt-2">Puedes encontrar estas credenciales en la configuración de tu proyecto de Supabase, en la sección "API".</p>
-            </div>
-        </div>
-    </div>
-);
-
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<User | null>(null);
@@ -93,8 +76,9 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    if (supabase) {
+        await supabase.auth.signOut();
+    }
     setProfile(null);
     setSession(null);
     setActivePage('new_quote');
@@ -151,10 +135,6 @@ const App: React.FC = () => {
     return <Spinner message="Cargando tu espacio de trabajo..." />;
   }
   
-  if (!supabase) {
-    return <ConfigurationError />;
-  }
-
   if (session && profile) {
       return (
         <Layout 
