@@ -166,6 +166,38 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
     };
 };
 
+export const resendOTP = async (userData: { fullName: string, companyName: string, phone: string }) => {
+    if (!supabase) throw new Error("Supabase not configured");
+    const cleanPhone = userData.phone.replace(/\D/g, '');
+    
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // New code
+
+    // Actualizar token en DB
+    await supabase
+        .from('profiles')
+        .update({ verify_token: otpCode })
+        .eq('phone', cleanPhone);
+
+    // Reenviar a n8n
+    try {
+        console.log(`Reenviando OTP ${otpCode} al webhook de n8n...`);
+        await fetch(N8N_REGISTRATION_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: userData.fullName,
+                phone: cleanPhone,
+                business_name: userData.companyName,
+                otp: otpCode,
+                event: 'resend_verification',
+                date: new Date().toISOString()
+            })
+        });
+    } catch (e) {
+        console.error("Error resending webhook:", e);
+    }
+};
+
 // Step 2: Verify OTP
 export const verifyUserOTP = async (userId: string, inputOtp: string): Promise<boolean> => {
     if (!supabase) return false;
@@ -249,6 +281,20 @@ export const updateUserPermissions = async (userId: string, permissions: UserPer
     const { error } = await supabase.from('profiles').update({ permissions }).eq('id', userId);
     if (error) throw error;
 };
+
+export const updateUserProfile = async (userId: string, data: { fullName: string, companyName: string, phone: string }) => {
+    if (!supabase) return;
+    const { error } = await supabase
+        .from('profiles')
+        .update({ 
+            full_name: data.fullName, 
+            company_name: data.companyName, 
+            phone: data.phone 
+        })
+        .eq('id', userId);
+    
+    if (error) throw error;
+}
 
 export const deleteUserProfile = async (userId: string) => {
     if (!supabase) return;

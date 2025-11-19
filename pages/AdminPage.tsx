@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions } from '../types';
-import { getAllUsers, updateUserPermissions, deleteUserProfile } from '../services/supabaseClient';
-import { Shield, Search, Check, X, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity } from 'lucide-react';
+import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -12,6 +12,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Edit Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editForm, setEditForm] = useState({ fullName: '', companyName: '', phone: '' });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -69,6 +75,33 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
           }
       }
   };
+  
+  const handleEditClick = (user: User) => {
+      setEditingUser(user);
+      setEditForm({
+          fullName: user.fullName,
+          companyName: user.companyName,
+          phone: user.phone
+      });
+      setShowEditModal(true);
+  };
+  
+  const handleSaveUser = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!editingUser) return;
+      setSaving(true);
+      try {
+          await updateUserProfile(editingUser.id, editForm);
+          setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...editForm } : u));
+          setShowEditModal(false);
+          setEditingUser(null);
+      } catch (error) {
+          console.error("Error updating user:", error);
+          alert("No se pudo actualizar el usuario.");
+      } finally {
+          setSaving(false);
+      }
+  };
 
   const filteredUsers = users.filter(u => 
     u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,12 +138,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                     Panel de Administración
                 </h1>
                 <p className="text-textSecondary dark:text-dark-textSecondary mt-1">
-                    Bienvenido, Super Admin <strong>{currentUser.fullName}</strong>. Tienes el control total.
+                    Gestión total de usuarios y suscripciones.
                 </p>
             </div>
             <div className="hidden md:block">
                  <div className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg animate-pulse">
-                    MODO SUPER ADMIN
+                    SUPER ADMIN
                  </div>
             </div>
          </div>
@@ -118,21 +151,21 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-center justify-between">
                 <div>
-                    <p className="text-xs text-textSecondary uppercase font-bold">Usuarios Totales</p>
+                    <p className="text-xs text-textSecondary uppercase font-bold">Usuarios</p>
                     <p className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{stats.totalUsers}</p>
                 </div>
                 <Users className="text-blue-500" size={24}/>
             </div>
             <div className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-center justify-between">
                 <div>
-                    <p className="text-xs text-textSecondary uppercase font-bold">Usuarios Activos</p>
+                    <p className="text-xs text-textSecondary uppercase font-bold">Activos</p>
                     <p className="text-2xl font-bold text-green-500">{stats.activeUsers}</p>
                 </div>
                 <Activity className="text-green-500" size={24}/>
             </div>
              <div className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-center justify-between">
                 <div>
-                    <p className="text-xs text-textSecondary uppercase font-bold">Planes Premium</p>
+                    <p className="text-xs text-textSecondary uppercase font-bold">Premium</p>
                     <p className="text-2xl font-bold text-purple-500">{stats.proUsers}</p>
                 </div>
                 <Crown className="text-purple-500" size={24}/>
@@ -140,13 +173,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
          </div>
       </div>
 
-      {/* Search & Table */}
+      {/* Search */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">Lista de Usuarios</h2>
+        <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">Usuarios</h2>
         <div className="relative">
             <input 
                 type="text" 
-                placeholder="Buscar por nombre, negocio o teléfono..." 
+                placeholder="Buscar..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 rounded-lg border border-border dark:border-dark-border bg-surface dark:bg-dark-surface text-sm w-full md:w-72 focus:ring-2 focus:ring-primary focus:outline-none"
@@ -155,17 +188,86 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
         </div>
       </div>
 
-      <div className="bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border overflow-hidden shadow-sm">
+      {/* Mobile List View (Visible on small screens) */}
+      <div className="md:hidden space-y-4">
+          {filteredUsers.map(user => {
+              const perms = user.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true };
+              const isSelf = user.id === currentUser.id;
+              
+              return (
+                  <div key={user.id} className="bg-surface dark:bg-dark-surface p-5 rounded-xl border border-border dark:border-dark-border shadow-sm">
+                      <div className="flex justify-between items-start mb-4">
+                          <div>
+                              <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary">{user.companyName}</h3>
+                              <p className="text-sm text-textSecondary dark:text-dark-textSecondary flex items-center gap-1 mt-1">
+                                  <Briefcase size={12}/> {user.fullName}
+                              </p>
+                              <p className="text-xs text-textSecondary dark:text-dark-textSecondary font-mono mt-1">{user.phone}</p>
+                          </div>
+                           {user.is_onboarded && (
+                                <span className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-[10px] font-bold px-2 py-1 rounded-full">
+                                    OK
+                                </span>
+                            )}
+                      </div>
+                      
+                      {/* Plan Selector - Mobile */}
+                      <div className="mb-4">
+                          <label className="text-xs font-bold text-textSecondary uppercase mb-1 block">Plan Actual</label>
+                           <select
+                                value={perms.plan}
+                                onChange={(e) => handlePlanChange(user.id, user.permissions, e.target.value as any)}
+                                className={`w-full border border-border dark:border-dark-border font-bold rounded-lg px-3 py-2 focus:outline-none uppercase ${
+                                    perms.plan === 'enterprise' ? 'bg-purple-100 text-purple-800' :
+                                    perms.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-gray-100 text-gray-800'
+                                }`}
+                            >
+                                <option value="free">Free</option>
+                                <option value="pro">Pro</option>
+                                <option value="enterprise">Enterprise</option>
+                            </select>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-4 border-t border-border dark:border-dark-border">
+                          <div className="flex gap-2">
+                                <button 
+                                    onClick={() => handleEditClick(user)}
+                                    className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg"
+                                >
+                                    <Edit2 size={18}/>
+                                </button>
+                                <button 
+                                    onClick={() => !isSelf && handlePermissionChange(user.id, user.permissions, 'is_active')}
+                                    disabled={isSelf}
+                                    className={`p-2 rounded-lg ${perms.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}
+                                >
+                                    {perms.is_active ? <Shield size={18}/> : <AlertTriangle size={18}/>}
+                                </button>
+                          </div>
+                           <button
+                                onClick={() => handleDeleteUser(user.id, user.companyName)}
+                                disabled={isSelf}
+                                className={`p-2 text-red-500 hover:bg-red-50 rounded-lg ${isSelf ? 'opacity-30' : ''}`}
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                      </div>
+                  </div>
+              );
+          })}
+      </div>
+
+      {/* Desktop Table View (Hidden on small screens) */}
+      <div className="hidden md:block bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 dark:bg-white/5 text-textSecondary dark:text-dark-textSecondary uppercase font-semibold text-xs">
                     <tr>
                         <th className="px-6 py-4">Usuario / Negocio</th>
                         <th className="px-6 py-4">Contacto</th>
-                        <th className="px-6 py-4 text-center">Onboarding</th>
                         <th className="px-6 py-4 text-center">Plan Actual</th>
-                        <th className="px-6 py-4 text-center">Permisos (IA / PDF)</th>
-                        <th className="px-6 py-4 text-center">Acceso</th>
+                        <th className="px-6 py-4 text-center">Permisos</th>
                         <th className="px-6 py-4 text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -187,18 +289,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-textPrimary dark:text-dark-textPrimary font-mono text-xs">{user.phone}</div>
-                                    <div className="text-xs text-textSecondary dark:text-dark-textSecondary truncate max-w-[150px]">{user.email || '-'}</div>
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    {user.is_onboarded ? (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                                            COMPLETO
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                                            PENDIENTE
-                                        </span>
-                                    )}
                                 </td>
                                 
                                 {/* Plan Selector */}
@@ -206,7 +296,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                                     <select
                                         value={perms.plan}
                                         onChange={(e) => handlePlanChange(user.id, user.permissions, e.target.value as any)}
-                                        className={`border border-border dark:border-dark-border text-xs font-semibold rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary uppercase ${
+                                        className={`cursor-pointer border border-border dark:border-dark-border text-xs font-semibold rounded px-2 py-1 focus:outline-none uppercase ${
                                             perms.plan === 'enterprise' ? 'bg-purple-100 text-purple-800' :
                                             perms.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
                                             'bg-gray-100 text-gray-800'
@@ -218,27 +308,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                                     </select>
                                 </td>
 
-                                {/* Permission Toggles */}
-                                <td className="px-6 py-4">
-                                    <div className="flex justify-center gap-2">
-                                        <button 
-                                            title={perms.can_use_ai ? "Desactivar IA" : "Activar IA"}
-                                            onClick={() => handlePermissionChange(user.id, user.permissions, 'can_use_ai')}
-                                            className={`p-1.5 rounded transition-colors ${perms.can_use_ai ? 'text-white bg-green-500 shadow-sm' : 'text-gray-400 bg-gray-200 dark:bg-gray-700'}`}
-                                        >
-                                            <span className="text-[10px] font-bold">IA</span>
-                                        </button>
-                                        <button 
-                                            title={perms.can_download_pdf ? "Desactivar PDF" : "Activar PDF"}
-                                            onClick={() => handlePermissionChange(user.id, user.permissions, 'can_download_pdf')}
-                                            className={`p-1.5 rounded transition-colors ${perms.can_download_pdf ? 'text-white bg-blue-500 shadow-sm' : 'text-gray-400 bg-gray-200 dark:bg-gray-700'}`}
-                                        >
-                                            <span className="text-[10px] font-bold">PDF</span>
-                                        </button>
-                                    </div>
-                                </td>
-
-                                {/* Access Control (Block) */}
+                                {/* Access Control */}
                                 <td className="px-6 py-4 text-center">
                                     <button 
                                         onClick={() => !isSelf && handlePermissionChange(user.id, user.permissions, 'is_active')}
@@ -249,16 +319,25 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                                     </button>
                                 </td>
 
-                                {/* Delete Action */}
+                                {/* Actions */}
                                 <td className="px-6 py-4 text-center">
-                                    <button
-                                        onClick={() => handleDeleteUser(user.id, user.companyName)}
-                                        disabled={isSelf}
-                                        className={`p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors ${isSelf ? 'invisible' : ''}`}
-                                        title="Eliminar Usuario"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div className="flex justify-center gap-2">
+                                        <button
+                                            onClick={() => handleEditClick(user)}
+                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                                            title="Editar Datos"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteUser(user.id, user.companyName)}
+                                            disabled={isSelf}
+                                            className={`p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors ${isSelf ? 'invisible' : ''}`}
+                                            title="Eliminar Usuario"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         );
@@ -267,6 +346,56 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
             </table>
         </div>
       </div>
+      
+      {/* Edit Modal */}
+      {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="bg-surface dark:bg-dark-surface rounded-2xl w-full max-w-md shadow-2xl border border-border dark:border-dark-border animate-fade-in">
+                  <div className="px-6 py-4 border-b border-border dark:border-dark-border flex justify-between items-center">
+                      <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary">Editar Usuario</h3>
+                      <button onClick={() => setShowEditModal(false)} className="text-textSecondary hover:text-textPrimary"><X size={20}/></button>
+                  </div>
+                  <form onSubmit={handleSaveUser} className="p-6 space-y-4">
+                      <div>
+                          <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Nombre Completo</label>
+                          <input 
+                            type="text" 
+                            value={editForm.fullName}
+                            onChange={e => setEditForm({...editForm, fullName: e.target.value})}
+                            className="w-full px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary"
+                          />
+                      </div>
+                      <div>
+                          <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Nombre del Negocio</label>
+                          <input 
+                            type="text" 
+                            value={editForm.companyName}
+                            onChange={e => setEditForm({...editForm, companyName: e.target.value})}
+                            className="w-full px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary"
+                          />
+                      </div>
+                      <div>
+                          <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Teléfono</label>
+                          <input 
+                            type="text" 
+                            value={editForm.phone}
+                            onChange={e => setEditForm({...editForm, phone: e.target.value})}
+                            className="w-full px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary"
+                          />
+                      </div>
+                      
+                      <div className="pt-4 flex gap-3">
+                          <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-2.5 text-sm font-semibold text-textSecondary hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg">
+                              Cancelar
+                          </button>
+                          <button type="submit" disabled={saving} className="flex-1 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-opacity-90 rounded-lg shadow-md flex items-center justify-center gap-2">
+                              {saving ? 'Guardando...' : <><Save size={16}/> Guardar Cambios</>}
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
