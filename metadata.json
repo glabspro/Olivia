@@ -1,5 +1,5 @@
 {
-  "name": "Olivia",
+  "name": "Olivia-App",
   "description": "A multi-tenant quotation SaaS where users can upload supplier quotes (PDF/Excel), automatically extract products and prices, add a profit margin, and generate a professional quote to send via WhatsApp.",
   "requestFramePermissions": []
 }
