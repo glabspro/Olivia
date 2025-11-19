@@ -80,6 +80,8 @@ export interface User {
   is_admin?: boolean;
   is_onboarded?: boolean;
   permissions?: UserPermissions;
+  verify_token?: string;
+  is_verified?: boolean;
 }
 
 // Database Types

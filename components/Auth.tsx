@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { Sparkles, FileText, Send, ArrowRight, UserPlus, Briefcase, User, Phone } from 'lucide-react';
+import { Sparkles, FileText, Send, ArrowRight, UserPlus, Briefcase, User, Phone, KeyRound, CheckCircle2 } from 'lucide-react';
 import Logo from './Logo';
 import Spinner from './Spinner';
-import { getUserByPhone, registerNewUser } from '../services/supabaseClient';
+import { getUserByPhone, registerNewUser, verifyUserOTP } from '../services/supabaseClient';
 import { User as AppUser } from '../types';
 
 // This is a minimal, non-functional component for visual mockups.
@@ -59,13 +59,15 @@ interface AuthProps {
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
-  const [step, setStep] = useState<'check_phone' | 'register'>('check_phone');
+  const [step, setStep] = useState<'check_phone' | 'register' | 'verify_otp'>('check_phone');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+51');
   
   // Registration Fields
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [tempUserId, setTempUserId] = useState<string | null>(null);
+  const [otp, setOtp] = useState('');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -95,8 +97,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         const existingUser = await getUserByPhone(fullPhone); 
         
         if (existingUser) {
-            // Login successful
-            onLogin(existingUser);
+            if (existingUser.is_verified === false) {
+                // User exists but verification pending (interrupted flow)
+                // In a real app we would resend OTP here. For now, we assume they might have it or need to re-register
+                // Let's re-register them to trigger a new OTP
+                 setStep('register'); // Go to register to update details and trigger new OTP
+            } else {
+                // Login successful
+                onLogin(existingUser);
+            }
         } else {
             // User not found, go to registration
             setStep('register');
@@ -122,14 +131,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
       try {
           const fullPhone = getFullPhone();
-          const newUser = await registerNewUser({
+          const { user: newUser, alreadyVerified } = await registerNewUser({
               fullName,
               companyName,
               phone: fullPhone
           });
           
-          // Login with the new user
-          onLogin(newUser);
+          if (alreadyVerified) {
+              onLogin(newUser);
+          } else {
+              setTempUserId(newUser.id);
+              setStep('verify_otp');
+          }
       } catch (err: any) {
           console.error(err);
           setError(err.message || 'Error al registrar usuario.');
@@ -138,17 +151,55 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       }
   };
 
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError('');
+      setLoading(true);
+
+      if (!tempUserId) {
+          setError("Error de sesión. Por favor intenta registrarte de nuevo.");
+          setStep('register');
+          setLoading(false);
+          return;
+      }
+
+      try {
+          const isValid = await verifyUserOTP(tempUserId, otp);
+          if (isValid) {
+              // Fetch full user to login
+              const fullPhone = getFullPhone();
+              const user = await getUserByPhone(fullPhone);
+              if (user) {
+                  onLogin(user);
+              } else {
+                  throw new Error("Error recuperando usuario verificado.");
+              }
+          } else {
+              setError("Código incorrecto. Por favor verifica el mensaje en WhatsApp.");
+          }
+      } catch (err: any) {
+          console.error(err);
+          setError("Error al verificar código.");
+      } finally {
+          setLoading(false);
+      }
+  }
+
   const inputBaseClasses = "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
   const labelClasses = "block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-2";
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background text-textPrimary dark:text-dark-textPrimary">
-      {loading && <Spinner message={step === 'check_phone' ? "Verificando..." : "Enviando bienvenida..."} />}
+      {loading && <Spinner message={
+          step === 'check_phone' ? "Verificando..." : 
+          step === 'register' ? "Enviando código por WhatsApp..." :
+          "Validando llave..."
+      } />}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden"><Logo /></div>
           
-          {step === 'check_phone' ? (
+          {step === 'check_phone' && (
               <>
                 <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4">
                     Bienvenido a Olivia
@@ -197,7 +248,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     </button>
                 </form>
               </>
-          ) : (
+          )}
+
+          {step === 'register' && (
               <>
                 <div className="mb-4">
                     <button onClick={() => setStep('check_phone')} className="text-sm text-textSecondary hover:text-primary flex items-center gap-1"><ArrowRight className="rotate-180" size={14}/> Volver</button>
@@ -239,10 +292,62 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                         <button type="submit" className="w-full py-3 font-bold text-white bg-accent-teal rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
                             <div className="flex items-center justify-center gap-2">
                                 <UserPlus size={18} />
-                                Registrarme
+                                Enviar Código
                             </div>
                         </button>
                     </div>
+                </form>
+              </>
+          )}
+
+          {step === 'verify_otp' && (
+              <>
+                 <div className="mb-4">
+                    <button onClick={() => setStep('register')} className="text-sm text-textSecondary hover:text-primary flex items-center gap-1"><ArrowRight className="rotate-180" size={14}/> Corregir datos</button>
+                </div>
+
+                 <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4">
+                    Verifica tu cuenta
+                </h1>
+                <p className="text-textSecondary dark:text-dark-textSecondary mb-8">
+                    Hemos enviado una <strong>Llave de Seguridad</strong> de 6 dígitos a tu WhatsApp. Ingrésala para continuar.
+                </p>
+
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl mb-8 border border-green-100 dark:border-green-900/30 flex items-start gap-3">
+                    <div className="bg-green-100 dark:bg-green-800 p-2 rounded-full mt-1">
+                        <CheckCircle2 size={20} className="text-green-600 dark:text-green-300"/>
+                    </div>
+                     <div>
+                        <p className="font-semibold text-green-800 dark:text-green-300">Mensaje Enviado</p>
+                        <p className="text-sm text-green-700 dark:text-green-400 mt-1">Revisa tu WhatsApp, el código debería llegar en unos segundos.</p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleVerifyOTP} className="space-y-6">
+                    <div>
+                        <label className={labelClasses}>Llave de 6 Dígitos</label>
+                        <div className="relative">
+                             <KeyRound className="absolute left-3 top-3.5 text-gray-400" size={18}/>
+                             <input 
+                                type="text" 
+                                value={otp} 
+                                onChange={e => {
+                                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                    setOtp(val);
+                                }} 
+                                className={`${inputBaseClasses} pl-10 text-2xl tracking-widest font-mono`} 
+                                placeholder="000000" 
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <button type="submit" disabled={otp.length < 6} className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <div className="flex items-center justify-center gap-2">
+                            Validar y Entrar
+                            <ArrowRight size={18} />
+                        </div>
+                    </button>
                 </form>
               </>
           )}

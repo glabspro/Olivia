@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Theme } from '../types';
-import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown } from 'lucide-react';
 import Logo from './Logo';
 
 interface LayoutProps {
@@ -58,19 +58,6 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
          <nav className="flex-grow px-4 py-4 space-y-1">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} />)}
          </nav>
-         
-         {/* Bottom Profile Section in Sidebar */}
-         <div className="p-4 border-t border-border dark:border-dark-border">
-             <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                 <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      {user.companyName.charAt(0)}
-                 </div>
-                 <div className="flex-1 min-w-0">
-                     <p className="text-sm font-medium text-textPrimary dark:text-dark-textPrimary truncate">{user.companyName}</p>
-                     <p className="text-xs text-textSecondary dark:text-dark-textSecondary truncate">Ver perfil</p>
-                 </div>
-             </div>
-         </div>
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -80,40 +67,56 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                <div className="lg:hidden">
                  <Logo />
                </div>
-              <div className="flex items-center gap-2">
+               
+               {/* Spacer to push profile to right on mobile or if logo is hidden on desktop */}
+               <div className="flex-1 lg:hidden"></div>
+
+              <div className="flex items-center gap-3 md:gap-4">
                 <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
                   {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
                 
-                {/* Profile Dropdown (Top Right) - mainly for Mobile or quick access */}
+                {/* Profile Dropdown (Prominent Position) */}
                 <div className="relative">
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)} 
-                    className="flex items-center gap-2 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+                    className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-border transition-all"
                   >
-                    <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
                       {user.companyName.charAt(0)}
                     </div>
+                    <div className="hidden md:flex flex-col items-start">
+                        <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary leading-tight">{user.companyName}</span>
+                        <span className="text-xs text-textSecondary dark:text-dark-textSecondary">Propietario</span>
+                    </div>
+                    <ChevronDown size={16} className="text-textSecondary hidden md:block"/>
                   </button>
+
                   {showProfileMenu && (
                     <div 
                       className="absolute right-0 mt-2 w-64 bg-surface dark:bg-dark-surface rounded-xl shadow-xl py-2 z-50 border border-border dark:border-dark-border animate-fade-in"
                       onClick={() => setShowProfileMenu(false)}
                     >
-                      <div className="px-4 py-3 border-b border-border dark:border-dark-border">
+                      <div className="px-4 py-3 border-b border-border dark:border-dark-border md:hidden">
                         <p className="font-semibold text-textPrimary dark:text-dark-textPrimary truncate">{user.companyName}</p>
                         <p className="text-sm text-textSecondary dark:text-dark-textSecondary">{user.phone}</p>
-                        {user.is_admin && <span className="text-xs text-red-500 font-bold uppercase tracking-wider">Administrador</span>}
                       </div>
+                      <div className="px-4 py-3 border-b border-border dark:border-dark-border hidden md:block">
+                        <p className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase tracking-wider mb-1">Cuenta</p>
+                        <p className="font-medium text-textPrimary dark:text-dark-textPrimary truncate">{user.fullName}</p>
+                        <p className="text-sm text-textSecondary dark:text-dark-textSecondary">{user.phone}</p>
+                         {user.is_admin && <span className="mt-1 inline-block text-xs text-red-500 font-bold uppercase tracking-wider bg-red-100 dark:bg-red-900/20 px-2 py-0.5 rounded">Admin</span>}
+                      </div>
+
                        <button 
                         onClick={() => setActivePage('settings')}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                       >
                         <SettingsIcon size={16} /> Mi Perfil / Configuración
                       </button>
                       <button 
                         onClick={onLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                       >
                         <LogOut size={16} /> Cerrar Sesión
                       </button>
@@ -125,7 +128,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 bg-background dark:bg-dark-background">
           {children}
         </main>
       </div>

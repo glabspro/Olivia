@@ -9,7 +9,7 @@ import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissio
 const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co'; 
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA';
 
-// URL del Webhook de n8n para registro de nuevos usuarios
+// URL del Webhook de n8n para registro de nuevos usuarios y envio de OTP
 const N8N_REGISTRATION_WEBHOOK = 'https://webhook.red51.site/webhook/new-user-olivia';
 
 const areCredentialsValid = (url?: string, key?: string): boolean => {
@@ -86,20 +86,30 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
             is_admin: data.is_admin,
             email: data.email,
             is_onboarded: data.is_onboarded,
-            permissions: data.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+            permissions: data.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+            is_verified: data.is_verified
         };
     }
 
     return null;
 };
 
-export const registerNewUser = async (userData: { fullName: string, companyName: string, phone: string }): Promise<User> => {
+// Step 1: Register User and Generate OTP
+export const registerNewUser = async (userData: { fullName: string, companyName: string, phone: string }): Promise<{ user: User, alreadyVerified: boolean }> => {
     if (!supabase) throw new Error("Supabase not configured");
     
     const cleanPhone = userData.phone.replace(/\D/g, '');
-    const newId = crypto.randomUUID(); // Generamos un ID único manualmente
+    
+    // Check if user exists first
+    const existingUser = await getUserByPhone(cleanPhone);
+    if (existingUser) {
+        return { user: existingUser, alreadyVerified: !!existingUser.is_verified };
+    }
 
-    // 1. Guardar en Supabase
+    const newId = crypto.randomUUID();
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit code
+
+    // 1. Guardar en Supabase (is_verified = false)
     const { error } = await supabase
         .from('profiles')
         .insert({
@@ -109,51 +119,77 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
             phone: cleanPhone,
             is_admin: false,
             is_onboarded: false,
+            is_verified: false,
+            verify_token: otpCode,
             permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
         });
 
     if (error) {
-        // Si el error es por duplicado (código 23505 en Postgres), asumimos que ya existe y lo devolvemos
-        // Esto hace el registro "idempotente" y evita errores si el usuario da doble click
-        if (error.code === '23505' || error.message.includes('unique constraint')) {
-            console.log("Usuario ya existe, procediendo a login...");
-            const existingUser = await getUserByPhone(cleanPhone);
-            if (existingUser) return existingUser;
-        }
         throw new Error(`Error creando perfil: ${error.message}`);
     }
     
-    // 2. Seed Initial Data (Non-blocking but awaited for better UX on first load)
+    // 2. Seed Initial Data
     await seedInitialData(newId);
 
-    // 3. Notificar a n8n (Disparar Webhook de Bienvenida)
+    // 3. Notificar a n8n con el OTP
     try {
-        // Enviamos los datos al Webhook para procesar con Evolution API
-        fetch(N8N_REGISTRATION_WEBHOOK, {
+        console.log(`Enviando OTP ${otpCode} al webhook de n8n...`);
+        await fetch(N8N_REGISTRATION_WEBHOOK, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: userData.fullName,
                 phone: cleanPhone,
                 business_name: userData.companyName,
-                event: 'new_registration',
+                otp: otpCode,
+                event: 'verification_request',
                 date: new Date().toISOString()
             })
-        }).catch(err => console.error("Error notificando a n8n (silencioso):", err));
+        });
+        console.log("Webhook enviado.");
     } catch (e) {
         console.error("Error trigger webhook:", e);
     }
 
     return {
-        id: newId,
-        fullName: userData.fullName,
-        companyName: userData.companyName,
-        phone: cleanPhone,
-        is_admin: false,
-        is_onboarded: false,
-        permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+        user: {
+            id: newId,
+            fullName: userData.fullName,
+            companyName: userData.companyName,
+            phone: cleanPhone,
+            is_admin: false,
+            is_onboarded: false,
+            is_verified: false,
+            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+        },
+        alreadyVerified: false
     };
 };
+
+// Step 2: Verify OTP
+export const verifyUserOTP = async (userId: string, inputOtp: string): Promise<boolean> => {
+    if (!supabase) return false;
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('verify_token')
+        .eq('id', userId)
+        .single();
+
+    if (error || !data) return false;
+
+    if (data.verify_token === inputOtp) {
+        // Mark as verified
+        await supabase
+            .from('profiles')
+            .update({ is_verified: true, verify_token: null }) // Clear token after use
+            .eq('id', userId);
+        return true;
+    }
+
+    return false;
+};
+
 
 export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | null> => {
     if (!supabase) return null;
@@ -174,7 +210,8 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         is_admin: data.is_admin,
         email: supabaseUser.email,
         is_onboarded: data.is_onboarded,
-        permissions: data.permissions
+        permissions: data.permissions,
+        is_verified: data.is_verified
     };
 };
 
@@ -202,7 +239,8 @@ export const getAllUsers = async (): Promise<User[]> => {
         email: u.email,
         is_admin: u.is_admin,
         is_onboarded: u.is_onboarded,
-        permissions: u.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+        permissions: u.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+        is_verified: u.is_verified
     }));
 };
 
