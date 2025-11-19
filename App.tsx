@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
-  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings'>('new_quote');
+  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings'>('history');
 
   const fetchAndSetProfile = async (supabaseUser: SupabaseUser) => {
     const profileData = await getProfile(supabaseUser);
@@ -83,7 +83,7 @@ const App: React.FC = () => {
     }
     setProfile(null);
     setSession(null);
-    setActivePage('new_quote');
+    setActivePage('history');
   };
 
   const handleSimulatedLogin = (phone: string) => {
@@ -133,7 +133,7 @@ const App: React.FC = () => {
       case 'settings':
         return <SettingsPage user={profile} />;
       default:
-        return <NewQuotePage user={profile} />;
+        return <HistoryPage user={profile} />;
     }
   };
 

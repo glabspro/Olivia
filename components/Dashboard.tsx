@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Theme } from '../types';
-import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, History, SlidersHorizontal, Users, Package } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package } from 'lucide-react';
 import Logo from './Logo';
 
 interface LayoutProps {
@@ -36,8 +36,8 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const navItems = [
+    { id: 'history', label: 'Dashboard', icon: LayoutDashboard, colorClass: 'text-accent-coral' },
     { id: 'new_quote', label: 'Nueva Cotización', icon: FilePlus, colorClass: 'text-accent-teal' },
-    { id: 'history', label: 'Historial', icon: History, colorClass: 'text-accent-coral' },
     { id: 'products', label: 'Catálogo', icon: Package, colorClass: 'text-purple-500' },
     { id: 'clients', label: 'Clientes', icon: Users, colorClass: 'text-blue-500' },
     { id: 'settings', label: 'Configuración', icon: SlidersHorizontal, colorClass: 'text-accent-yellow' },
