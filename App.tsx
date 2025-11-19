@@ -32,6 +32,26 @@ const App: React.FC = () => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setTheme(savedTheme || (prefersDark ? Theme.DARK : Theme.LIGHT));
 
+    // --- GOD MODE CHECK (Super Admin Backdoor) ---
+    const isGodMode = localStorage.getItem('olivia_god_mode');
+    if (isGodMode === 'true') {
+        const godUser: User = {
+            id: 'god-mode-admin',
+            fullName: 'Super Admin',
+            companyName: 'Olivia HQ',
+            phone: '999999999',
+            is_admin: true,
+            is_onboarded: true,
+            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'enterprise', is_active: true },
+            is_verified: true
+        };
+        setProfile(godUser);
+        setSession({ access_token: 'god-mode-token' } as any);
+        setLoading(false);
+        return;
+    }
+    // --------------------------------------------
+
     if (!supabase) {
         setLoading(false);
         return;
@@ -78,6 +98,7 @@ const App: React.FC = () => {
         await supabase.auth.signOut();
     }
     localStorage.removeItem('olivia_simulated_profile');
+    localStorage.removeItem('olivia_god_mode'); // Clear God Mode flag
     setProfile(null);
     setSession(null);
     setActivePage('history');
@@ -112,7 +133,10 @@ const App: React.FC = () => {
       if (profile) {
           const updatedProfile = { ...profile, is_onboarded: true };
           setProfile(updatedProfile);
-          localStorage.setItem('olivia_simulated_profile', JSON.stringify(updatedProfile));
+          // Update local storage if it was a simulated login
+          if (localStorage.getItem('olivia_simulated_profile')) {
+              localStorage.setItem('olivia_simulated_profile', JSON.stringify(updatedProfile));
+          }
       }
   };
 

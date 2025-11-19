@@ -250,6 +250,14 @@ export const updateUserPermissions = async (userId: string, permissions: UserPer
     if (error) throw error;
 };
 
+export const deleteUserProfile = async (userId: string) => {
+    if (!supabase) return;
+    // Nota: En un sistema real con integridad referencial, esto podría fallar si hay tablas relacionadas 
+    // sin "ON DELETE CASCADE". Asumimos que profiles es la tabla principal.
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) throw error;
+};
+
 // --- Database Functions ---
 
 export const saveQuotation = async (
