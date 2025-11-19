@@ -1,6 +1,6 @@
 
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
-import { User, QuotationItem, SavedQuotation, DbClient, DbProduct } from '../types';
+import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions } from '../types';
 
 // -----------------------------------------------------------------------------
 // ¡IMPORTANTE! Reemplaza estos valores con las credenciales de tu proyecto de Supabase.
@@ -84,7 +84,9 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
             companyName: data.company_name,
             phone: data.phone,
             is_admin: data.is_admin,
-            email: data.email
+            email: data.email,
+            is_onboarded: data.is_onboarded,
+            permissions: data.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
         };
     }
 
@@ -105,7 +107,9 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
             full_name: userData.fullName,
             company_name: userData.companyName,
             phone: cleanPhone,
-            is_admin: false
+            is_admin: false,
+            is_onboarded: false,
+            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
         });
 
     if (error) {
@@ -145,7 +149,9 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
         fullName: userData.fullName,
         companyName: userData.companyName,
         phone: cleanPhone,
-        is_admin: false
+        is_admin: false,
+        is_onboarded: false,
+        permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
     };
 };
 
@@ -154,7 +160,7 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, company_name, phone, is_admin')
+        .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
@@ -167,7 +173,43 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         phone: data.phone || supabaseUser.phone || '',
         is_admin: data.is_admin,
         email: supabaseUser.email,
+        is_onboarded: data.is_onboarded,
+        permissions: data.permissions
     };
+};
+
+export const completeOnboarding = async (userId: string) => {
+    if (!supabase) return;
+    await supabase.from('profiles').update({ is_onboarded: true }).eq('id', userId);
+};
+
+// --- Admin Functions ---
+
+export const getAllUsers = async (): Promise<User[]> => {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+
+    return data.map((u: any) => ({
+        id: u.id,
+        fullName: u.full_name,
+        companyName: u.company_name,
+        phone: u.phone,
+        email: u.email,
+        is_admin: u.is_admin,
+        is_onboarded: u.is_onboarded,
+        permissions: u.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+    }));
+};
+
+export const updateUserPermissions = async (userId: string, permissions: UserPermissions) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('profiles').update({ permissions }).eq('id', userId);
+    if (error) throw error;
 };
 
 // --- Database Functions ---

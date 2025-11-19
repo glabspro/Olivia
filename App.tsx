@@ -8,6 +8,8 @@ import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import ClientsPage from './pages/ClientsPage';
 import ProductsPage from './pages/ProductsPage';
+import OnboardingPage from './pages/OnboardingPage';
+import AdminPage from './pages/AdminPage';
 import { supabase, getProfile } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
@@ -17,7 +19,7 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
-  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings'>('history');
+  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin'>('history');
 
   const fetchAndSetProfile = async (supabaseUser: SupabaseUser) => {
     const profileData = await getProfile(supabaseUser);
@@ -36,8 +38,6 @@ const App: React.FC = () => {
     }
 
     // Check existing session
-    // Nota: Como estamos usando un login híbrido (simulado para simplificar pero guardando en BD), 
-    // dependemos principalmente del estado local 'profile' si no hay Auth de Supabase real activo.
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
             setSession(session);
@@ -47,7 +47,7 @@ const App: React.FC = () => {
                 setLoading(false);
             }
         } else {
-            // Check if we have a persisted "simulated" session in localStorage for better UX on refresh
+            // Check simulated session
             const savedProfile = localStorage.getItem('olivia_simulated_profile');
             if(savedProfile) {
                 setProfile(JSON.parse(savedProfile));
@@ -84,10 +84,8 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (user: User) => {
-      // Persist simple login
       localStorage.setItem('olivia_simulated_profile', JSON.stringify(user));
       
-      // Create a dummy session object to satisfy the types
       const simulatedSession: Session = {
           access_token: 'simulated-token',
           refresh_token: 'simulated-refresh-token',
@@ -109,6 +107,14 @@ const App: React.FC = () => {
       setSession(simulatedSession);
       setProfile(user);
   };
+  
+  const handleOnboardingComplete = () => {
+      if (profile) {
+          const updatedProfile = { ...profile, is_onboarded: true };
+          setProfile(updatedProfile);
+          localStorage.setItem('olivia_simulated_profile', JSON.stringify(updatedProfile));
+      }
+  };
 
   const renderActivePage = () => {
     if (!profile) return null;
@@ -123,6 +129,8 @@ const App: React.FC = () => {
         return <ProductsPage user={profile} />;
       case 'settings':
         return <SettingsPage user={profile} />;
+      case 'admin':
+        return <AdminPage currentUser={profile} />;
       default:
         return <HistoryPage user={profile} />;
     }
@@ -133,6 +141,22 @@ const App: React.FC = () => {
   }
   
   if (session && profile) {
+      // Check Permissions Block
+      if (profile.permissions && profile.permissions.is_active === false) {
+          return (
+              <div className="h-screen flex flex-col items-center justify-center bg-gray-50 text-center p-4">
+                  <h1 className="text-3xl font-bold text-red-600 mb-2">Acceso Restringido</h1>
+                  <p className="text-gray-600">Tu cuenta ha sido desactivada por un administrador.</p>
+                  <button onClick={handleLogout} className="mt-4 px-4 py-2 bg-gray-200 rounded-lg">Cerrar Sesión</button>
+              </div>
+          )
+      }
+
+      // Show Onboarding if not completed
+      if (profile.is_onboarded === false) {
+          return <OnboardingPage user={profile} onComplete={handleOnboardingComplete} />;
+      }
+
       return (
         <Layout 
           user={profile} 
@@ -147,7 +171,6 @@ const App: React.FC = () => {
       );
   }
 
-  // If no session, show Auth page
   return <Auth onLogin={handleLogin} />;
 };
 

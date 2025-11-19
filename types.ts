@@ -63,6 +63,14 @@ export interface Settings {
   taxRate: number;
 }
 
+// Admin & Permissions Types
+export interface UserPermissions {
+    can_use_ai: boolean;
+    can_download_pdf: boolean;
+    plan: 'free' | 'pro' | 'enterprise';
+    is_active: boolean;
+}
+
 export interface User {
   id: string;
   fullName: string;
@@ -70,6 +78,8 @@ export interface User {
   phone: string;
   email?: string;
   is_admin?: boolean;
+  is_onboarded?: boolean;
+  permissions?: UserPermissions;
 }
 
 // Database Types
