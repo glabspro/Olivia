@@ -5,8 +5,8 @@ import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { saveQuotation } from '../services/supabaseClient';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { saveQuotation, getMonthlyQuoteCount, incrementAIUsage } from '../services/supabaseClient';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -41,6 +41,25 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     
+    // Limit Logic
+    const [quoteCount, setQuoteCount] = useState(0);
+    const isFreePlan = user.permissions?.plan === 'free';
+    const quoteLimit = 5;
+    const limitReached = isFreePlan && quoteCount >= quoteLimit;
+    
+    // AI Limit Logic
+    const aiUsageLimit = 2;
+    const currentAiUsage = user.ai_usage_count || 0;
+    const aiLimitReached = isFreePlan && currentAiUsage >= aiUsageLimit;
+    
+    useEffect(() => {
+        const checkLimits = async () => {
+            const count = await getMonthlyQuoteCount(user.id);
+            setQuoteCount(count);
+        };
+        checkLimits();
+    }, [user.id]);
+
     const [settings, setSettings] = useState<Settings>({
         companyName: user.companyName,
         companyLogo: null,
@@ -195,12 +214,21 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
             setSettings(newSettings);
             setHasBeenFinalized(true);
+            // Refresh count after finalizing
+            const count = await getMonthlyQuoteCount(user.id);
+            setQuoteCount(count);
         } catch (e) {
             console.error("Failed to save incremented quote number", e);
         }
     };
 
     const handleFileUpload = async (file: File) => {
+        // AI Permission & Limit Check
+        if (aiLimitReached) {
+            alert("Has agotado tus 2 usos gratuitos de IA. Por favor actualiza a PRO para acceso ilimitado.");
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
         try {
@@ -214,6 +242,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             if (extractedClientName) {
                 setClientName(extractedClientName);
             }
+            
+            // Success! Increment usage counter
+            await incrementAIUsage(user.id);
+
             setMarginType(settings.defaultMarginType);
             setMarginValue(settings.defaultMarginValue);
             setStep(2);
@@ -263,6 +295,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     };
 
     const handleDownloadPDF = () => {
+        if (limitReached && !hasBeenFinalized) {
+            alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
+            return;
+        }
+
         const previewElement = pdfContainerRef.current;
         if (!previewElement) return;
 
@@ -292,6 +329,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     };
 
     const handleSendEmail = () => {
+        if (limitReached && !hasBeenFinalized) {
+             alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
+             return;
+        }
+
         const subject = `Cotización ${currentQuotationNumber} - ${settings.companyName}`;
         const body = `Estimado(a) ${clientName},\n\nAdjunto encontrarás la cotización solicitada.\n\n${whatsAppMessage}\n\nAtentamente,\n${settings.companyName}`;
         
@@ -302,6 +344,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
     const handleSendToWebhook = async () => {
         if (!clientPhone || isSending || sentSuccess) return;
+        
+        if (limitReached && !hasBeenFinalized) {
+             alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
+             return;
+        }
 
         setIsSending(true);
 
@@ -427,8 +474,23 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                 <div className="max-w-4xl mx-auto animate-fade-in">
                      <div className="text-center mb-10">
                         <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">Crea una Nueva Cotización</h2>
-                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Elige cómo quieres empezar. Importa un documento para que la IA haga el trabajo, o empieza desde cero.</p>
+                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Elige cómo quieres empezar.</p>
+                        {isFreePlan && (
+                            <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gray-100 dark:bg-white/5 text-sm text-textSecondary border border-border">
+                                <span>Cotizaciones este mes: <strong>{quoteCount} / {quoteLimit}</strong></span>
+                            </div>
+                        )}
                      </div>
+                     
+                     {limitReached && (
+                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-4 rounded-xl flex items-center gap-3 mb-8">
+                             <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
+                             <div>
+                                 <h4 className="font-bold text-red-600 dark:text-red-400">Límite Mensual Alcanzado</h4>
+                                 <p className="text-sm text-red-500 dark:text-red-300">Has llegado al máximo de {quoteLimit} cotizaciones gratuitas. Actualiza a PRO para ilimitadas.</p>
+                             </div>
+                         </div>
+                     )}
 
                     {error && (
                         <div className="w-full bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-lg relative mb-8" role="alert">
@@ -438,28 +500,43 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                     )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Card 1: Import */}
+                        {/* Card 1: Import (AI) */}
                         <label 
                             htmlFor="file-upload"
+                            onClick={(e) => {
+                                if (aiLimitReached) {
+                                    e.preventDefault();
+                                    alert("Has agotado tus 2 usos gratuitos de IA. Actualiza a PRO.");
+                                }
+                            }}
                             onDragEnter={handleDragEnter}
                             onDragLeave={handleDragLeave}
                             onDragOver={handleDragOver}
                             onDrop={handleDrop}
-                            className={`flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1 ${isDragging ? 'border-primary dark:border-dark-primary shadow-lg scale-105' : 'border-dashed border-border dark:border-dark-border'}`}
+                            className={`flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1 ${isDragging ? 'border-primary dark:border-dark-primary shadow-lg scale-105' : 'border-dashed border-border dark:border-dark-border'} ${aiLimitReached ? 'opacity-75' : ''}`}
                         >
-                            <div className="p-4 bg-primary/10 rounded-full mb-4 transition-transform group-hover:scale-110">
-                                <FileUp size={32} className="text-primary" />
+                            <div className="absolute top-4 right-4">
+                                {isFreePlan ? (
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${aiLimitReached ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                                        {aiLimitReached ? <span className="flex items-center gap-1"><Lock size={10}/> 0/2 Usos</span> : <span className="flex items-center gap-1"><Sparkles size={10}/> {currentAiUsage}/2 Gratis</span>}
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-bold bg-primary text-white px-2 py-1 rounded-full">ILIMITADO</span>
+                                )}
                             </div>
-                            <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Importar desde Documento</h3>
-                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary mt-1">Ideal para digitalizar cotizaciones. La IA extraerá los productos por ti.</p>
-                            <input id="file-upload" type="file" className="sr-only" onChange={handleFileChange} disabled={isLoading} accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx"/>
+                            <div className={`p-4 rounded-full mb-4 transition-transform group-hover:scale-110 ${aiLimitReached ? 'bg-gray-100 text-gray-400' : 'bg-primary/10 text-primary'}`}>
+                                <FileUp size={32} />
+                            </div>
+                            <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Importar desde Documento (IA)</h3>
+                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary mt-1">Ideal para digitalizar cotizaciones automáticamente.</p>
+                            <input id="file-upload" type="file" className="sr-only" onChange={handleFileChange} disabled={isLoading || aiLimitReached} accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx"/>
                         </label>
                         
                         {/* Card 2: Manual */}
                         <button
                             onClick={handleManualCreation}
-                            disabled={isLoading}
-                            className="flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 border-border dark:border-dark-border transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 disabled:opacity-50"
+                            disabled={isLoading || limitReached}
+                            className={`flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 border-border dark:border-dark-border transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:shadow-none`}
                         >
                             <div className="p-4 bg-accent-teal/10 rounded-full mb-4 transition-transform group-hover:scale-110">
                                 <Edit size={32} className="text-accent-teal" />
@@ -471,6 +548,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                 </div>
             )}
 
+            {/* Steps 2 & 3 - (No Changes except limits check on save/send) */}
             {step === 2 && (
                 <div className="max-w-4xl mx-auto animate-fade-in">
                      <div className="flex justify-between items-center mb-6">
@@ -663,10 +741,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                     />
                                     <button
                                         onClick={handleSendToWebhook}
-                                        disabled={!sendButtonEnabled}
+                                        disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized)}
                                         className={`group w-full flex items-center justify-center gap-3 px-4 py-4 text-white font-bold text-lg rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${sentSuccess ? 'bg-green-600' : 'bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:brightness-110 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-800 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none'}`}
                                     >
-                                        {buttonContent}
+                                        {limitReached && !hasBeenFinalized ? (
+                                            <><Lock size={20}/> Límite Alcanzado</>
+                                        ) : (
+                                            buttonContent
+                                        )}
                                     </button>
                                 </div>
 
@@ -676,7 +758,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                 <div className="space-y-3">
                                     <button
                                         onClick={handleSendEmail}
-                                        disabled={!clientEmail}
+                                        disabled={!clientEmail || (limitReached && !hasBeenFinalized)}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Abrir cliente de correo"}
                                     >
@@ -686,8 +768,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
                                     <button
                                         onClick={handleDownloadPDF}
-                                        disabled={items.length === 0}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-pink-600 hover:shadow-md transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                                        disabled={items.length === 0 || (limitReached && !hasBeenFinalized)}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-pink-600 hover:shadow-md transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Download size={20} />
                                         Descargar PDF

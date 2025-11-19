@@ -82,6 +82,7 @@ export interface User {
   permissions?: UserPermissions;
   verify_token?: string;
   is_verified?: boolean;
+  ai_usage_count?: number;
 }
 
 // Database Types

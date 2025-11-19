@@ -87,7 +87,8 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
             email: data.email,
             is_onboarded: data.is_onboarded,
             permissions: data.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
-            is_verified: data.is_verified
+            is_verified: data.is_verified,
+            ai_usage_count: data.ai_usage_count || 0
         };
     }
 
@@ -121,7 +122,8 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
             is_onboarded: false,
             is_verified: false,
             verify_token: otpCode,
-            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+            ai_usage_count: 0
         });
 
     if (error) {
@@ -160,7 +162,8 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
             is_admin: false,
             is_onboarded: false,
             is_verified: false,
-            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true }
+            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+            ai_usage_count: 0
         },
         alreadyVerified: false
     };
@@ -243,13 +246,27 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         email: supabaseUser.email,
         is_onboarded: data.is_onboarded,
         permissions: data.permissions,
-        is_verified: data.is_verified
+        is_verified: data.is_verified,
+        ai_usage_count: data.ai_usage_count || 0
     };
 };
 
 export const completeOnboarding = async (userId: string) => {
     if (!supabase) return;
     await supabase.from('profiles').update({ is_onboarded: true }).eq('id', userId);
+};
+
+export const incrementAIUsage = async (userId: string) => {
+    if (!supabase) return;
+    
+    // Fetch current count to allow incrementing without complex RPC for now
+    const { data } = await supabase.from('profiles').select('ai_usage_count').eq('id', userId).single();
+    const current = data?.ai_usage_count || 0;
+    
+    await supabase
+        .from('profiles')
+        .update({ ai_usage_count: current + 1 })
+        .eq('id', userId);
 };
 
 // --- Admin Functions ---
@@ -272,7 +289,8 @@ export const getAllUsers = async (): Promise<User[]> => {
         is_admin: u.is_admin,
         is_onboarded: u.is_onboarded,
         permissions: u.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
-        is_verified: u.is_verified
+        is_verified: u.is_verified,
+        ai_usage_count: u.ai_usage_count || 0
     }));
 };
 
@@ -305,6 +323,25 @@ export const deleteUserProfile = async (userId: string) => {
 };
 
 // --- Database Functions ---
+
+export const getMonthlyQuoteCount = async (userId: string): Promise<number> => {
+    if (!supabase) return 0;
+
+    const date = new Date();
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+
+    const { count, error } = await supabase
+        .from('quotations')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', firstDayOfMonth);
+    
+    if (error) {
+        console.error("Error counting monthly quotes:", error);
+        return 0;
+    }
+    return count || 0;
+}
 
 export const saveQuotation = async (
     userId: string,

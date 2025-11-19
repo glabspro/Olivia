@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { DbProduct, User } from '../types';
 import { getProducts, saveProduct, deleteProduct } from '../services/supabaseClient';
-import { Package, Search, Plus, Edit2, Trash2, X, DollarSign } from 'lucide-react';
+import { Package, Search, Plus, Edit2, Trash2, X, DollarSign, Lock } from 'lucide-react';
 
 interface ProductsPageProps {
     user: User;
@@ -81,6 +81,11 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ user }) => {
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Permission Logic
+    const isFreePlan = user.permissions?.plan === 'free';
+    const productLimit = 10;
+    const canAddProduct = !isFreePlan || products.length < productLimit;
+
     if (loading) return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>;
 
     return (
@@ -92,7 +97,9 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ user }) => {
                             Catálogo de Productos
                             <span className="absolute bottom-0 left-0 h-1 w-16 bg-purple-500 rounded-full"></span>
                         </h2>
-                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Gestiona tus productos y servicios.</p>
+                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">
+                            {isFreePlan ? `Tienes ${products.length} / ${productLimit} productos (Plan Free)` : 'Gestiona tus productos y servicios.'}
+                        </p>
                     </div>
                     <div className="flex gap-3 w-full md:w-auto">
                         <div className="relative flex-grow md:flex-grow-0">
@@ -106,10 +113,11 @@ const ProductsPage: React.FC<ProductsPageProps> = ({ user }) => {
                             <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                         </div>
                         <button 
-                            onClick={() => handleOpenModal()}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 transition-colors whitespace-nowrap"
+                            onClick={() => canAddProduct && handleOpenModal()}
+                            disabled={!canAddProduct}
+                            className={`flex items-center gap-2 px-4 py-2 font-bold rounded-lg transition-colors whitespace-nowrap ${canAddProduct ? 'bg-primary text-white hover:bg-opacity-90' : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'}`}
                         >
-                            <Plus size={18} />
+                            {canAddProduct ? <Plus size={18} /> : <Lock size={18} />}
                             <span className="hidden sm:inline">Nuevo Producto</span>
                         </button>
                     </div>
