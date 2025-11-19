@@ -4,7 +4,7 @@ import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp } from 'lucide-react';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -21,6 +21,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');
+    const [clientEmail, setClientEmail] = useState('');
     
     const [selectedTermId, setSelectedTermId] = useState<string>('');
     const [customTerm, setCustomTerm] = useState('');
@@ -67,7 +68,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         taxRate: 18,
     });
     
+    // Ref for the hidden container used for generation (high quality)
     const pdfContainerRef = useRef<HTMLDivElement>(null);
+    
     const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     const totalWithMargin = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
     const finalTotal = taxType === TaxType.ADDED ? totalWithMargin * (1 + taxRate / 100) : totalWithMargin;
@@ -212,6 +215,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         setTaxRate(settings.taxRate);
         setClientName('');
         setClientPhone('');
+        setClientEmail('');
         
         if (settings.paymentTerms.length > 0) {
             setSelectedTermId(settings.paymentTerms[0].id);
@@ -236,6 +240,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         const previewElement = pdfContainerRef.current;
         if (!previewElement) return;
 
+        setIsLoading(true);
         html2canvas(previewElement, { 
           scale: 2, 
           useCORS: true, 
@@ -249,11 +254,22 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`Cotizacion_${currentQuotationNumber}_${clientName.replace(/ /g,"_") || 'cliente'}.pdf`);
             finalizeAndIncrementQuoteNumber();
+            setIsLoading(false);
         })
         .catch(err => {
             console.error("Error generating PDF:", err);
             alert("Hubo un problema al generar el PDF. Por favor, intente de nuevo.");
+            setIsLoading(false);
         });
+    };
+
+    const handleSendEmail = () => {
+        const subject = `Cotización ${currentQuotationNumber} - ${settings.companyName}`;
+        const body = `Estimado(a) ${clientName},\n\nAdjunto encontrarás la cotización solicitada.\n\n${whatsAppMessage}\n\nAtentamente,\n${settings.companyName}`;
+        
+        const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(mailtoLink, '_blank');
+        finalizeAndIncrementQuoteNumber();
     };
 
     const handleSendToWebhook = async () => {
@@ -308,7 +324,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             };
 
             console.log("--- SIMULANDO ENVÍO A N8N WEBHOOK ---");
-            console.log("URL: https://n8n.example.com/webhook/send-quote");
             console.log("Payload:", payload);
             
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -351,9 +366,15 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const textareaClasses = `${inputClasses} min-h-[100px] resize-y`;
 
     const sendButtonEnabled = items.length > 0 && clientName && clientPhone && !isSending && !sentSuccess;
+    
     let buttonContent;
     if (sentSuccess) {
-        buttonContent = '¡Enviado con Éxito!';
+        buttonContent = (
+            <>
+                <CheckCircle size={20} />
+                ¡Enviado con Éxito!
+            </>
+        );
     } else if (isSending) {
         buttonContent = (
             <>
@@ -362,16 +383,21 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             </>
         );
     } else {
-        buttonContent = 'Enviar';
+        buttonContent = (
+            <>
+                <MessageSquare size={20} />
+                Enviar por WhatsApp
+            </>
+        );
     }
 
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full">
-            {isLoading && <Spinner message="Procesando documento en nuestro servidor..." />}
+            {isLoading && <Spinner message="Procesando..." />}
             
             {step === 1 && (
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl mx-auto animate-fade-in">
                      <div className="text-center mb-10">
                         <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">Crea una Nueva Cotización</h2>
                         <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Elige cómo quieres empezar. Importa un documento para que la IA haga el trabajo, o empieza desde cero.</p>
@@ -419,7 +445,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             )}
 
             {step === 2 && (
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl mx-auto animate-fade-in">
                      <div className="flex justify-between items-center mb-6">
                         <div>
                             <h2 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">Espacio de Trabajo</h2>
@@ -448,21 +474,28 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                         </div>
 
                         <div>
-                            <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4 flex items-center gap-2"><UserIcon size={20} className="text-accent-teal"/> 2. Ingresa los Datos del Cliente</h3>
-                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4 flex items-center gap-2"><UserIcon size={20} className="text-accent-teal"/> 2. Datos del Cliente</h3>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <input 
                                     type="text"
                                     value={clientName}
                                     onChange={(e) => setClientName(e.target.value)}
                                     className={inputClasses}
-                                    placeholder="Nombre del Cliente"
+                                    placeholder="Nombre del Cliente *"
                                 />
                                 <input 
                                     type="text"
                                     value={clientPhone}
                                     onChange={(e) => setClientPhone(e.target.value)}
                                     className={inputClasses}
-                                    placeholder="Teléfono (ej. 519...)"
+                                    placeholder="Teléfono (ej. 987654321) *"
+                                />
+                                <input 
+                                    type="email"
+                                    value={clientEmail}
+                                    onChange={(e) => setClientEmail(e.target.value)}
+                                    className={inputClasses}
+                                    placeholder="Correo (Opcional)"
                                 />
                             </div>
                         </div>
@@ -520,46 +553,124 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                             </div>
                         </div>
 
+                         {/* Move to Preview Button */}
+                         <div className="pt-6 border-t border-border dark:border-dark-border flex justify-end">
+                            <button
+                                onClick={() => setStep(3)}
+                                disabled={items.length === 0 || !clientName || !clientPhone}
+                                className="px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all duration-300 disabled:bg-gray-300 dark:disabled:bg-gray-700 flex items-center gap-2"
+                            >
+                                <Eye size={20} />
+                                Continuar a Vista Previa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {step === 3 && (
+                <div className="max-w-7xl mx-auto animate-fade-in">
+                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <div>
-                            <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4">5. Genera y Envía</h3>
-                             <div className="space-y-4">
-                                <div className="bg-green-500/10 p-4 rounded-lg space-y-3">
-                                    <label htmlFor="whatsapp-message" className="text-sm font-semibold text-green-800 dark:text-green-300 flex items-center gap-2">
-                                        <MessageSquare size={16}/> Asistente de Envío (vía n8n)
+                            <button 
+                                onClick={() => setStep(2)} 
+                                className="flex items-center gap-2 text-textSecondary dark:text-dark-textSecondary hover:text-primary mb-2 text-sm"
+                            >
+                                <ArrowLeft size={16}/> Volver a Editar
+                            </button>
+                            <h2 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">Vista Previa</h2>
+                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary">Revisa que todo esté correcto antes de enviar.</p>
+                        </div>
+                         <button onClick={resetState} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-coral bg-accent-coral/10 rounded-lg hover:bg-accent-coral/20 transition-colors">
+                            <RefreshCw size={16} />
+                            Nueva Cotización
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-8">
+                        {/* Live Preview Container */}
+                        <div className="flex-1 order-2 lg:order-1 bg-gray-100 dark:bg-zinc-900 rounded-xl p-4 md:p-8 overflow-x-auto shadow-inner border border-border dark:border-dark-border">
+                             <div className="min-w-[700px] md:min-w-full bg-white shadow-lg mx-auto max-w-[210mm] origin-top transform scale-95 md:scale-100">
+                                <QuotationPreview
+                                    items={items}
+                                    marginType={marginType}
+                                    marginValue={marginValue}
+                                    clientName={clientName}
+                                    clientPhone={clientPhone}
+                                    companyName={settings.companyName}
+                                    companyLogo={settings.companyLogo}
+                                    companyAddress={settings.companyAddress}
+                                    companyPhone={settings.companyPhone}
+                                    companyEmail={settings.companyEmail}
+                                    companyWebsite={settings.companyWebsite}
+                                    companyDocumentType={settings.companyDocumentType}
+                                    companyDocumentNumber={settings.companyDocumentNumber}
+                                    currencySymbol={settings.currencySymbol}
+                                    selectedTemplate={settings.defaultTemplate}
+                                    paymentTerms={finalPaymentTerms}
+                                    paymentMethods={finalPaymentMethods}
+                                    quotationNumber={currentQuotationNumber}
+                                    themeColor={settings.themeColor}
+                                    headerImage={settings.headerImage}
+                                    taxType={taxType}
+                                    taxRate={taxRate}
+                                />
+                             </div>
+                        </div>
+
+                        {/* Actions Panel */}
+                        <div className="w-full lg:w-96 order-1 lg:order-2 space-y-6">
+                            <div className="bg-surface dark:bg-dark-surface p-6 rounded-xl shadow-md border border-border dark:border-dark-border sticky top-24">
+                                <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary mb-4">Opciones de Envío</h3>
+                                
+                                {/* WhatsApp Section */}
+                                <div className="mb-6">
+                                    <label className="text-xs font-semibold text-textSecondary dark:text-dark-textSecondary uppercase tracking-wider mb-2 block">
+                                        Mensaje (WhatsApp)
                                     </label>
                                     <textarea 
-                                        id="whatsapp-message"
                                         value={whatsAppMessage}
                                         onChange={(e) => setWhatsAppMessage(e.target.value)}
-                                        className={`${textareaClasses} bg-white dark:bg-dark-surface`}
+                                        className={`${textareaClasses} text-sm h-24 mb-3`}
                                         placeholder="Mensaje para el cliente..."
                                     />
                                     <button
                                         onClick={handleSendToWebhook}
-                                        className={`w-full flex items-center justify-center gap-3 px-4 py-3 text-sm font-semibold text-white rounded-lg transition-colors duration-300 ${
-                                            sentSuccess 
-                                            ? 'bg-accent-teal' 
-                                            : 'bg-green-500 hover:bg-green-600'
-                                        } disabled:opacity-60 disabled:cursor-not-allowed`}
                                         disabled={!sendButtonEnabled}
+                                        className={`w-full flex items-center justify-center gap-2 px-4 py-3.5 text-white font-bold rounded-lg shadow transition-all hover:shadow-lg hover:-translate-y-0.5 ${sentSuccess ? 'bg-green-600' : 'bg-[#25D366] hover:bg-[#20BA5A] disabled:bg-gray-300 dark:disabled:bg-gray-700'}`}
                                     >
                                         {buttonContent}
                                     </button>
                                 </div>
-                                
-                                <button
-                                    onClick={handleDownloadPDF}
-                                    className="w-full flex items-center justify-center gap-2 text-center px-4 py-3 text-sm font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={items.length === 0 || !clientName}
-                                >
-                                    <Download size={16} />
-                                    Descargar solo el PDF
-                                </button>
+
+                                <hr className="border-border dark:border-dark-border mb-6"/>
+
+                                {/* Other Actions */}
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={handleSendEmail}
+                                        disabled={!clientEmail}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Abrir cliente de correo"}
+                                    >
+                                        <Mail size={20} />
+                                        Enviar por Correo
+                                    </button>
+
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        disabled={items.length === 0}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-pink-600 hover:shadow-md transition-all hover:-translate-y-0.5 disabled:opacity-50"
+                                    >
+                                        <Download size={20} />
+                                        Descargar PDF
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                     {/* Hidden Preview for PDF Generation */}
+                     {/* Hidden Preview for High-Res Generation */}
                     <div className="fixed top-0 left-[-9999px] w-[210mm] bg-white">
                         <div ref={pdfContainerRef}>
                             <QuotationPreview
