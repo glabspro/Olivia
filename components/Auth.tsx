@@ -143,19 +143,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background text-textPrimary dark:text-dark-textPrimary">
-      {loading && <Spinner message={step === 'check_phone' ? "Verificando..." : "Creando tu cuenta..."} />}
+      {loading && <Spinner message={step === 'check_phone' ? "Verificando..." : "Enviando bienvenida..."} />}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden"><Logo /></div>
           
           {step === 'check_phone' ? (
               <>
-                <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
+                <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4">
                     Bienvenido a Olivia
                 </h1>
-                <p className="text-lg font-medium mb-8 bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 p-5 rounded-xl text-center shadow-sm text-gray-600 dark:text-gray-300">
-                    Ingresa tu número de celular para <span className="text-blue-600 dark:text-blue-400 font-bold">acceder</span> o <span className="text-primary dark:text-dark-primary font-bold">crear tu cuenta</span>.
-                </p>
+                
+                {/* Highlighted Instruction Box */}
+                <div className="mb-8 p-6 bg-white dark:bg-dark-surface border border-gray-100 dark:border-gray-700 rounded-xl shadow-md text-center relative overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-primary"></div>
+                    <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+                        Ingresa tu número de celular para <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">acceder</span> o <span className="text-primary dark:text-dark-primary font-bold text-xl">crear tu cuenta</span>.
+                    </p>
+                </div>
                 
                 <form className="space-y-6" onSubmit={handleCheckPhone}>
                     <div>
