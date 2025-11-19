@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { User, Theme } from '../types';
-import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, History, SlidersHorizontal } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, History, SlidersHorizontal, Users, Package } from 'lucide-react';
 import Logo from './Logo';
 
 interface LayoutProps {
@@ -9,7 +10,7 @@ interface LayoutProps {
   theme: Theme;
   toggleTheme: () => void;
   activePage: string;
-  setActivePage: (page: 'new_quote' | 'history' | 'settings') => void;
+  setActivePage: (page: 'new_quote' | 'history' | 'clients' | 'products' | 'settings') => void;
   children: React.ReactNode;
 }
 
@@ -37,6 +38,8 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
   const navItems = [
     { id: 'new_quote', label: 'Nueva Cotización', icon: FilePlus, colorClass: 'text-accent-teal' },
     { id: 'history', label: 'Historial', icon: History, colorClass: 'text-accent-coral' },
+    { id: 'products', label: 'Catálogo', icon: Package, colorClass: 'text-purple-500' },
+    { id: 'clients', label: 'Clientes', icon: Users, colorClass: 'text-blue-500' },
     { id: 'settings', label: 'Configuración', icon: SlidersHorizontal, colorClass: 'text-accent-yellow' },
   ];
 

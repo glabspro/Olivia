@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { QuotationItem, MarginType, Template, Settings, User, PaymentOption, TaxType } from '../types';
 import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
+import { saveQuotation } from '../services/supabaseClient';
 import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -158,8 +160,32 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         }
     }, [clientName, finalTotal, settings.companyName, settings.currencySymbol, currentQuotationNumber]);
 
-    const finalizeAndIncrementQuoteNumber = () => {
+    const saveToDatabase = async () => {
+        if(hasBeenFinalized) return;
+        
+        try {
+            console.log("Guardando en Supabase...");
+            await saveQuotation(
+                user.id, 
+                { name: clientName, phone: clientPhone, email: clientEmail },
+                { 
+                    number: currentQuotationNumber, 
+                    total: finalTotal, 
+                    currency: settings.currencySymbol, 
+                    items: items 
+                }
+            );
+            console.log("Guardado exitoso.");
+        } catch (err) {
+            console.error("Error guardando en base de datos:", err);
+            // No bloqueamos la UI si falla el guardado en BD, puede ser error de red o de permisos simulados
+        }
+    };
+
+    const finalizeAndIncrementQuoteNumber = async () => {
         if (hasBeenFinalized) return;
+
+        await saveToDatabase();
 
         const newSettings = {
             ...settings,
@@ -253,7 +279,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`Cotizacion_${currentQuotationNumber}_${clientName.replace(/ /g,"_") || 'cliente'}.pdf`);
+            
             finalizeAndIncrementQuoteNumber();
+            
             setIsLoading(false);
         })
         .catch(err => {
@@ -289,7 +317,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             
             const pdfBase64 = pdf.output('datauristring').split(',')[1];
             
-            finalizeAndIncrementQuoteNumber();
+            await finalizeAndIncrementQuoteNumber();
 
             const baseSubtotalCalc = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
             const totalWithMarginCalc = marginType === MarginType.FIXED ? baseSubtotalCalc + marginValue : baseSubtotalCalc * (1 + marginValue / 100);
@@ -324,7 +352,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             };
 
             console.log("--- SIMULANDO ENVÍO A N8N WEBHOOK ---");
-            console.log("Payload:", payload);
             
             await new Promise(resolve => setTimeout(resolve, 1500));
 

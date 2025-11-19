@@ -6,6 +6,8 @@ import Layout from './components/Dashboard';
 import NewQuotePage from './pages/NewQuotePage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
+import ClientsPage from './pages/ClientsPage';
+import ProductsPage from './pages/ProductsPage';
 import { supabase, getProfile } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
@@ -15,7 +17,7 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
-  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'settings'>('new_quote');
+  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings'>('new_quote');
 
   const fetchAndSetProfile = async (supabaseUser: SupabaseUser) => {
     const profileData = await getProfile(supabaseUser);
@@ -122,10 +124,14 @@ const App: React.FC = () => {
     switch (activePage) {
       case 'new_quote':
         return <NewQuotePage user={profile} />;
+      case 'history':
+        return <HistoryPage user={profile} />;
+      case 'clients':
+        return <ClientsPage user={profile} />;
+      case 'products':
+        return <ProductsPage user={profile} />;
       case 'settings':
         return <SettingsPage user={profile} />;
-      case 'history':
-        return <HistoryPage />;
       default:
         return <NewQuotePage user={profile} />;
     }

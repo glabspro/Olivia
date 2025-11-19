@@ -1,3 +1,4 @@
+
 export interface QuotationItem {
   id: string;
   description: string;
@@ -69,4 +70,31 @@ export interface User {
   phone: string;
   email?: string;
   is_admin?: boolean;
+}
+
+// Database Types
+export interface DbClient {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  address?: string;
+}
+
+export interface DbProduct {
+  id: string;
+  name: string;
+  unit_price: number;
+  currency: string;
+}
+
+export interface SavedQuotation {
+  id: string;
+  quotation_number: string;
+  client: DbClient;
+  total_amount: number;
+  currency: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  created_at: string;
+  items?: QuotationItem[];
 }
