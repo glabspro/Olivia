@@ -128,17 +128,17 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pb-24">
       {/* Header & Stats */}
       <div className="mb-8">
          <div className="flex justify-between items-start mb-6">
             <div>
                 <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-3">
                     <Shield className="text-red-500" size={32}/>
-                    Panel de Administración
+                    Panel Admin
                 </h1>
                 <p className="text-textSecondary dark:text-dark-textSecondary mt-1">
-                    Gestión total de usuarios y suscripciones.
+                    Gestión de usuarios.
                 </p>
             </div>
             <div className="hidden md:block">
@@ -148,47 +148,47 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
             </div>
          </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-center justify-between">
+         <div className="grid grid-cols-3 gap-2 md:gap-4 mb-8">
+            <div className="bg-surface dark:bg-dark-surface p-3 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex flex-col md:flex-row items-center justify-between text-center md:text-left">
                 <div>
-                    <p className="text-xs text-textSecondary uppercase font-bold">Usuarios</p>
-                    <p className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{stats.totalUsers}</p>
+                    <p className="text-[10px] md:text-xs text-textSecondary uppercase font-bold">Usuarios</p>
+                    <p className="text-xl md:text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{stats.totalUsers}</p>
                 </div>
-                <Users className="text-blue-500" size={24}/>
+                <Users className="text-blue-500 mt-1 md:mt-0" size={20}/>
             </div>
-            <div className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-center justify-between">
+            <div className="bg-surface dark:bg-dark-surface p-3 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex flex-col md:flex-row items-center justify-between text-center md:text-left">
                 <div>
-                    <p className="text-xs text-textSecondary uppercase font-bold">Activos</p>
-                    <p className="text-2xl font-bold text-green-500">{stats.activeUsers}</p>
+                    <p className="text-[10px] md:text-xs text-textSecondary uppercase font-bold">Activos</p>
+                    <p className="text-xl md:text-2xl font-bold text-green-500">{stats.activeUsers}</p>
                 </div>
-                <Activity className="text-green-500" size={24}/>
+                <Activity className="text-green-500 mt-1 md:mt-0" size={20}/>
             </div>
-             <div className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-center justify-between">
+             <div className="bg-surface dark:bg-dark-surface p-3 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex flex-col md:flex-row items-center justify-between text-center md:text-left">
                 <div>
-                    <p className="text-xs text-textSecondary uppercase font-bold">Premium</p>
-                    <p className="text-2xl font-bold text-purple-500">{stats.proUsers}</p>
+                    <p className="text-[10px] md:text-xs text-textSecondary uppercase font-bold">Pro</p>
+                    <p className="text-xl md:text-2xl font-bold text-purple-500">{stats.proUsers}</p>
                 </div>
-                <Crown className="text-purple-500" size={24}/>
+                <Crown className="text-purple-500 mt-1 md:mt-0" size={20}/>
             </div>
          </div>
       </div>
 
       {/* Search */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">Usuarios</h2>
-        <div className="relative">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary self-start md:self-center">Lista de Usuarios</h2>
+        <div className="relative w-full md:w-auto">
             <input 
                 type="text" 
-                placeholder="Buscar..." 
+                placeholder="Buscar usuario, negocio o teléfono..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 rounded-lg border border-border dark:border-dark-border bg-surface dark:bg-dark-surface text-sm w-full md:w-72 focus:ring-2 focus:ring-primary focus:outline-none"
+                className="pl-10 pr-4 py-3 rounded-lg border border-border dark:border-dark-border bg-surface dark:bg-dark-surface text-sm w-full md:w-72 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm"
             />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-3.5 text-gray-400" size={16} />
         </div>
       </div>
 
-      {/* Mobile List View (Visible on small screens) */}
+      {/* Mobile List View (Enhanced for Touch) */}
       <div className="md:hidden space-y-4">
           {filteredUsers.map(user => {
               const perms = user.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true };
@@ -198,11 +198,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                   <div key={user.id} className="bg-surface dark:bg-dark-surface p-5 rounded-xl border border-border dark:border-dark-border shadow-sm">
                       <div className="flex justify-between items-start mb-4">
                           <div>
-                              <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary">{user.companyName}</h3>
+                              <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary line-clamp-1">{user.companyName}</h3>
                               <p className="text-sm text-textSecondary dark:text-dark-textSecondary flex items-center gap-1 mt-1">
                                   <Briefcase size={12}/> {user.fullName}
                               </p>
-                              <p className="text-xs text-textSecondary dark:text-dark-textSecondary font-mono mt-1">{user.phone}</p>
+                              <p className="text-xs text-textSecondary dark:text-dark-textSecondary font-mono mt-1 bg-gray-100 dark:bg-white/5 inline-block px-2 py-0.5 rounded">{user.phone}</p>
                           </div>
                            {user.is_onboarded && (
                                 <span className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-[10px] font-bold px-2 py-1 rounded-full">
@@ -211,46 +211,49 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                             )}
                       </div>
                       
-                      {/* Plan Selector - Mobile */}
-                      <div className="mb-4">
-                          <label className="text-xs font-bold text-textSecondary uppercase mb-1 block">Plan Actual</label>
+                      {/* Plan Selector - Mobile Large */}
+                      <div className="mb-4 bg-gray-50 dark:bg-white/5 p-3 rounded-lg">
+                          <label className="text-xs font-bold text-textSecondary uppercase mb-2 block">Plan de Suscripción</label>
                            <select
                                 value={perms.plan}
                                 onChange={(e) => handlePlanChange(user.id, user.permissions, e.target.value as any)}
-                                className={`w-full border border-border dark:border-dark-border font-bold rounded-lg px-3 py-2 focus:outline-none uppercase ${
+                                className={`w-full border-2 border-transparent font-bold rounded-lg px-3 py-3 focus:outline-none uppercase text-center ${
                                     perms.plan === 'enterprise' ? 'bg-purple-100 text-purple-800' :
                                     perms.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-gray-100 text-gray-800'
+                                    'bg-white text-gray-800 shadow-sm border-gray-200'
                                 }`}
                             >
-                                <option value="free">Free</option>
-                                <option value="pro">Pro</option>
-                                <option value="enterprise">Enterprise</option>
+                                <option value="free">GRATIS (Free)</option>
+                                <option value="pro">PRO</option>
+                                <option value="enterprise">EMPRESARIAL</option>
                             </select>
                       </div>
 
-                      <div className="flex justify-between items-center pt-4 border-t border-border dark:border-dark-border">
-                          <div className="flex gap-2">
-                                <button 
-                                    onClick={() => handleEditClick(user)}
-                                    className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg"
-                                >
-                                    <Edit2 size={18}/>
-                                </button>
-                                <button 
-                                    onClick={() => !isSelf && handlePermissionChange(user.id, user.permissions, 'is_active')}
-                                    disabled={isSelf}
-                                    className={`p-2 rounded-lg ${perms.is_active ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}
-                                >
-                                    {perms.is_active ? <Shield size={18}/> : <AlertTriangle size={18}/>}
-                                </button>
-                          </div>
+                      <div className="grid grid-cols-3 gap-3 pt-2">
+                            <button 
+                                onClick={() => handleEditClick(user)}
+                                className="flex flex-col items-center justify-center p-3 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl active:scale-95 transition-transform"
+                            >
+                                <Edit2 size={20} className="mb-1"/>
+                                <span className="text-[10px] font-bold uppercase">Editar</span>
+                            </button>
+                            
+                            <button 
+                                onClick={() => !isSelf && handlePermissionChange(user.id, user.permissions, 'is_active')}
+                                disabled={isSelf}
+                                className={`flex flex-col items-center justify-center p-3 rounded-xl active:scale-95 transition-transform ${perms.is_active ? 'bg-green-50 text-green-600 dark:bg-green-900/20' : 'bg-orange-50 text-orange-600 dark:bg-orange-900/20'}`}
+                            >
+                                {perms.is_active ? <Shield size={20} className="mb-1"/> : <AlertTriangle size={20} className="mb-1"/>}
+                                <span className="text-[10px] font-bold uppercase">{perms.is_active ? 'Bloquear' : 'Desbloq.'}</span>
+                            </button>
+
                            <button
                                 onClick={() => handleDeleteUser(user.id, user.companyName)}
                                 disabled={isSelf}
-                                className={`p-2 text-red-500 hover:bg-red-50 rounded-lg ${isSelf ? 'opacity-30' : ''}`}
+                                className={`flex flex-col items-center justify-center p-3 text-red-500 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 rounded-xl active:scale-95 transition-transform ${isSelf ? 'opacity-30' : ''}`}
                             >
-                                <Trash2 size={18} />
+                                <Trash2 size={20} className="mb-1" />
+                                <span className="text-[10px] font-bold uppercase">Eliminar</span>
                             </button>
                       </div>
                   </div>
@@ -258,7 +261,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
           })}
       </div>
 
-      {/* Desktop Table View (Hidden on small screens) */}
+      {/* Desktop Table View */}
       <div className="hidden md:block bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">

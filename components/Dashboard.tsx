@@ -19,14 +19,14 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
     return (
         <button
             onClick={() => setActivePage(id)}
-            className={`w-full flex ${isMobile ? 'flex-col items-center justify-center h-full' : 'items-center gap-3'} px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 relative ${
+            className={`w-full flex ${isMobile ? 'flex-col items-center justify-center h-full py-1' : 'items-center gap-3 px-3 py-2'} font-medium rounded-lg transition-colors duration-200 relative ${
             isActive
                 ? 'text-primary dark:text-dark-primary bg-primary/10 dark:bg-dark-primary/10'
                 : 'text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5'
             }`}
         >
-        <Icon size={isMobile ? 24 : 20} className={`${isActive ? 'text-primary' : colorClass}`} />
-        <span className={isMobile ? 'text-xs mt-1' : ''}>{label}</span>
+        <Icon size={isMobile ? 20 : 20} className={`${isActive ? 'text-primary' : colorClass}`} />
+        <span className={isMobile ? 'text-[10px] mt-0.5 leading-tight text-center' : 'text-sm'}>{label}</span>
         </button>
     );
 }
@@ -37,15 +37,15 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
 
   const navItems = [
     { id: 'history', label: 'Dashboard', icon: LayoutDashboard, colorClass: 'text-accent-coral' },
-    { id: 'new_quote', label: 'Nueva Cotización', icon: FilePlus, colorClass: 'text-accent-teal' },
+    { id: 'new_quote', label: 'Crear', icon: FilePlus, colorClass: 'text-accent-teal' },
     { id: 'products', label: 'Catálogo', icon: Package, colorClass: 'text-purple-500' },
     { id: 'clients', label: 'Clientes', icon: Users, colorClass: 'text-blue-500' },
-    { id: 'settings', label: 'Configuración', icon: SlidersHorizontal, colorClass: 'text-accent-yellow' },
+    { id: 'settings', label: 'Ajustes', icon: SlidersHorizontal, colorClass: 'text-accent-yellow' },
   ];
 
   // Add Admin item if user is admin
   if (user.is_admin) {
-      navItems.push({ id: 'admin', label: 'Admin Panel', icon: Shield, colorClass: 'text-red-500' });
+      navItems.push({ id: 'admin', label: 'Admin', icon: Shield, colorClass: 'text-red-500' });
   }
 
   return (
@@ -133,9 +133,9 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
         </main>
       </div>
 
-       {/* Mobile Bottom Navigation */}
-       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/90 dark:bg-dark-surface/90 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-around items-center lg:hidden z-20">
-            {navItems.slice(0, 5).map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} isMobile={true} />)}
+       {/* Mobile Bottom Navigation - Updated to show all items */}
+       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-between px-2 items-center lg:hidden z-20">
+            {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} isMobile={true} />)}
        </nav>
     </div>
   );
