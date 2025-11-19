@@ -28,9 +28,6 @@ const N8N_WEBHOOK_URL = 'https://webhook.red51.site/webhook/process-quote-ai';
 
 
 export const extractItemsFromFile = async (file: File): Promise<ExtractedData> => {
-  // FIX: This check for a placeholder URL was causing a TypeScript error because the URL is already configured,
-  // making the comparison always false. The check has been removed.
-  
   console.log(`Iniciando subida al webhook de n8n: ${N8N_WEBHOOK_URL}`);
   console.log(`Detalles del archivo a enviar:`, {
     name: file.name,
@@ -51,7 +48,12 @@ export const extractItemsFromFile = async (file: File): Promise<ExtractedData> =
     if (!response.ok) {
       const errorBody = await response.text();
       console.error("La respuesta del webhook de n8n no fue exitosa:", response.status, errorBody);
-      throw new Error(`Error del servicio de procesamiento: ${response.statusText}`);
+
+      if (response.status === 403) {
+        throw new Error(`Error 403 (Acceso Denegado). Esto es un problema de permisos en tu servidor de n8n. Por favor, revisa la configuración CORS del webhook 'process-quote-ai'.`);
+      }
+      
+      throw new Error(`Error del servicio de procesamiento (${response.status}): ${errorBody || response.statusText}`);
     }
 
     const result: N8nWebhookResponse = await response.json();
@@ -76,9 +78,21 @@ export const extractItemsFromFile = async (file: File): Promise<ExtractedData> =
 
   } catch (error) {
     console.error("Error al llamar al webhook de n8n:", error);
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        const detailedError = `Error de Conexión (CORS): No se pudo comunicar con el servidor de n8n.
+
+Causa probable: El webhook no está configurado para aceptar peticiones desde esta aplicación.
+
+Solución:
+1. En n8n, abre el webhook 'process-quote-ai'.
+2. Ve a 'Node Options'.
+3. Activa 'Respond to Preflight Request'.
+4. En 'Allowed Origins', añade la URL de tu app.`;
+        throw new Error(detailedError);
+    }
     if (error instanceof Error) {
         throw new Error(error.message);
     }
-    throw new Error("No se pudieron extraer los datos. El servicio de procesamiento no está disponible o no respondió correctamente.");
+    throw new Error("Ocurrió un error inesperado al contactar el servicio de procesamiento.");
   }
 };

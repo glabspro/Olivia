@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, Theme } from './types';
 import Auth from './components/Auth';
@@ -50,22 +51,27 @@ const App: React.FC = () => {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        if (session?.user) {
-            fetchAndSetProfile(session.user).finally(() => setLoading(false));
+        // Only set session if it exists and we haven't manually set a simulated one
+        if (session) {
+            setSession(session);
+            if (session?.user) {
+                fetchAndSetProfile(session.user).finally(() => setLoading(false));
+            } else {
+                setLoading(false);
+            }
         } else {
             setLoading(false);
         }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      if (session?.user) {
+      // If we are simulating, we might want to ignore null session updates from supabase
+      // But for now, standard behavior
+      if (session) {
+        setSession(session);
         setLoading(true);
         await fetchAndSetProfile(session.user);
         setLoading(false);
-      } else {
-        setProfile(null);
       }
     });
 
@@ -92,6 +98,39 @@ const App: React.FC = () => {
     setProfile(null);
     setSession(null);
     setActivePage('new_quote');
+  };
+
+  const handleSimulatedLogin = (phone: string) => {
+      const simulatedUser: User = {
+          id: `simulated-user-${phone}`,
+          fullName: 'Usuario Demo',
+          companyName: 'Mi Empresa S.A.C.',
+          phone: phone,
+          email: 'demo@olivia.com',
+          is_admin: false
+      };
+
+      // Construct a minimal simulated session object
+      const simulatedSession: Session = {
+          access_token: 'simulated-token',
+          refresh_token: 'simulated-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer',
+          user: {
+              id: simulatedUser.id,
+              aud: 'authenticated',
+              role: 'authenticated',
+              email: simulatedUser.email,
+              phone: simulatedUser.phone,
+              app_metadata: {},
+              user_metadata: {},
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+          } as SupabaseUser
+      };
+
+      setSession(simulatedSession);
+      setProfile(simulatedUser);
   };
 
   const renderActivePage = () => {
@@ -131,8 +170,8 @@ const App: React.FC = () => {
       );
   }
 
-  // If no session, show Auth page
-  return <Auth />;
+  // If no session, show Auth page with simulated login callback
+  return <Auth onLogin={handleSimulatedLogin} />;
 };
 
 export default App;

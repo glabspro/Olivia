@@ -1,7 +1,7 @@
+
 import React, { useState } from 'react';
-import { Sparkles, FileText, Send, CheckCircle } from 'lucide-react';
+import { Sparkles, FileText, Send, ArrowRight } from 'lucide-react';
 import Logo from './Logo';
-import { supabase } from '../services/supabaseClient';
 import Spinner from './Spinner';
 
 // This is a minimal, non-functional component for visual mockups.
@@ -67,96 +67,34 @@ const countries = [
   { code: 'VE', name: 'Venezuela', dial_code: '+58', flag: '🇻🇪' },
 ];
 
-const Auth: React.FC = () => {
+interface AuthProps {
+  onLogin: (phone: string) => void;
+}
+
+const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
   const [countryCode, setCountryCode] = useState('+51');
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setMessage('');
     setLoading(true);
 
-    const n8nWebhookUrl = 'https://webhook.red51.site/webhook/olivia-send-otp';
-
-    try {
-      const fullPhoneNumber = `${countryCode.replace('+', '')}${phone}`;
-      const response = await fetch(n8nWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone: fullPhoneNumber }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'El servicio de mensajería no está disponible. Intenta más tarde.';
-        try {
-            // Intenta leer la respuesta de error como JSON, que es como n8n suele responder.
-            const errorData = await response.json();
-            if (errorData && errorData.message) {
-                 // Si n8n devuelve un error estructurado, úsalo.
-                errorMessage = `Error del servidor: ${errorData.message}`;
-            } else {
-                // Si no es JSON o no tiene el formato esperado, usa el texto plano.
-                const errorText = await response.text();
-                errorMessage = `Error ${response.status}: ${errorText || response.statusText}`;
-            }
-        } catch (e) {
-            // Si la respuesta no es JSON, usa el status text.
-            errorMessage = `El servidor respondió con un error: ${response.status} ${response.statusText}`;
-        }
-        throw new Error(errorMessage);
-      }
-      
-      setMessage('¡Código enviado! Revisa tu WhatsApp.');
-      setStep('otp');
-
-    } catch (err: any) {
-        console.error("Error al llamar al webhook de n8n:", err);
-        setError(err.message || 'No se pudo enviar el código. Revisa tu conexión.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setMessage('');
-    setLoading(true);
-    
-    try {
-        if (!supabase) throw new Error("Cliente de Supabase no inicializado.");
-        const fullPhoneNumber = `${countryCode.replace('+', '')}${phone}`;
-
-        const { data, error } = await supabase.functions.invoke('verify-whatsapp-otp', {
-            body: { phone: fullPhoneNumber, otp },
-        });
-
-        if (error) throw error;
-        
-        const { session } = data;
-        if (!session) throw new Error("No se recibió una sesión. Intenta de nuevo.");
-
-        const { error: sessionError } = await supabase.auth.setSession({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-        });
-
-        if (sessionError) throw sessionError;
-        
-    } catch (err: any) {
-        console.error("Error al verificar OTP:", err);
-        setError(err.message || 'El código es incorrecto o ha expirado. Intenta de nuevo.');
-    } finally {
+    // Validación simple: 9 dígitos
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length !== 9) {
+        setError('Por favor ingresa un número válido de 9 dígitos para continuar.');
         setLoading(false);
+        return;
     }
+
+    // Simular retraso de red para mejor UX
+    setTimeout(() => {
+        setLoading(false);
+        onLogin(phone);
+    }, 1000);
   };
 
   const inputBaseClasses = "w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary text-base transition-shadow shadow-sm";
@@ -164,22 +102,21 @@ const Auth: React.FC = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-background dark:bg-dark-background text-textPrimary dark:text-dark-textPrimary">
-      {loading && <Spinner message="Procesando..." />}
+      {loading && <Spinner message="Ingresando..." />}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 order-2 lg:order-1">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden"><Logo /></div>
           
           <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary mb-2">
-            Accede o crea tu cuenta
+            Bienvenido a Olivia
           </h1>
           <p className="text-textSecondary dark:text-dark-textSecondary mb-8">
-            Ingresa tu número de WhatsApp para empezar. Te enviaremos un código de acceso único.
+            Ingresa tu número de celular para acceder a tu cuenta (Demo).
           </p>
           
-          {step === 'phone' ? (
-            <form className="space-y-4" onSubmit={handlePhoneSubmit}>
+            <form className="space-y-6" onSubmit={handlePhoneSubmit}>
               <div>
-                <label htmlFor="phone" className={labelClasses}>Tu número de WhatsApp</label>
+                <label htmlFor="phone" className={labelClasses}>Tu número de celular</label>
                 <div className="flex">
                   <select
                     value={countryCode}
@@ -201,40 +138,19 @@ const Auth: React.FC = () => {
                     onChange={(e) => setPhone(e.target.value)} 
                     className={`${inputBaseClasses} rounded-l-none`} 
                     required 
+                    maxLength={9}
                   />
                 </div>
               </div>
               <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
-                <div className="flex items-center justify-center gap-2">Ingresar o Crear Cuenta</div>
+                <div className="flex items-center justify-center gap-2">
+                    Ingresar
+                    <ArrowRight size={18} />
+                </div>
               </button>
             </form>
-          ) : (
-            <form className="space-y-6" onSubmit={handleOtpSubmit}>
-               <div>
-                <label htmlFor="otp" className={labelClasses}>Código de Verificación</label>
-                <input 
-                    id="otp" 
-                    type="text" 
-                    inputMode="numeric"
-                    pattern="\d{6}"
-                    placeholder="Ingresa el código de 6 dígitos"
-                    value={otp} 
-                    onChange={(e) => setOtp(e.target.value)} 
-                    className={`${inputBaseClasses} tracking-[0.5em] text-center`} 
-                    required 
-                />
-                <button type="button" onClick={() => { setStep('phone'); setError(''); }} className="text-sm text-primary hover:underline mt-2">
-                    ¿Número equivocado? Cambiar
-                </button>
-              </div>
-              <button type="submit" className="w-full py-3 font-bold text-white bg-primary rounded-lg shadow-md hover:shadow-lg hover:opacity-90 transition-all duration-300">
-                <div className="flex items-center justify-center gap-2"><CheckCircle size={18}/> Verificar y Entrar</div>
-              </button>
-            </form>
-          )}
 
           {error && <p className="mt-4 text-center text-sm text-red-600 bg-red-500/10 p-3 rounded-lg">{error}</p>}
-          {message && <p className="mt-4 text-center text-sm text-green-600 bg-green-500/10 p-3 rounded-lg">{message}</p>}
 
           <div className="lg:hidden mt-12"><FeatureList /></div>
         </div>

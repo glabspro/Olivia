@@ -5,8 +5,8 @@ import { User } from '../types';
 // ¡IMPORTANTE! Reemplaza estos valores con las credenciales de tu proyecto de Supabase.
 // Las encuentras en "Project Settings" > "API".
 // -----------------------------------------------------------------------------
-const supabaseUrl = 'https://fttmmnkmlefliqbhvljp.supabase.co'; // ej: https://tuidaleatorio.supabase.co
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0dG1tbmttbGVmbGlxYmh2bGpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3OTQ4NjAsImV4cCI6MjA3ODM3MDg2MH0.oWDSOq-sMl1nI7yQ1sc2L2ynLQHQcZQl0w47tolXYmI'; // La clave pública (anon)
+const supabaseUrl = 'https://oglrurotvhufxrkwkfzq.supabase.co'; // ej: https://tuidaleatorio.supabase.co
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nbHJ1cm90dmh1Znhya3drZnpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MTQyOTEsImV4cCI6MjA3ODM5MDI5MX0.d7e2hBCYAE4_FTRcwqsLFQ9MHLhHHNNbLDjFxw0xymU'; // La clave pública (anon)
 
 // Esta función comprueba si las credenciales son válidas y no marcadores de posición
 const areCredentialsValid = (url?: string, key?: string): boolean => {
