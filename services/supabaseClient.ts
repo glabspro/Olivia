@@ -271,8 +271,8 @@ export const incrementAIUsage = async (userId: string) => {
 
 // --- Storage Functions ---
 
-export const uploadQuotationPDF = async (file: File): Promise<string | null> => {
-    if (!supabase) return null;
+export const uploadQuotationPDF = async (file: File): Promise<string> => {
+    if (!supabase) throw new Error("Supabase client not initialized");
 
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.pdf`;
 
@@ -285,7 +285,8 @@ export const uploadQuotationPDF = async (file: File): Promise<string | null> => 
 
     if (error) {
         console.error("Error uploading PDF to Supabase:", error);
-        return null;
+        // Throw specific error to be caught by UI
+        throw new Error(`Error Storage: ${error.message}`);
     }
 
     const { data } = supabase.storage
