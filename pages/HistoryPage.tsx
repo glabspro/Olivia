@@ -249,9 +249,11 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
 
     const scrollToQuotes = () => {
         setViewMode('list');
-        if (quotesListRef.current) {
-            quotesListRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
+        setTimeout(() => {
+            if (quotesListRef.current) {
+                quotesListRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
     };
 
     const KanbanCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => (
@@ -355,7 +357,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     }
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)] overflow-hidden flex flex-col">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] md:overflow-hidden flex flex-col">
             {/* MODAL 1: Selection */}
             {showSelectionModal && activeQuote && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
@@ -502,7 +504,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
             </div>
 
             {/* Content Area */}
-            <div id="quotes-list-view" ref={quotesListRef} className="flex-grow overflow-hidden flex flex-col">
+            <div id="quotes-list-view" ref={quotesListRef} className="flex-grow flex flex-col md:overflow-hidden">
                 {quotes.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg shadow-sm border-dashed">
                         <div className="p-4 bg-black/5 dark:bg-white/5 rounded-full mb-4">
@@ -515,14 +517,14 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                     </div>
                 ) : viewMode === 'list' ? (
                     <>
-                        {/* Mobile List View - Explicit container height handling */}
-                        <div className="md:hidden flex-1 overflow-y-auto space-y-3 pb-24 pr-1">
+                        {/* Mobile List View - Natural height */}
+                        <div className="md:hidden space-y-3 pb-24">
                             {filteredQuotes.map(quote => (
                                 <MobileListCard key={quote.id} quote={quote} />
                             ))}
                         </div>
 
-                        {/* Desktop List View */}
+                        {/* Desktop List View - Constrained height with scroll */}
                         <div className="hidden md:block bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border shadow-sm overflow-hidden h-full overflow-y-auto">
                             <table className="w-full text-sm text-left text-textSecondary dark:text-dark-textSecondary">
                                 <thead className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase bg-gray-50 dark:bg-white/5 sticky top-0 z-10">
