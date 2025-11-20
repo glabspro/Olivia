@@ -55,7 +55,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
     <>
       {/* Floating Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+            setNote('');
+            setDate('');
+            setIsOpen(true);
+        }}
         className={`fixed bottom-20 md:bottom-8 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-primary text-white hover:bg-pink-600 hover:scale-105`}
         title="Abrir Oliv-IA"
       >
