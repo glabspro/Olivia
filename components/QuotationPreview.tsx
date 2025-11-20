@@ -105,7 +105,6 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             all: `border ${rowBorderColor}`,
             none: ''
        };
-       // Reduced padding from p-2.5 to px-2 py-1.5 for better fit
        return (
         <table className="w-full text-[8.5pt]">
             <thead style={{ backgroundColor: headerBgColor || `${themeColor}1A`, color: headerTextColor || themeColor }}>
@@ -150,8 +149,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
     // --- TEMPLATE-SPECIFIC COMPONENTS ---
 
     const ModernTemplate = () => (
-      // Reduced padding from p-10 to p-8
-      <div className="bg-white p-8 font-sans text-gray-800 text-[9pt] leading-relaxed">
+      <div className="bg-white p-8 font-sans text-gray-800 text-[9pt] leading-relaxed min-h-[297mm] flex flex-col relative">
         <header className="flex justify-between items-start mb-6 pb-3 border-b-2" style={{borderColor: themeColor}}>
           <div>
             {companyLogo && <img src={companyLogo} alt="Logo" className="max-h-14 mb-3 object-contain" />}
@@ -169,11 +167,11 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             <p className="font-bold text-gray-900 text-base">{clientName}</p>
             <p className="text-gray-600">{clientPhone}</p>
         </section>
-        <main><ItemsTable /></main>
+        <main className="flex-grow"><ItemsTable /></main>
         <section className="flex justify-end mt-6">
             <SummarySection borderColor="gray-100" totalBorderColor={themeColor} />
         </section>
-        <footer className="mt-6 pt-3 border-t border-gray-100 text-[7.5pt] text-gray-500">
+        <footer className="mt-auto pt-6 border-t border-gray-100 text-[7.5pt] text-gray-500">
             {(paymentTerms || paymentMethods) && (
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-0.5 uppercase tracking-wider text-[7pt]">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
@@ -189,8 +187,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
     );
 
     const ClassicTemplate = () => (
-      // Reduced padding from p-8 to p-6
-      <div className="bg-white p-6 font-serif text-gray-800 text-[9pt] leading-relaxed border-4 double border-gray-400">
+      <div className="bg-white p-6 font-serif text-gray-800 text-[9pt] leading-relaxed border-4 double border-gray-400 min-h-[297mm] flex flex-col relative">
         <header className="text-center mb-5">
             {companyLogo && <img src={companyLogo} alt="Logo" className="max-h-14 mb-2 object-contain mx-auto" />}
             <h1 className="text-2xl tracking-widest uppercase font-bold text-gray-900">{companyName}</h1>
@@ -211,11 +208,11 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
               <p>{new Date().toLocaleDateString('es-PE')}</p>
             </div>
         </section>
-        <main><ItemsTable borders="all" headerBgColor="#E5E7EB" headerTextColor="#374151" rowBorderColor="border-gray-300" /></main>
+        <main className="flex-grow"><ItemsTable borders="all" headerBgColor="#E5E7EB" headerTextColor="#374151" rowBorderColor="border-gray-300" /></main>
         <section className="flex justify-end mt-5">
             <SummarySection borderColor="gray-200" />
         </section>
-        <footer className="mt-5 pt-3 border-t-2 border-gray-300 text-[7.5pt] text-gray-600">
+        <footer className="mt-auto pt-6 border-t-2 border-gray-300 text-[7.5pt] text-gray-600">
              {(paymentTerms || paymentMethods) && (
                 <div className="grid grid-cols-2 gap-4 mb-3">
                     {paymentTerms && <div><h4 className="font-bold mb-0.5">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
@@ -228,8 +225,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
     );
 
     const MinimalistTemplate = () => (
-      // Reduced padding from p-12 to p-8
-      <div className="bg-white p-8 font-sans text-gray-700 text-[8pt] leading-normal">
+      <div className="bg-white p-8 font-sans text-gray-700 text-[8pt] leading-normal min-h-[297mm] flex flex-col relative">
         <header className="flex justify-between items-start mb-8">
           <h1 className="text-base font-bold tracking-[0.2em] uppercase">{companyName}</h1>
           <div className="text-right text-[8.5pt]">
@@ -248,7 +244,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                 <p>{new Date().toLocaleDateString('es-PE')}</p>
             </div>
         </section>
-        <main>
+        <main className="flex-grow">
           <table className="w-full text-[8.5pt]">
             <thead>
                 <tr className="border-b border-gray-200">
@@ -275,7 +271,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         <section className="flex justify-end mt-6">
             <SummarySection borderColor="gray-200" />
         </section>
-        <footer className="mt-8 pt-3 border-t border-gray-200 text-[7pt] text-gray-500">
+        <footer className="mt-auto pt-6 border-t border-gray-200 text-[7pt] text-gray-500">
           {(paymentTerms || paymentMethods) && (
             <div className="mb-3 whitespace-pre-wrap">
               {paymentTerms && <p><span className="font-semibold">Términos:</span> {paymentTerms}</p>}
@@ -288,8 +284,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
     );
     
     const ElegantTemplate = () => (
-        // Reduced padding from p-12 to p-8
-        <div className="bg-white p-8 font-serif text-gray-700 text-[9pt] leading-loose">
+        <div className="bg-white p-8 font-serif text-gray-700 text-[9pt] leading-loose min-h-[297mm] flex flex-col relative">
             <header className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-thin" style={{color: themeColor}}>{companyName}</h1>
@@ -307,12 +302,12 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                 <p className="text-lg font-medium text-gray-800">{clientName}</p>
             </section>
 
-            <main><ItemsTable borders="none" headerBgColor="transparent" headerTextColor={themeColor} /></main>
+            <main className="flex-grow"><ItemsTable borders="none" headerBgColor="transparent" headerTextColor={themeColor} /></main>
             
             <section className="flex justify-end mt-8">
                 <SummarySection borderColor="gray-100" totalBorderColor={themeColor} />
             </section>
-            <footer className="mt-8 pt-4 text-[7.5pt] text-gray-500">
+            <footer className="mt-auto pt-6 text-[7.5pt] text-gray-500">
                 <div className="w-full h-px mb-4" style={{background: `linear-gradient(90deg, transparent, ${themeColor}, transparent)`}}></div>
                 {(paymentTerms || paymentMethods) && (
                     <div className="grid grid-cols-2 gap-6 mb-4">
@@ -328,9 +323,8 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
     );
 
     const BoldTemplate = () => (
-      <div className="bg-white font-sans text-[9pt]">
+      <div className="bg-white font-sans text-[9pt] min-h-[297mm] flex flex-col relative">
         <header 
-          // Reduced padding from p-10 to p-8
           className="p-8 text-white relative bg-cover bg-center" 
           style={{ 
             backgroundColor: themeColor,
@@ -342,7 +336,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
               <p className="text-lg font-bold opacity-90">{quotationNumber}</p>
           </div>
         </header>
-        <div className="p-6"> {/* Reduced from p-10 */}
+        <div className="p-6 flex-grow flex flex-col">
             <section className="grid grid-cols-2 gap-8 mb-6">
                 <div>
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">DE:</p>
@@ -359,7 +353,9 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                  </div>
             </section>
             
-            <ItemsTable headerBgColor="#1F2937" headerTextColor="#F9FAFB" />
+            <div className="flex-grow">
+                <ItemsTable headerBgColor="#1F2937" headerTextColor="#F9FAFB" />
+            </div>
             
             <section className="mt-6">
               <div className="flex justify-end">
@@ -367,7 +363,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
               </div>
             </section>
              
-            <footer className="mt-6 pt-3 border-t border-gray-100 text-[7.5pt] text-gray-500">
+            <footer className="mt-auto pt-6 border-t border-gray-100 text-[7.5pt] text-gray-500">
                 {(paymentTerms || paymentMethods) && (
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         {paymentTerms && <div><h4 className="font-semibold text-gray-600 mb-0.5 uppercase tracking-wider text-[7pt]">Términos:</h4><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
