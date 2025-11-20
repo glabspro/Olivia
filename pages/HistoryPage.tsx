@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal, GripVertical, Plus, Save, X, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal, GripVertical, Plus, Save, X, Trash2, ClipboardList, Bell } from 'lucide-react';
 import { getQuotations, updateQuotationStatus, updateQuotationTags } from '../services/supabaseClient';
 import { SavedQuotation, User, CrmMeta } from '../types';
 
@@ -14,6 +14,7 @@ const CRM_TAGS = [
     { id: 'call', label: 'Llamar', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Phone, actionType: 'datetime' },
     { id: 'whatsapp', label: 'WhatsApp', color: 'bg-green-100 text-green-700 border-green-200', icon: MessageCircle, actionType: 'text' },
     { id: 'meeting', label: 'Reunión', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Briefcase, actionType: 'datetime' },
+    { id: 'task', label: 'Tarea', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', icon: ClipboardList, actionType: 'datetime' },
     { id: 'urgent', label: 'Urgente', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle, actionType: 'none' },
 ];
 
@@ -184,8 +185,12 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         const currentMeta = activeQuote.crm_meta || {};
         let newMeta: CrmMeta = { ...currentMeta };
         
-        if (selectedTagId === 'call' || selectedTagId === 'meeting') {
+        if (selectedTagId === 'call' || selectedTagId === 'meeting' || selectedTagId === 'task') {
             newMeta.next_followup = tagInputValue;
+            // Remove reminder_sent flag if date changes to allow new notification
+            if (newMeta.next_followup !== currentMeta.next_followup) {
+                 delete (newMeta as any).reminder_sent;
+            }
         } else if (selectedTagId === 'whatsapp') {
             newMeta.notes = tagInputValue;
         }
@@ -313,7 +318,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
             <p className="text-sm font-bold text-textPrimary dark:text-dark-textPrimary mb-3">{quote.currency} {quote.total_amount.toFixed(2)}</p>
             
             {/* CRM Meta Info Display */}
-            {quote.crm_meta?.next_followup && quote.tags?.some(t => t === 'call' || t === 'meeting') && (
+            {quote.crm_meta?.next_followup && quote.tags?.some(t => t === 'call' || t === 'meeting' || t === 'task') && (
                 <div className="mb-2 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded flex items-center gap-1">
                     <Calendar size={10}/>
                     {formatDate(quote.crm_meta.next_followup)}
@@ -442,7 +447,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                         </div>
                         <div className="p-4">
                             <p className="text-sm text-textSecondary dark:text-dark-textSecondary mb-3">
-                                {selectedTagDef.id === 'call' || selectedTagDef.id === 'meeting' ? '¿Cuándo programas esta acción?' : 'Añade una nota rápida:'}
+                                {selectedTagDef.actionType === 'datetime' ? '¿Cuándo programas esta acción?' : 'Añade una nota rápida:'}
                             </p>
                             
                             {selectedTagDef.id === 'whatsapp' ? (
@@ -455,12 +460,18 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                     autoFocus
                                 />
                             ) : (
-                                <input 
-                                    type="datetime-local"
-                                    value={tagInputValue}
-                                    onChange={(e) => setTagInputValue(e.target.value)}
-                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
-                                />
+                                <>
+                                    <input 
+                                        type="datetime-local"
+                                        value={tagInputValue}
+                                        onChange={(e) => setTagInputValue(e.target.value)}
+                                        className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
+                                    />
+                                    <div className="mt-3 flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-xs text-blue-600 dark:text-blue-400">
+                                        <Bell size={14} className="mt-0.5 flex-shrink-0"/>
+                                        <p>Te enviaremos un <strong>WhatsApp 20 min antes</strong>.</p>
+                                    </div>
+                                </>
                             )}
                             
                             <div className="flex gap-2 mt-4">
