@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send } from 'lucide-react';
-import { getQuotations, updateQuotationStatus } from '../services/supabaseClient';
+import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal } from 'lucide-react';
+import { getQuotations, updateQuotationStatus, updateQuotationTags } from '../services/supabaseClient';
 import { SavedQuotation, User } from '../types';
 
 interface HistoryPageProps {
@@ -10,10 +10,51 @@ interface HistoryPageProps {
     onDuplicateQuote?: (id: string) => void;
 }
 
+const CRM_TAGS = [
+    { id: 'call', label: 'Llamar', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Phone },
+    { id: 'whatsapp', label: 'WhatsApp', color: 'bg-green-100 text-green-700 border-green-200', icon: MessageCircle },
+    { id: 'meeting', label: 'Reunión', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Briefcase },
+    { id: 'urgent', label: 'Urgente', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle },
+];
+
+const STATUS_CONFIG: Record<string, { label: string, color: string, icon: any }> = {
+    'draft': { label: 'Borrador', color: 'bg-gray-100 text-gray-600 border-gray-200', icon: Clock },
+    'sent': { label: 'Enviada', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Send },
+    'negotiation': { label: 'Negociación', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Handshake },
+    'accepted': { label: 'Ganada', color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle },
+    'rejected': { label: 'Perdida', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
+};
+
+const MetricCard = ({ title, value, subValue, icon: Icon, colorClass, bgClass }: any) => (
+    <div className="bg-surface dark:bg-dark-surface p-6 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-start justify-between">
+        <div>
+            <p className="text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">{title}</p>
+            <h3 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{value}</h3>
+            {subValue && <p className="text-xs text-green-500 flex items-center mt-1"><ArrowUpRight size={12} className="mr-1"/> {subValue}</p>}
+        </div>
+        <div className={`p-3 rounded-lg ${bgClass}`}>
+            <Icon size={24} className={colorClass} />
+        </div>
+    </div>
+);
+
+const TagBadge: React.FC<{ tagId: string }> = ({ tagId }) => {
+    const tagDef = CRM_TAGS.find(t => t.id === tagId);
+    if (!tagDef) return null;
+    const Icon = tagDef.icon;
+    return (
+        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${tagDef.color}`}>
+            <Icon size={8}/> {tagDef.label}
+        </span>
+    );
+};
+
 const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicateQuote }) => {
     const [quotes, setQuotes] = useState<SavedQuotation[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+    const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -41,8 +82,45 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         }
     };
 
+    const toggleTag = async (quoteId: string, currentTags: string[] | undefined, tagId: string) => {
+        const tags = currentTags || [];
+        let newTags;
+        if (tags.includes(tagId)) {
+            newTags = tags.filter(t => t !== tagId);
+        } else {
+            newTags = [...tags, tagId];
+        }
+        
+        setQuotes(quotes.map(q => q.id === quoteId ? { ...q, tags: newTags } : q));
+        
+        try {
+            await updateQuotationTags(quoteId, newTags);
+        } catch (error) {
+            console.error("Failed to update tags", error);
+            fetchData();
+        }
+    };
+
+    // --- Drag and Drop Handlers ---
+    const handleDragStart = (e: React.DragEvent, quoteId: string) => {
+        setDraggedQuoteId(quoteId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault(); // Necessary to allow dropping
+    };
+
+    const handleDrop = (e: React.DragEvent, newStatus: string) => {
+        e.preventDefault();
+        if (draggedQuoteId) {
+            handleStatusChange(draggedQuoteId, newStatus);
+            setDraggedQuoteId(null);
+        }
+    };
+
+
     // Calculate Dashboard Metrics - REAL SALES (Accepted Only)
-    // Projected = All except Rejected/Draft
     const acceptedQuotes = quotes.filter(q => q.status === 'accepted');
     const totalSalesAmount = acceptedQuotes.reduce((sum, quote) => sum + Number(quote.total_amount), 0);
     const totalQuotesCount = quotes.length;
@@ -62,56 +140,94 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         q.quotation_number.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (loading) {
-         return (
-            <div className="container mx-auto px-4 py-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+    const KanbanCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => (
+        <div 
+            draggable 
+            onDragStart={(e) => handleDragStart(e, quote.id)}
+            className="bg-white dark:bg-dark-surface p-4 rounded-lg shadow-sm border border-border dark:border-dark-border mb-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+        >
+            <div className="flex justify-between items-start mb-2">
+                <span className="text-xs font-mono text-textSecondary dark:text-dark-textSecondary bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded">{quote.quotation_number}</span>
+                <div className="relative group">
+                     <button className="text-textSecondary hover:text-primary"><MoreHorizontal size={16}/></button>
+                     <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10 py-1">
+                        <button onClick={() => onEditQuote?.(quote.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"><Edit2 size={12}/> Editar</button>
+                        <button onClick={() => onDuplicateQuote?.(quote.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"><Copy size={12}/> Duplicar</button>
+                     </div>
+                </div>
             </div>
-         );
-    }
+            <h4 className="font-bold text-textPrimary dark:text-dark-textPrimary truncate mb-1">{quote.client.name}</h4>
+            <p className="text-sm font-bold text-textPrimary dark:text-dark-textPrimary mb-3">{quote.currency} {quote.total_amount.toFixed(2)}</p>
+            
+            {/* Tags */}
+            <div className="flex flex-wrap gap-1 mb-3">
+                {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
+                
+                {/* Add Tag Button */}
+                <div className="relative group">
+                    <button className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary hover:bg-primary/10">
+                        <Tag size={10} />
+                    </button>
+                    <div className="absolute left-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-20 py-1">
+                         <p className="text-[10px] text-gray-500 px-3 py-1 uppercase font-bold">Etiquetas</p>
+                         {CRM_TAGS.map(tag => (
+                             <button 
+                                key={tag.id}
+                                onClick={() => toggleTag(quote.id, quote.tags, tag.id)}
+                                className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : ''}`}
+                            >
+                                <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
+                                {tag.label}
+                             </button>
+                         ))}
+                    </div>
+                </div>
+            </div>
 
-    const MetricCard = ({ title, value, subValue, icon: Icon, colorClass, bgClass }: any) => (
-        <div className="bg-surface dark:bg-dark-surface p-6 rounded-xl border border-border dark:border-dark-border shadow-sm flex items-start justify-between">
-            <div>
-                <p className="text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">{title}</p>
-                <h3 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{value}</h3>
-                {subValue && <p className="text-xs text-green-500 flex items-center mt-1"><ArrowUpRight size={12} className="mr-1"/> {subValue}</p>}
-            </div>
-            <div className={`p-3 rounded-lg ${bgClass}`}>
-                <Icon size={24} className={colorClass} />
+            <div className="text-[10px] text-textSecondary dark:text-dark-textSecondary flex justify-between items-center">
+                 <span>{new Date(quote.created_at).toLocaleDateString('es-PE')}</span>
             </div>
         </div>
     );
 
-    const StatusBadge = ({ status }: { status: string }) => {
-        switch(status) {
-            case 'draft': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"><Clock size={10}/> Borrador</span>;
-            case 'sent': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"><Send size={10}/> Enviada</span>;
-            case 'accepted': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"><CheckCircle size={10}/> Aprobada</span>;
-            case 'rejected': return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"><XCircle size={10}/> Rechazada</span>;
-            default: return null;
-        }
-    };
+    if (loading) {
+         return (
+            <div className="container mx-auto px-4 py-8 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+            </div>
+         );
+    }
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="max-w-6xl mx-auto animate-fade-in">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)] overflow-hidden flex flex-col">
+            <div className="flex-shrink-0 mb-6">
                 <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
                     <div>
                         <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary relative pb-2">
                             Dashboard
                             <span className="absolute bottom-0 left-0 h-1 w-16 bg-accent-coral rounded-full"></span>
                         </h2>
-                        <p className="text-textSecondary dark:text-dark-textSecondary mt-2">
-                            Resumen de actividad y métricas clave de tu negocio.
-                        </p>
+                    </div>
+                    <div className="flex items-center bg-surface dark:bg-dark-surface p-1 rounded-lg border border-border dark:border-dark-border shadow-sm">
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-100 dark:bg-white/10 text-primary' : 'text-textSecondary hover:text-textPrimary'}`}
+                        >
+                            <List size={20} />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('kanban')}
+                            className={`p-2 rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-gray-100 dark:bg-white/10 text-primary' : 'text-textSecondary hover:text-textPrimary'}`}
+                        >
+                            <Kanban size={20} />
+                        </button>
                     </div>
                 </div>
 
                 {/* KPI Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <MetricCard 
-                        title="Ventas Cerradas (Total)" 
+                        title="Ventas Ganadas" 
                         value={`S/ ${totalSalesAmount.toFixed(2)}`} 
                         subValue={`${acceptedQuotes.length} aprobadas`}
                         icon={DollarSign} 
@@ -121,7 +237,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                     <MetricCard 
                         title="Cotizaciones Totales" 
                         value={totalQuotesCount} 
-                        subValue="Incluye borradores"
+                        subValue="Pipeline Completo"
                         icon={FileText} 
                         colorClass="text-blue-500"
                         bgClass="bg-blue-500/10"
@@ -136,21 +252,21 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                     />
                 </div>
 
-                {/* Recent Activity Section */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Actividad Reciente</h3>
-                    <div className="relative mt-2 md:mt-0 w-full md:w-auto">
-                        <input 
-                            type="text" 
-                            placeholder="Buscar cotización..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full md:w-64 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary"
-                        />
-                        <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-                    </div>
+                {/* Search Bar */}
+                <div className="relative w-full md:w-96 mb-4">
+                    <input 
+                        type="text" 
+                        placeholder="Buscar por cliente o número..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 w-full bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary shadow-sm"
+                    />
+                    <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                 </div>
+            </div>
 
+            {/* Content Area */}
+            <div className="flex-grow overflow-hidden">
                 {quotes.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg shadow-sm border-dashed">
                         <div className="p-4 bg-black/5 dark:bg-white/5 rounded-full mb-4">
@@ -158,25 +274,27 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                         </div>
                         <h3 className="text-xl font-semibold text-textPrimary dark:text-dark-textPrimary">Sin actividad reciente</h3>
                         <p className="text-textSecondary dark:text-dark-textSecondary mt-2 text-center">
-                            Genera tu primera cotización para ver las métricas.
+                            Genera tu primera cotización para ver el tablero.
                         </p>
                     </div>
-                ) : (
-                    <div className="bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border shadow-sm overflow-hidden min-h-[400px]">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left text-textSecondary dark:text-dark-textSecondary">
-                                <thead className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase bg-gray-50 dark:bg-white/5">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-4 font-semibold">Nro.</th>
-                                        <th scope="col" className="px-6 py-4 font-semibold">Cliente</th>
-                                        <th scope="col" className="px-6 py-4 font-semibold">Fecha</th>
-                                        <th scope="col" className="px-6 py-4 font-semibold text-right">Monto</th>
-                                        <th scope="col" className="px-6 py-4 font-semibold text-center">Estado</th>
-                                        <th scope="col" className="px-6 py-4 font-semibold text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredQuotes.map((quote) => (
+                ) : viewMode === 'list' ? (
+                    <div className="bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border shadow-sm overflow-hidden h-full overflow-y-auto">
+                        <table className="w-full text-sm text-left text-textSecondary dark:text-dark-textSecondary">
+                            <thead className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase bg-gray-50 dark:bg-white/5 sticky top-0 z-10">
+                                <tr>
+                                    <th className="px-6 py-4 font-semibold">Nro.</th>
+                                    <th className="px-6 py-4 font-semibold">Cliente</th>
+                                    <th className="px-6 py-4 font-semibold">Etiquetas</th>
+                                    <th className="px-6 py-4 font-semibold text-right">Monto</th>
+                                    <th className="px-6 py-4 font-semibold text-center">Estado</th>
+                                    <th className="px-6 py-4 font-semibold text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredQuotes.map((quote) => {
+                                    const statusInfo = STATUS_CONFIG[quote.status] || STATUS_CONFIG['sent'];
+                                    const StatusIcon = statusInfo.icon;
+                                    return (
                                         <tr key={quote.id} className="border-b border-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                                             <td className="px-6 py-4 font-medium text-textPrimary dark:text-dark-textPrimary">
                                                 {quote.quotation_number}
@@ -188,25 +306,42 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {new Date(quote.created_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                <div className="flex flex-wrap gap-1">
+                                                     {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
+                                                     <div className="relative group">
+                                                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-gray-400"><Tag size={14}/></button>
+                                                        <div className="absolute left-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-20 py-1">
+                                                            {CRM_TAGS.map(tag => (
+                                                                <button 
+                                                                    key={tag.id}
+                                                                    onClick={() => toggleTag(quote.id, quote.tags, tag.id)}
+                                                                    className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : ''}`}
+                                                                >
+                                                                    <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
+                                                                    {tag.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 text-right font-bold text-textPrimary dark:text-dark-textPrimary">
                                                 {quote.currency} {quote.total_amount.toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <div className="relative group inline-block">
-                                                     <button className="focus:outline-none">
-                                                        <StatusBadge status={quote.status} />
+                                                     <button className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${statusInfo.color} shadow-sm`}>
+                                                        <StatusIcon size={12}/> {statusInfo.label}
                                                      </button>
-                                                     {/* Simple Status Dropdown on Hover/Click */}
-                                                     <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10">
-                                                         {['draft', 'sent', 'accepted', 'rejected'].map(s => (
+                                                     <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10 py-1">
+                                                         {Object.entries(STATUS_CONFIG).map(([key, val]) => (
                                                              <button
-                                                                key={s}
-                                                                onClick={() => handleStatusChange(quote.id, s)}
-                                                                className={`block w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 capitalize ${quote.status === s ? 'font-bold' : ''}`}
+                                                                key={key}
+                                                                onClick={() => handleStatusChange(quote.id, key)}
+                                                                className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.status === key ? 'font-bold text-primary' : ''}`}
                                                              >
-                                                                 {s === 'draft' ? 'Borrador' : s === 'sent' ? 'Enviada' : s === 'accepted' ? 'Aprobada' : 'Rechazada'}
+                                                                 <val.icon size={14} className={quote.status === key ? 'text-primary' : 'text-gray-400'}/>
+                                                                 {val.label}
                                                              </button>
                                                          ))}
                                                      </div>
@@ -231,10 +366,55 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex h-full gap-4 overflow-x-auto pb-4">
+                        {Object.entries(STATUS_CONFIG).map(([statusKey, config]) => {
+                            const columnQuotes = filteredQuotes.filter(q => q.status === statusKey);
+                            
+                            return (
+                                <div 
+                                    key={statusKey}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => handleDrop(e, statusKey)}
+                                    className="flex-shrink-0 w-72 bg-gray-50 dark:bg-white/5 rounded-xl border border-border dark:border-dark-border flex flex-col h-full max-h-full"
+                                >
+                                    {/* Column Header */}
+                                    <div className={`p-3 border-b border-gray-200 dark:border-gray-700 rounded-t-xl flex justify-between items-center ${config.color.split(' ')[0].replace('bg-', 'bg-opacity-20 bg-')}`}>
+                                        <div className="flex items-center gap-2 font-bold text-sm text-textPrimary dark:text-dark-textPrimary">
+                                            <config.icon size={16}/>
+                                            {config.label}
+                                        </div>
+                                        <span className="bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full text-xs font-bold shadow-sm">{columnQuotes.length}</span>
+                                    </div>
+                                    
+                                    {/* Cards Container */}
+                                    <div className="p-2 flex-grow overflow-y-auto">
+                                        {columnQuotes.length === 0 ? (
+                                             <div className="h-20 flex items-center justify-center text-xs text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg m-1">
+                                                 Vacío
+                                             </div>
+                                        ) : (
+                                            columnQuotes.map(quote => (
+                                                <KanbanCard key={quote.id} quote={quote} />
+                                            ))
+                                        )}
+                                    </div>
+                                    
+                                    {/* Column Footer Total */}
+                                    <div className="p-3 border-t border-gray-200 dark:border-gray-700 text-right">
+                                        <span className="text-xs text-gray-500 font-medium">Total: </span>
+                                        <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                             S/ {columnQuotes.reduce((sum, q) => sum + Number(q.total_amount), 0).toFixed(0)}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

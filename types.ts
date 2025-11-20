@@ -112,9 +112,10 @@ export interface SavedQuotation {
   client: DbClient;
   total_amount: number;
   currency: string;
-  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  status: 'draft' | 'sent' | 'negotiation' | 'accepted' | 'rejected';
   created_at: string;
   items?: QuotationItem[];
   discount?: number;
   discount_type?: 'amount' | 'percentage';
+  tags?: string[];
 }

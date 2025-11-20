@@ -373,7 +373,7 @@ export const saveQuotation = async (
     userId: string,
     clientData: { name: string; phone: string; email?: string },
     quoteData: { number: string; total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
-    status: 'draft' | 'sent' | 'accepted' | 'rejected' = 'sent'
+    status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'negotiation' = 'sent'
 ) => {
     if (!supabase) throw new Error("Supabase no configurado");
 
@@ -457,14 +457,10 @@ export const updateQuotation = async (
     quotationId: string,
     clientData: { name: string; phone: string; email?: string },
     quoteData: { total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
-    status?: 'draft' | 'sent' | 'accepted' | 'rejected'
+    status?: 'draft' | 'sent' | 'accepted' | 'rejected' | 'negotiation'
 ) => {
      if (!supabase) throw new Error("Supabase no configurado");
 
-     // 1. Update Client (or get existing ID if name changed) - logic simplified here assuming client linked by ID
-     // For simple editing, we'll assume we update the linked client info OR link to new one. 
-     // To keep it simple for now, let's update the Quotation header and Items.
-     
      // Update Quotation Header
      const updateData: any = {
         total_amount: quoteData.total,
@@ -505,6 +501,15 @@ export const updateQuotationStatus = async (quotationId: string, status: string)
     if (error) throw error;
 };
 
+export const updateQuotationTags = async (quotationId: string, tags: string[]) => {
+    if (!supabase) return;
+    const { error } = await supabase
+        .from('quotations')
+        .update({ tags })
+        .eq('id', quotationId);
+    if (error) throw error;
+};
+
 export const getQuotations = async (userId: string): Promise<SavedQuotation[]> => {
     if (!supabase) return [];
 
@@ -519,6 +524,7 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
             created_at,
             discount,
             discount_type,
+            tags,
             clients (
                 id,
                 name,
@@ -543,6 +549,7 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
         created_at: q.created_at,
         discount: q.discount || 0,
         discount_type: q.discount_type || 'amount',
+        tags: q.tags || [],
         client: {
             id: q.clients?.id,
             name: q.clients?.name || 'Cliente Desconocido',
