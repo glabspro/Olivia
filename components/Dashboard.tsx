@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { User, Theme } from '../types';
 import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown } from 'lucide-react';
 import Logo from './Logo';
+import QuickTaskFab from './QuickTaskFab';
 
 interface LayoutProps {
   user: User;
@@ -60,7 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
          </nav>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         <header className="bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border sticky top-0 z-10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -128,8 +129,11 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 bg-background dark:bg-dark-background">
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 bg-background dark:bg-dark-background relative">
           {children}
+          
+          {/* Floating Assistant Widget - Accessible on all pages */}
+          <QuickTaskFab user={user} />
         </main>
       </div>
 
