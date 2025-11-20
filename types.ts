@@ -97,6 +97,7 @@ export interface DbClient {
   phone: string;
   email?: string;
   address?: string;
+  document?: string; // RUC or DNI
 }
 
 export interface DbProduct {

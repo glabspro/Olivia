@@ -370,7 +370,7 @@ export const getMonthlyQuoteCount = async (userId: string): Promise<number> => {
 
 export const saveQuotation = async (
     userId: string,
-    clientData: { name: string; phone: string; email?: string },
+    clientData: { name: string; phone: string; email?: string; address?: string; document?: string },
     quoteData: { number: string; total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
     status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'negotiation' = 'sent',
     skipProductSave: boolean = false
@@ -388,6 +388,7 @@ export const saveQuotation = async (
 
     if (existingClient) {
         clientId = existingClient.id;
+        // Optional: Update client info if provided (ignoring this for now based on previous logic, but can be enabled)
     } else {
         const { data: newClient, error: clientError } = await supabase
             .from('clients')
@@ -395,7 +396,9 @@ export const saveQuotation = async (
                 user_id: userId,
                 name: clientData.name,
                 phone: clientData.phone,
-                email: clientData.email
+                email: clientData.email,
+                address: clientData.address,
+                document: clientData.document
             })
             .select('id')
             .single();
@@ -456,7 +459,7 @@ export const saveQuotation = async (
 
 export const updateQuotation = async (
     quotationId: string,
-    clientData: { name: string; phone: string; email?: string },
+    clientData: { name: string; phone: string; email?: string; address?: string; document?: string },
     quoteData: { total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
     status?: 'draft' | 'sent' | 'accepted' | 'rejected' | 'negotiation'
 ) => {
@@ -542,7 +545,9 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
                 id,
                 name,
                 phone,
-                email
+                email,
+                address,
+                document
             ),
             quotation_items (
                 description
@@ -571,7 +576,9 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
             id: q.clients?.id,
             name: q.clients?.name || 'Cliente Desconocido',
             phone: q.clients?.phone,
-            email: q.clients?.email
+            email: q.clients?.email,
+            address: q.clients?.address,
+            document: q.clients?.document
         },
         items: q.quotation_items?.map((i: any) => ({ description: i.description }))
     }));
@@ -684,7 +691,8 @@ export const saveClient = async (userId: string, client: Omit<DbClient, 'id'> & 
                 name: client.name,
                 phone: client.phone,
                 email: client.email,
-                address: client.address
+                address: client.address,
+                document: client.document
             })
             .eq('id', client.id)
             .eq('user_id', userId);
@@ -697,7 +705,8 @@ export const saveClient = async (userId: string, client: Omit<DbClient, 'id'> & 
                 name: client.name,
                 phone: client.phone,
                 email: client.email,
-                address: client.address
+                address: client.address,
+                document: client.document
             });
         error = insertError;
     }

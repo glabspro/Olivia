@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { DbClient, User } from '../types';
 import { getClients, saveClient, deleteClient } from '../services/supabaseClient';
-import { Users, Search, Plus, Edit2, Trash2, MapPin, Phone, Mail, X } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Trash2, MapPin, Phone, Mail, X, FileText } from 'lucide-react';
 
 interface ClientsPageProps {
     user: User;
@@ -16,7 +16,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [editingClient, setEditingClient] = useState<DbClient | null>(null);
     
     // Form state
-    const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' });
+    const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '', document: '' });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -40,11 +40,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 name: client.name, 
                 phone: client.phone, 
                 email: client.email || '', 
-                address: client.address || '' 
+                address: client.address || '',
+                document: client.document || ''
             });
         } else {
             setEditingClient(null);
-            setFormData({ name: '', phone: '', email: '', address: '' });
+            setFormData({ name: '', phone: '', email: '', address: '', document: '' });
         }
         setShowModal(true);
     };
@@ -81,7 +82,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const filteredClients = clients.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.phone.includes(searchTerm) ||
-        (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
+        (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (c.document && c.document.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     if (loading) return <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>;
@@ -131,7 +133,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
                             </div>
                             <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary mb-1">{client.name}</h3>
-                            <div className="space-y-2 mt-4 text-sm text-textSecondary dark:text-dark-textSecondary">
+                            {client.document && (
+                                <p className="text-xs font-mono bg-gray-100 dark:bg-white/5 inline-block px-2 py-0.5 rounded text-textSecondary mb-3">
+                                    ID: {client.document}
+                                </p>
+                            )}
+                            <div className="space-y-2 mt-2 text-sm text-textSecondary dark:text-dark-textSecondary">
                                 <div className="flex items-center gap-2"><Phone size={14}/> {client.phone}</div>
                                 {client.email && <div className="flex items-center gap-2"><Mail size={14}/> {client.email}</div>}
                                 {client.address && <div className="flex items-center gap-2"><MapPin size={14}/> {client.address}</div>}
@@ -165,6 +172,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Teléfono</label>
                                 <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary"/>
                             </div>
+                            
+                             <div>
+                                <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Documento (RUC / DNI)</label>
+                                <div className="relative">
+                                     <FileText size={16} className="absolute left-3 top-2.5 text-gray-400"/>
+                                    <input type="text" value={formData.document} onChange={e => setFormData({...formData, document: e.target.value})} className="w-full pl-9 pr-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary" placeholder="Ej. 20123456789"/>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">Correo Electrónico</label>
                                 <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-textPrimary dark:text-dark-textPrimary"/>

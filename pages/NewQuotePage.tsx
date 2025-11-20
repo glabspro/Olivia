@@ -32,6 +32,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');
     const [clientEmail, setClientEmail] = useState('');
+    const [clientDocument, setClientDocument] = useState('');
+    const [clientAddress, setClientAddress] = useState('');
     
     const [selectedTermId, setSelectedTermId] = useState<string>('');
     const [customTerm, setCustomTerm] = useState('');
@@ -75,17 +77,15 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                         setClientName(quoteData.client.name);
                         setClientPhone(quoteData.client.phone);
                         setClientEmail(quoteData.client.email || '');
+                        setClientDocument(quoteData.client.document || '');
+                        setClientAddress(quoteData.client.address || '');
+                        
                         setDiscountValue(quoteData.discount || 0);
                         setDiscountType(quoteData.discountType || DiscountType.AMOUNT);
                         
-                        // If duplicating, we treat it as new (reset finalized, keep items/client)
-                        // If editing, we keep ID (logic handled in save)
-                        
                         if (isEditing) {
-                            // We are in edit mode, we might want to jump to step 2 directly
                             setStep(2);
                         } else {
-                            // Duplicating - basically just prefilling
                             setStep(2);
                         }
                     }
@@ -137,13 +137,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         taxRate: 18,
     });
     
-    // Ref for the hidden container used for generation (high quality)
     const pdfContainerRef = useRef<HTMLDivElement>(null);
     
     const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     const totalWithMargin = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
     
-    // Calculate Discount
     let discountAmount = 0;
     if (discountType === DiscountType.PERCENTAGE) {
         discountAmount = totalWithMargin * (discountValue / 100);
@@ -154,12 +152,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
     const finalTotal = taxType === TaxType.ADDED ? totalAfterDiscount * (1 + taxRate / 100) : totalAfterDiscount;
     
-    // Determine Quote Number (Edit = Keep Same, New/Dup = Next Available)
-    const currentQuotationNumber = isEditing && quoteIdToEdit // If editing, fetch existing number? 
-        ? (settings.quotationPrefix + "???") // Actually, we should display the real existing number. Ideally we fetch it.
-        // For MVP, let's assume we just use the next number for duplicates, and for edits we should keep the old one.
-        // But we don't have the old number in state easily without fetching. 
-        // Let's assume edits update the CONTENT but keep the ID/Number.
+    const currentQuotationNumber = isEditing && quoteIdToEdit 
+        ? (settings.quotationPrefix + "???") 
         : `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(4, '0')}`;
 
 
@@ -169,7 +163,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             if (savedSettings) {
                 let parsedSettings = JSON.parse(savedSettings);
 
-                // Backward compatibility for payment options
                 if (typeof parsedSettings.paymentTerms === 'string') {
                     parsedSettings.paymentTerms = parsedSettings.paymentTerms ? [{ id: 'migrated-term', name: 'Predeterminado', details: parsedSettings.paymentTerms }] : [];
                 } else if (!parsedSettings.paymentTerms) {
@@ -248,11 +241,19 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         if(hasBeenFinalized && !isEditing) return; // Allow save if editing
         
         try {
+            const clientData = { 
+                name: clientName, 
+                phone: clientPhone, 
+                email: clientEmail, 
+                address: clientAddress, 
+                document: clientDocument 
+            };
+            
             if (isEditing && quoteIdToEdit) {
                 // UPDATE EXISTING
                 await updateQuotation(
                     quoteIdToEdit,
-                    { name: clientName, phone: clientPhone, email: clientEmail },
+                    clientData,
                     { 
                         total: finalTotal, 
                         currency: settings.currencySymbol, 
@@ -267,7 +268,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 // INSERT NEW (or Duplicate)
                 await saveQuotation(
                     user.id, 
-                    { name: clientName, phone: clientPhone, email: clientEmail },
+                    clientData,
                     { 
                         number: currentQuotationNumber, 
                         total: finalTotal, 
@@ -322,7 +323,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             await saveToDatabase('draft');
             
             if (!isEditing) {
-                // Increment number so the draft keeps its number and next quote gets a new one
                 const newSettings = {
                     ...settings,
                     quotationNextNumber: settings.quotationNextNumber + 1,
@@ -331,7 +331,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 setSettings(newSettings);
             }
             
-            // Update limit UI if needed (drafts might not count towards limit, but let's refresh anyway)
             const count = await getMonthlyQuoteCount(user.id);
             setQuoteCount(count);
 
@@ -346,7 +345,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     };
 
     const handleFileUpload = async (file: File) => {
-        // AI Permission & Limit Check
         if (aiLimitReached) {
             alert("Has agotado tus 2 usos gratuitos de IA. Por favor actualiza a PRO para acceso ilimitado.");
             return;
@@ -366,7 +364,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 setClientName(extractedClientName);
             }
             
-            // Success! Increment usage counter
             await incrementAIUsage(user.id);
 
             setMarginType(settings.defaultMarginType);
@@ -399,6 +396,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         setClientName('');
         setClientPhone('');
         setClientEmail('');
+        setClientDocument('');
+        setClientAddress('');
         
         if (settings.paymentTerms.length > 0) {
             setSelectedTermId(settings.paymentTerms[0].id);
@@ -591,18 +590,15 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
             
-            // Generate Blob
             const pdfBlob = pdf.output('blob');
             const fileName = `Cotizacion_${clientName.replace(/ /g,"_")}.pdf`;
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
             
-            // Upload to Storage
             const publicUrl = await uploadQuotationPDF(file);
             if (!publicUrl) throw new Error("No se pudo generar el enlace público del PDF");
 
             await finalizeAndIncrementQuoteNumber();
             
-            // Create Professional Message with Line Breaks
             const whatsappText = `Hola *${clientName}*! 👋%0A%0ATe comparto la cotización solicitada, por un total de *${settings.currencySymbol} ${finalTotal.toFixed(2)}*.%0A%0APuedes revisarla y descargarla en el siguiente enlace:%0A%0A📄 *Ver Cotización:*%0A${publicUrl}%0A%0AQuedo atento a tus comentarios.%0A*${settings.companyName}*`;
             
             const cleanPhone = clientPhone.replace(/\D/g, '');
@@ -656,7 +652,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const sendButtonEnabled = items.length > 0 && clientName && clientPhone && !isSending && !sentSuccess;
     const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
     
-    // Page Title Logic
     const pageTitle = isEditing ? 'Editar Cotización' : isDuplicating ? 'Duplicar Cotización' : 'Nueva Cotización';
 
     return (
@@ -784,7 +779,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
                         <div>
                             <h3 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary mb-4 flex items-center gap-2"><UserIcon size={20} className="text-accent-teal"/> 2. Datos del Cliente</h3>
-                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <input 
                                     type="text"
                                     value={clientName}
@@ -800,11 +795,25 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                                     placeholder="Teléfono (ej. 987654321) *"
                                 />
                                 <input 
+                                    type="text"
+                                    value={clientDocument}
+                                    onChange={(e) => setClientDocument(e.target.value)}
+                                    className={inputClasses}
+                                    placeholder="RUC / DNI (Opcional)"
+                                />
+                                <input 
                                     type="email"
                                     value={clientEmail}
                                     onChange={(e) => setClientEmail(e.target.value)}
                                     className={inputClasses}
                                     placeholder="Correo (Opcional)"
+                                />
+                                <input 
+                                    type="text"
+                                    value={clientAddress}
+                                    onChange={(e) => setClientAddress(e.target.value)}
+                                    className={`${inputClasses} sm:col-span-2`}
+                                    placeholder="Dirección (Opcional)"
                                 />
                             </div>
                         </div>
