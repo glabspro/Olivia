@@ -205,8 +205,9 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         
         try {
             await updateQuotationTags(activeQuote.id, newTags, newMeta);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to update tags with meta", error);
+            alert("Error al guardar la etiqueta. Por favor intenta de nuevo.");
             fetchData();
         }
     }
@@ -316,7 +317,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         }
         
         if (eventDate <= now) {
-            return <span className="text-red-500">La fecha del evento ya pasó.</span>;
+            return <span className="text-gray-500 dark:text-gray-400">📅 Fecha pasada. Se guardará como historial (sin recordatorio).</span>;
         }
 
         return (
