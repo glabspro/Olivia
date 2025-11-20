@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { QuotationItem, MarginType, TaxType } from '../types';
+import { QuotationItem, MarginType, TaxType, DiscountType } from '../types';
 import { Trash2, PlusCircle } from 'lucide-react';
 
 interface QuotationEditorProps {
@@ -9,6 +10,10 @@ interface QuotationEditorProps {
   setMarginType: (type: MarginType) => void;
   marginValue: number;
   setMarginValue: (value: number) => void;
+  discountType: DiscountType;
+  setDiscountType: (type: DiscountType) => void;
+  discountValue: number;
+  setDiscountValue: (value: number) => void;
   currencySymbol?: string;
   taxType: TaxType;
   taxRate: number;
@@ -21,6 +26,10 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
   setMarginType,
   marginValue,
   setMarginValue,
+  discountType,
+  setDiscountType,
+  discountValue,
+  setDiscountValue,
   currencySymbol = 'S/',
   taxType,
   taxRate,
@@ -60,14 +69,24 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
   const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const totalWithMargin = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
   
+  // Apply Discount logic
+  let discountAmount = 0;
+  if (discountType === DiscountType.PERCENTAGE) {
+      discountAmount = totalWithMargin * (discountValue / 100);
+  } else {
+      discountAmount = discountValue;
+  }
+  
+  const totalAfterDiscount = Math.max(0, totalWithMargin - discountAmount);
+  
   let subtotalForTax, igvAmount, finalTotal;
 
   if (taxType === TaxType.INCLUDED) {
-    finalTotal = totalWithMargin;
+    finalTotal = totalAfterDiscount;
     subtotalForTax = finalTotal / (1 + taxRate / 100);
     igvAmount = finalTotal - subtotalForTax;
   } else { // TaxType.ADDED
-    subtotalForTax = totalWithMargin;
+    subtotalForTax = totalAfterDiscount;
     igvAmount = subtotalForTax * (taxRate / 100);
     finalTotal = subtotalForTax + igvAmount;
   }
@@ -160,28 +179,59 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
       </div>
 
       <div className="mt-6 space-y-4 md:space-y-0 md:flex md:justify-between md:items-start gap-6 p-4 bg-background dark:bg-dark-background rounded-lg border border-border dark:border-dark-border">
-        <div className="w-full md:w-auto">
-          <label htmlFor="margin-type" className="text-md font-semibold text-textPrimary dark:text-dark-textPrimary mb-2 block">Ajustar Margen:</label>
-          <div className="flex">
-            <select
-              id="margin-type"
-              value={marginType}
-              onChange={(e) => setMarginType(e.target.value as MarginType)}
-              className="h-14 rounded-l-md bg-surface dark:bg-dark-surface border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
-            >
-              <option value={MarginType.PERCENTAGE}>%</option>
-              <option value={MarginType.FIXED}>{currencySymbol}</option>
-            </select>
-            <input
-              type="number"
-              value={marginValue}
-              onChange={(e) => setMarginValue(parseFloat(e.target.value) || 0)}
-              className="w-full h-14 text-lg rounded-r-md bg-surface dark:bg-dark-surface border-y border-r border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
-            />
-          </div>
+        <div className="w-full md:w-1/2 space-y-4">
+            {/* Margin Control */}
+            <div>
+                <label htmlFor="margin-type" className="text-xs font-semibold text-textSecondary dark:text-dark-textSecondary mb-1 block uppercase tracking-wider">Margen de Ganancia</label>
+                <div className="flex">
+                    <select
+                    id="margin-type"
+                    value={marginType}
+                    onChange={(e) => setMarginType(e.target.value as MarginType)}
+                    className="h-10 rounded-l-md border border-gray-200 dark:border-dark-border px-2 bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-sm"
+                    >
+                    <option value={MarginType.PERCENTAGE}>%</option>
+                    <option value={MarginType.FIXED}>{currencySymbol}</option>
+                    </select>
+                    <input
+                    type="number"
+                    value={marginValue}
+                    onChange={(e) => setMarginValue(parseFloat(e.target.value) || 0)}
+                    className="w-full h-10 px-3 border-y border-r border-gray-200 dark:border-dark-border rounded-r-md bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-sm"
+                    />
+                </div>
+            </div>
+            
+            {/* Discount Control */}
+            <div>
+                <label htmlFor="discount-type" className="text-xs font-semibold text-textSecondary dark:text-dark-textSecondary mb-1 block uppercase tracking-wider text-accent-coral">Descuento Global</label>
+                <div className="flex">
+                    <select
+                    id="discount-type"
+                    value={discountType}
+                    onChange={(e) => setDiscountType(e.target.value as DiscountType)}
+                    className="h-10 rounded-l-md border border-gray-200 dark:border-dark-border px-2 bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-sm"
+                    >
+                    <option value={DiscountType.PERCENTAGE}>%</option>
+                    <option value={DiscountType.AMOUNT}>{currencySymbol}</option>
+                    </select>
+                    <input
+                    type="number"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
+                    className="w-full h-10 px-3 border-y border-r border-gray-200 dark:border-dark-border rounded-r-md bg-white dark:bg-dark-surface text-textPrimary dark:text-dark-textPrimary text-sm"
+                    />
+                </div>
+            </div>
         </div>
-        <div className="text-right w-full md:w-auto flex-shrink-0">
-          <p className="text-sm text-textSecondary dark:text-dark-textSecondary">Subtotal: {currencySymbol} {subtotalForTax.toFixed(2)}</p>
+
+        <div className="text-right w-full md:w-auto flex-shrink-0 space-y-1 pt-2">
+          <p className="text-sm text-textSecondary dark:text-dark-textSecondary">Subtotal (con margen): {currencySymbol} {totalWithMargin.toFixed(2)}</p>
+          {discountAmount > 0 && (
+               <p className="text-sm text-accent-coral font-medium">Descuento: - {currencySymbol} {discountAmount.toFixed(2)}</p>
+          )}
+          <div className="w-full h-px bg-border dark:bg-dark-border my-1"></div>
+          <p className="text-sm text-textSecondary dark:text-dark-textSecondary">Base Imponible: {currencySymbol} {subtotalForTax.toFixed(2)}</p>
           <p className="text-sm text-textSecondary dark:text-dark-textSecondary">IGV ({taxRate}%): {currencySymbol} {igvAmount.toFixed(2)}</p>
           <p className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary mt-1">Total: {currencySymbol} {finalTotal.toFixed(2)}</p>
         </div>

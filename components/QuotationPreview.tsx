@@ -1,10 +1,13 @@
+
 import React from 'react';
-import { QuotationItem, MarginType, Template, TaxType } from '../types';
+import { QuotationItem, MarginType, Template, TaxType, DiscountType } from '../types';
 
 interface QuotationPreviewProps {
   items: QuotationItem[];
   marginType: MarginType;
   marginValue: number;
+  discountType?: DiscountType;
+  discountValue?: number;
   currencySymbol?: string;
   clientName: string;
   clientPhone: string;
@@ -30,6 +33,8 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
   items,
   marginType,
   marginValue,
+  discountType = DiscountType.AMOUNT,
+  discountValue = 0,
   currencySymbol = 'S/',
   clientName,
   clientPhone,
@@ -66,15 +71,24 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
 
   const totalWithMargin = items.reduce((acc, item) => acc + calculateFinalPrice(item), 0);
   
+  // Apply Discount
+  let discountAmount = 0;
+  if (discountType === DiscountType.PERCENTAGE) {
+      discountAmount = totalWithMargin * (discountValue / 100);
+  } else {
+      discountAmount = discountValue;
+  }
+  const totalAfterDiscount = Math.max(0, totalWithMargin - discountAmount);
+  
   let subtotal, igvAmount, finalTotal;
   const taxRateDecimal = taxRate / 100;
 
   if (taxType === TaxType.INCLUDED) {
-      finalTotal = totalWithMargin;
+      finalTotal = totalAfterDiscount;
       subtotal = finalTotal / (1 + taxRateDecimal);
       igvAmount = finalTotal - subtotal;
   } else { // TaxType.ADDED
-      subtotal = totalWithMargin;
+      subtotal = totalAfterDiscount;
       igvAmount = subtotal * taxRateDecimal;
       finalTotal = subtotal + igvAmount;
   }
@@ -118,6 +132,21 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
        );
     };
 
+    const SummarySection = ({ borderColor = 'gray-200', textColor = 'gray-600', totalColor = 'gray-900', totalBorderColor }: any) => (
+        <div className="w-full max-w-[300px] text-[8.5pt]">
+            <div className={`flex justify-between py-1 border-b border-${borderColor} text-${textColor}`}><p>Subtotal:</p><p>{currencySymbol} {totalWithMargin.toFixed(2)}</p></div>
+            {discountAmount > 0 && (
+                 <div className={`flex justify-between py-1 border-b border-${borderColor} text-red-500`}><p>Descuento:</p><p>- {currencySymbol} {discountAmount.toFixed(2)}</p></div>
+            )}
+            <div className={`flex justify-between py-1 border-b border-${borderColor} text-${textColor}`}><p>Base Imponible:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
+            <div className={`flex justify-between py-1 border-b border-${borderColor} text-${textColor}`}><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
+            <div className={`flex justify-between items-center pt-2 mt-1 font-bold text-base`} style={{ borderTop: totalBorderColor ? `2px solid ${totalBorderColor}` : 'none', color: totalBorderColor || totalColor }}>
+                <p>Total:</p>
+                <p>{currencySymbol} {finalTotal.toFixed(2)}</p>
+            </div>
+        </div>
+    );
+
     // --- TEMPLATE-SPECIFIC COMPONENTS ---
 
     const ModernTemplate = () => (
@@ -142,14 +171,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         </section>
         <main><ItemsTable /></main>
         <section className="flex justify-end mt-6">
-            <div className="w-full max-w-[300px] text-[8.5pt]">
-                <div className="flex justify-between py-1 border-b border-gray-100 text-gray-600"><p>Subtotal:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
-                <div className="flex justify-between py-1 border-b border-gray-100 text-gray-600"><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
-                <div className="flex justify-between items-center pt-2 mt-1 font-bold text-base" style={{ borderTop: `2px solid ${themeColor}` }}>
-                    <p>Total:</p>
-                    <p style={{ color: themeColor }}>{currencySymbol} {finalTotal.toFixed(2)}</p>
-                </div>
-            </div>
+            <SummarySection borderColor="gray-100" totalBorderColor={themeColor} />
         </section>
         <footer className="mt-6 pt-3 border-t border-gray-100 text-[7.5pt] text-gray-500">
             {(paymentTerms || paymentMethods) && (
@@ -191,11 +213,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         </section>
         <main><ItemsTable borders="all" headerBgColor="#E5E7EB" headerTextColor="#374151" rowBorderColor="border-gray-300" /></main>
         <section className="flex justify-end mt-5">
-            <div className="w-full max-w-[280px] text-[9pt]">
-              <div className="flex justify-between py-1 border-b border-gray-200"><p>Subtotal:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
-              <div className="flex justify-between py-1 border-b border-gray-200"><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
-              <div className="flex justify-between py-2 mt-1 font-bold text-base border-t-2 border-gray-400"><p>Total:</p><p>{currencySymbol} {finalTotal.toFixed(2)}</p></div>
-            </div>
+            <SummarySection borderColor="gray-200" />
         </section>
         <footer className="mt-5 pt-3 border-t-2 border-gray-300 text-[7.5pt] text-gray-600">
              {(paymentTerms || paymentMethods) && (
@@ -255,11 +273,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
           </table>
         </main>
         <section className="flex justify-end mt-6">
-            <div className="w-full max-w-[240px] text-[8.5pt]">
-                <div className="flex justify-between py-1 text-gray-600"><p>Subtotal</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
-                <div className="flex justify-between py-1 text-gray-600"><p>IGV ({taxRate}%)</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
-                <div className="flex justify-between pt-2 mt-2 font-bold text-base border-t border-gray-300"><p>Total</p><p>{currencySymbol} {finalTotal.toFixed(2)}</p></div>
-            </div>
+            <SummarySection borderColor="gray-200" />
         </section>
         <footer className="mt-8 pt-3 border-t border-gray-200 text-[7pt] text-gray-500">
           {(paymentTerms || paymentMethods) && (
@@ -296,14 +310,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             <main><ItemsTable borders="none" headerBgColor="transparent" headerTextColor={themeColor} /></main>
             
             <section className="flex justify-end mt-8">
-                <div className="w-full max-w-[280px] text-[8.5pt]">
-                    <div className="flex justify-between py-1.5 text-gray-600"><p>Subtotal:</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
-                    <div className="flex justify-between py-1.5 text-gray-600 border-b border-gray-100"><p>IGV ({taxRate}%):</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
-                    <div className="flex justify-between items-center pt-3 mt-3 font-semibold text-lg" style={{color: themeColor}}>
-                        <p>Total:</p>
-                        <p>{currencySymbol} {finalTotal.toFixed(2)}</p>
-                    </div>
-                </div>
+                <SummarySection borderColor="gray-100" totalBorderColor={themeColor} />
             </section>
             <footer className="mt-8 pt-4 text-[7.5pt] text-gray-500">
                 <div className="w-full h-px mb-4" style={{background: `linear-gradient(90deg, transparent, ${themeColor}, transparent)`}}></div>
@@ -356,14 +363,7 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             
             <section className="mt-6">
               <div className="flex justify-end">
-                <div className="w-full max-w-sm p-5 rounded-lg text-gray-800" style={{backgroundColor: `${themeColor}1A`}}>
-                  <div className="flex justify-between py-1 text-sm"><p>Subtotal</p><p>{currencySymbol} {subtotal.toFixed(2)}</p></div>
-                  <div className="flex justify-between py-1 text-sm"><p>IGV ({taxRate}%)</p><p>{currencySymbol} {igvAmount.toFixed(2)}</p></div>
-                  <div className="flex justify-between py-2 text-xl font-black mt-2 border-t-2" style={{borderColor: `${themeColor}80`, color: themeColor}}>
-                    <p>TOTAL</p>
-                    <p>{currencySymbol} {finalTotal.toFixed(2)}</p>
-                  </div>
-                </div>
+                  <SummarySection borderColor="gray-200" totalBorderColor={themeColor} />
               </div>
             </section>
              

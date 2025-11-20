@@ -16,6 +16,11 @@ export enum MarginType {
   FIXED = 'fixed',
 }
 
+export enum DiscountType {
+  PERCENTAGE = 'percentage',
+  AMOUNT = 'amount',
+}
+
 export enum Template {
   MODERN = 'modern',
   CLASSIC = 'classic',
@@ -110,4 +115,6 @@ export interface SavedQuotation {
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   created_at: string;
   items?: QuotationItem[];
+  discount?: number;
+  discount_type?: 'amount' | 'percentage';
 }

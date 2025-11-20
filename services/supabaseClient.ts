@@ -372,7 +372,7 @@ export const getMonthlyQuoteCount = async (userId: string): Promise<number> => {
 export const saveQuotation = async (
     userId: string,
     clientData: { name: string; phone: string; email?: string },
-    quoteData: { number: string; total: number; currency: string; items: QuotationItem[] },
+    quoteData: { number: string; total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
     status: 'draft' | 'sent' | 'accepted' | 'rejected' = 'sent'
 ) => {
     if (!supabase) throw new Error("Supabase no configurado");
@@ -412,7 +412,9 @@ export const saveQuotation = async (
             quotation_number: quoteData.number,
             total_amount: quoteData.total,
             currency: quoteData.currency,
-            status: status
+            status: status,
+            discount: quoteData.discount || 0,
+            discount_type: quoteData.discountType || 'amount'
         })
         .select('id')
         .single();
@@ -451,6 +453,58 @@ export const saveQuotation = async (
     return newQuote.id;
 };
 
+export const updateQuotation = async (
+    quotationId: string,
+    clientData: { name: string; phone: string; email?: string },
+    quoteData: { total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
+    status?: 'draft' | 'sent' | 'accepted' | 'rejected'
+) => {
+     if (!supabase) throw new Error("Supabase no configurado");
+
+     // 1. Update Client (or get existing ID if name changed) - logic simplified here assuming client linked by ID
+     // For simple editing, we'll assume we update the linked client info OR link to new one. 
+     // To keep it simple for now, let's update the Quotation header and Items.
+     
+     // Update Quotation Header
+     const updateData: any = {
+        total_amount: quoteData.total,
+        currency: quoteData.currency,
+        discount: quoteData.discount || 0,
+        discount_type: quoteData.discountType || 'amount'
+     };
+     if (status) updateData.status = status;
+
+     const { error: headerError } = await supabase
+        .from('quotations')
+        .update(updateData)
+        .eq('id', quotationId);
+
+     if (headerError) throw new Error(headerError.message);
+
+     // 2. Replace Items (Delete all and Insert new)
+     await supabase.from('quotation_items').delete().eq('quotation_id', quotationId);
+     
+     const itemsToInsert = quoteData.items.map(item => ({
+        quotation_id: quotationId,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total_price: item.quantity * item.unitPrice 
+    }));
+
+    const { error: itemsError } = await supabase.from('quotation_items').insert(itemsToInsert);
+    if (itemsError) throw new Error(itemsError.message);
+}
+
+export const updateQuotationStatus = async (quotationId: string, status: string) => {
+    if (!supabase) return;
+    const { error } = await supabase
+        .from('quotations')
+        .update({ status })
+        .eq('id', quotationId);
+    if (error) throw error;
+};
+
 export const getQuotations = async (userId: string): Promise<SavedQuotation[]> => {
     if (!supabase) return [];
 
@@ -463,6 +517,8 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
             currency,
             status,
             created_at,
+            discount,
+            discount_type,
             clients (
                 id,
                 name,
@@ -485,6 +541,8 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
         currency: q.currency,
         status: q.status,
         created_at: q.created_at,
+        discount: q.discount || 0,
+        discount_type: q.discount_type || 'amount',
         client: {
             id: q.clients?.id,
             name: q.clients?.name || 'Cliente Desconocido',
@@ -492,6 +550,39 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
             email: q.clients?.email
         }
     }));
+};
+
+export const getQuotationById = async (quotationId: string) => {
+    if (!supabase) return null;
+    
+    const { data: quote, error } = await supabase
+        .from('quotations')
+        .select(`
+            *,
+            clients (*),
+            quotation_items (*)
+        `)
+        .eq('id', quotationId)
+        .single();
+
+    if (error || !quote) return null;
+
+    return {
+        id: quote.id,
+        number: quote.quotation_number,
+        client: quote.clients,
+        items: quote.quotation_items.map((i: any) => ({
+            id: i.id,
+            description: i.description,
+            quantity: i.quantity,
+            unitPrice: i.unit_price
+        })),
+        discount: quote.discount || 0,
+        discountType: quote.discount_type || 'amount',
+        total: quote.total_amount,
+        currency: quote.currency,
+        status: quote.status
+    };
 };
 
 // --- Client Management Functions ---

@@ -21,6 +21,10 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
   const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin'>('history');
 
+  // CRM State: Quote Editing / Duplicating
+  const [quoteIdToEdit, setQuoteIdToEdit] = useState<string | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
   const fetchAndSetProfile = async (supabaseUser: SupabaseUser) => {
     const profileData = await getProfile(supabaseUser);
     setProfile(profileData);
@@ -140,13 +144,39 @@ const App: React.FC = () => {
       }
   };
 
+  // Handlers for CRM actions
+  const handleEditQuote = (id: string) => {
+      setQuoteIdToEdit(id);
+      setIsDuplicating(false);
+      setActivePage('new_quote');
+  };
+
+  const handleDuplicateQuote = (id: string) => {
+      setQuoteIdToEdit(id);
+      setIsDuplicating(true); // Flag to treat as new insert
+      setActivePage('new_quote');
+  };
+
   const renderActivePage = () => {
     if (!profile) return null;
     switch (activePage) {
       case 'new_quote':
-        return <NewQuotePage user={profile} />;
+        return (
+            <NewQuotePage 
+                user={profile} 
+                quoteIdToEdit={quoteIdToEdit}
+                isDuplicating={isDuplicating}
+                clearEditState={() => { setQuoteIdToEdit(null); setIsDuplicating(false); }}
+            />
+        );
       case 'history':
-        return <HistoryPage user={profile} />;
+        return (
+            <HistoryPage 
+                user={profile} 
+                onEditQuote={handleEditClick => handleEditQuote(handleEditClick)}
+                onDuplicateQuote={handleDuplicateQuote}
+            />
+        );
       case 'clients':
         return <ClientsPage user={profile} />;
       case 'products':

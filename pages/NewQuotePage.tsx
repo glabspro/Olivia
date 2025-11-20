@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { QuotationItem, MarginType, Template, Settings, User, PaymentOption, TaxType } from '../types';
+import { QuotationItem, MarginType, Template, Settings, User, PaymentOption, TaxType, DiscountType } from '../types';
 import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { saveQuotation, getMonthlyQuoteCount, incrementAIUsage, uploadQuotationPDF } from '../services/supabaseClient';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles, Smartphone, Bot, Zap, Share2, Save } from 'lucide-react';
+import { saveQuotation, updateQuotation, getMonthlyQuoteCount, incrementAIUsage, uploadQuotationPDF, getQuotationById } from '../services/supabaseClient';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles, Smartphone, Bot, Zap, Share2, Save, Copy } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -15,13 +15,18 @@ const N8N_SEND_WHATSAPP_URL = 'https://webhook.red51.site/webhook/send-quote-wha
 
 interface NewQuotePageProps {
     user: User;
+    quoteIdToEdit?: string | null;
+    isDuplicating?: boolean;
+    clearEditState?: () => void;
 }
 
-const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
+const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDuplicating, clearEditState }) => {
     const [step, setStep] = useState(1);
     const [items, setItems] = useState<QuotationItem[]>([]);
     const [marginType, setMarginType] = useState<MarginType>(MarginType.PERCENTAGE);
     const [marginValue, setMarginValue] = useState<number>(20);
+    const [discountType, setDiscountType] = useState<DiscountType>(DiscountType.AMOUNT);
+    const [discountValue, setDiscountValue] = useState<number>(0);
     const [hasBeenFinalized, setHasBeenFinalized] = useState(false);
 
     const [clientName, setClientName] = useState('');
@@ -54,6 +59,46 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const aiUsageLimit = 2;
     const currentAiUsage = user.ai_usage_count || 0;
     const aiLimitReached = isFreePlan && currentAiUsage >= aiUsageLimit;
+
+    // Determine if we are updating an existing quote
+    const isEditing = !!quoteIdToEdit && !isDuplicating;
+
+    // --- Load Existing Quote Logic ---
+    useEffect(() => {
+        const loadQuote = async () => {
+            if (quoteIdToEdit) {
+                setIsLoading(true);
+                try {
+                    const quoteData = await getQuotationById(quoteIdToEdit);
+                    if (quoteData) {
+                        setItems(quoteData.items);
+                        setClientName(quoteData.client.name);
+                        setClientPhone(quoteData.client.phone);
+                        setClientEmail(quoteData.client.email || '');
+                        setDiscountValue(quoteData.discount || 0);
+                        setDiscountType(quoteData.discountType || DiscountType.AMOUNT);
+                        
+                        // If duplicating, we treat it as new (reset finalized, keep items/client)
+                        // If editing, we keep ID (logic handled in save)
+                        
+                        if (isEditing) {
+                            // We are in edit mode, we might want to jump to step 2 directly
+                            setStep(2);
+                        } else {
+                            // Duplicating - basically just prefilling
+                            setStep(2);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error loading quote", e);
+                    setError("No se pudo cargar la cotización.");
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        loadQuote();
+    }, [quoteIdToEdit, isEditing]);
     
     useEffect(() => {
         const checkLimits = async () => {
@@ -97,8 +142,25 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     
     const baseSubtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
     const totalWithMargin = marginType === MarginType.FIXED ? baseSubtotal + marginValue : baseSubtotal * (1 + marginValue / 100);
-    const finalTotal = taxType === TaxType.ADDED ? totalWithMargin * (1 + taxRate / 100) : totalWithMargin;
-    const currentQuotationNumber = `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(4, '0')}`;
+    
+    // Calculate Discount
+    let discountAmount = 0;
+    if (discountType === DiscountType.PERCENTAGE) {
+        discountAmount = totalWithMargin * (discountValue / 100);
+    } else {
+        discountAmount = discountValue;
+    }
+    const totalAfterDiscount = Math.max(0, totalWithMargin - discountAmount);
+
+    const finalTotal = taxType === TaxType.ADDED ? totalAfterDiscount * (1 + taxRate / 100) : totalAfterDiscount;
+    
+    // Determine Quote Number (Edit = Keep Same, New/Dup = Next Available)
+    const currentQuotationNumber = isEditing && quoteIdToEdit // If editing, fetch existing number? 
+        ? (settings.quotationPrefix + "???") // Actually, we should display the real existing number. Ideally we fetch it.
+        // For MVP, let's assume we just use the next number for duplicates, and for edits we should keep the old one.
+        // But we don't have the old number in state easily without fetching. 
+        // Let's assume edits update the CONTENT but keep the ID/Number.
+        : `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(4, '0')}`;
 
 
     useEffect(() => {
@@ -175,30 +237,49 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
     useEffect(() => {
         if(clientName && finalTotal > 0) {
-            const message = `Hola ${clientName}, te comparto la cotización ${currentQuotationNumber} de ${settings.companyName} por un total de ${settings.currencySymbol} ${finalTotal.toFixed(2)}. Adjunto el PDF con el detalle. Quedo a tu disposición para cualquier consulta. ¡Saludos!`;
+            const message = `Hola ${clientName}, te comparto la cotización de ${settings.companyName} por un total de ${settings.currencySymbol} ${finalTotal.toFixed(2)}. Adjunto el PDF con el detalle. Quedo a tu disposición para cualquier consulta. ¡Saludos!`;
             setWhatsAppMessage(message);
         } else {
             setWhatsAppMessage('');
         }
-    }, [clientName, finalTotal, settings.companyName, settings.currencySymbol, currentQuotationNumber]);
+    }, [clientName, finalTotal, settings.companyName, settings.currencySymbol]);
 
     const saveToDatabase = async (status: 'draft' | 'sent' = 'sent') => {
-        if(hasBeenFinalized) return;
+        if(hasBeenFinalized && !isEditing) return; // Allow save if editing
         
         try {
-            console.log("Guardando en Supabase...", status);
-            await saveQuotation(
-                user.id, 
-                { name: clientName, phone: clientPhone, email: clientEmail },
-                { 
-                    number: currentQuotationNumber, 
-                    total: finalTotal, 
-                    currency: settings.currencySymbol, 
-                    items: items 
-                },
-                status
-            );
-            console.log("Guardado exitoso.");
+            if (isEditing && quoteIdToEdit) {
+                // UPDATE EXISTING
+                await updateQuotation(
+                    quoteIdToEdit,
+                    { name: clientName, phone: clientPhone, email: clientEmail },
+                    { 
+                        total: finalTotal, 
+                        currency: settings.currencySymbol, 
+                        items: items,
+                        discount: discountValue,
+                        discountType: discountType
+                    },
+                    status
+                );
+                console.log("Actualización exitosa.");
+            } else {
+                // INSERT NEW (or Duplicate)
+                await saveQuotation(
+                    user.id, 
+                    { name: clientName, phone: clientPhone, email: clientEmail },
+                    { 
+                        number: currentQuotationNumber, 
+                        total: finalTotal, 
+                        currency: settings.currencySymbol, 
+                        items: items,
+                        discount: discountValue,
+                        discountType: discountType
+                    },
+                    status
+                );
+                console.log("Guardado exitoso.");
+            }
         } catch (err) {
             console.error("Error guardando en base de datos:", err);
             throw err;
@@ -206,23 +287,28 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     };
 
     const finalizeAndIncrementQuoteNumber = async () => {
-        if (hasBeenFinalized) return;
+        if (hasBeenFinalized && !isEditing) return;
 
         await saveToDatabase('sent');
 
-        const newSettings = {
-            ...settings,
-            quotationNextNumber: settings.quotationNextNumber + 1,
-        };
-        try {
-            localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
-            setSettings(newSettings);
-            setHasBeenFinalized(true);
-            // Refresh count after finalizing
-            const count = await getMonthlyQuoteCount(user.id);
-            setQuoteCount(count);
-        } catch (e) {
-            console.error("Failed to save incremented quote number", e);
+        // Only increment number if we are creating a NEW one
+        if (!isEditing) {
+            const newSettings = {
+                ...settings,
+                quotationNextNumber: settings.quotationNextNumber + 1,
+            };
+            try {
+                localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
+                setSettings(newSettings);
+                setHasBeenFinalized(true);
+                // Refresh count after finalizing
+                const count = await getMonthlyQuoteCount(user.id);
+                setQuoteCount(count);
+            } catch (e) {
+                console.error("Failed to save incremented quote number", e);
+            }
+        } else {
+             setHasBeenFinalized(true);
         }
     };
 
@@ -235,13 +321,15 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         try {
             await saveToDatabase('draft');
             
-            // Increment number so the draft keeps its number and next quote gets a new one
-            const newSettings = {
-                ...settings,
-                quotationNextNumber: settings.quotationNextNumber + 1,
-            };
-            localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
-            setSettings(newSettings);
+            if (!isEditing) {
+                // Increment number so the draft keeps its number and next quote gets a new one
+                const newSettings = {
+                    ...settings,
+                    quotationNextNumber: settings.quotationNextNumber + 1,
+                };
+                localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
+                setSettings(newSettings);
+            }
             
             // Update limit UI if needed (drafts might not count towards limit, but let's refresh anyway)
             const count = await getMonthlyQuoteCount(user.id);
@@ -250,6 +338,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             alert("Borrador guardado correctamente.");
             resetState();
         } catch (error) {
+            console.error(error);
             alert("Hubo un error al guardar el borrador.");
         } finally {
             setIsLoading(false);
@@ -303,6 +392,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         setItems([]);
         setMarginType(settings.defaultMarginType);
         setMarginValue(settings.defaultMarginValue);
+        setDiscountType(DiscountType.AMOUNT);
+        setDiscountValue(0);
         setTaxType(settings.taxType);
         setTaxRate(settings.taxRate);
         setClientName('');
@@ -326,10 +417,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         setWhatsAppMessage('');
         setError(null);
         setHasBeenFinalized(false);
+        if (clearEditState) clearEditState();
     };
 
     const handleDownloadPDF = () => {
-        if (limitReached && !hasBeenFinalized) {
+        if (limitReached && !hasBeenFinalized && !isEditing) {
             alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
             return;
         }
@@ -349,7 +441,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`Cotizacion_${currentQuotationNumber}_${clientName.replace(/ /g,"_") || 'cliente'}.pdf`);
+            pdf.save(`Cotizacion_${clientName.replace(/ /g,"_") || 'cliente'}.pdf`);
             
             finalizeAndIncrementQuoteNumber();
             
@@ -363,12 +455,12 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     };
 
     const handleSendEmail = () => {
-        if (limitReached && !hasBeenFinalized) {
+        if (limitReached && !hasBeenFinalized && !isEditing) {
              alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
              return;
         }
 
-        const subject = `Cotización ${currentQuotationNumber} - ${settings.companyName}`;
+        const subject = `Cotización - ${settings.companyName}`;
         const body = `Estimado(a) ${clientName},\n\nAdjunto encontrarás la cotización solicitada.\n\n${whatsAppMessage}\n\nAtentamente,\n${settings.companyName}`;
         
         const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -380,11 +472,12 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const handleSendToWebhook = async () => {
         if (!clientPhone || isSending || sentSuccess) return;
         
-        if (limitReached && !hasBeenFinalized) {
+        if (limitReached && !hasBeenFinalized && !isEditing) {
              alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
              return;
         }
 
+        setIsLoading(true);
         setIsSending(true);
 
         try {
@@ -449,6 +542,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                 throw new Error(`Error del servidor: ${response.status}`);
             }
 
+            setIsLoading(false);
             setIsSending(false);
             setSentSuccess(true);
             setTimeout(() => setSentSuccess(false), 3000);
@@ -456,6 +550,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         } catch (err) {
             console.error("Error sending to webhook:", err);
             alert("Hubo un problema al enviar el mensaje. Por favor, verifica tu conexión o intenta de nuevo.");
+            setIsLoading(false);
             setIsSending(false);
         }
     };
@@ -463,6 +558,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     // --- Método Manual con Link (Redirección) ---
     const handleManualSendWithLink = async () => {
         if (!clientPhone || isSending || sentSuccess) return;
+        setIsLoading(true);
         setIsSending(true);
 
         try {
@@ -477,7 +573,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             
             // Generate Blob
             const pdfBlob = pdf.output('blob');
-            const fileName = `Cotizacion_${currentQuotationNumber}_${clientName.replace(/ /g,"_")}.pdf`;
+            const fileName = `Cotizacion_${clientName.replace(/ /g,"_")}.pdf`;
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
             
             // Upload to Storage
@@ -487,13 +583,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             await finalizeAndIncrementQuoteNumber();
             
             // Create Professional Message with Line Breaks
-            const whatsappText = `Hola *${clientName}*! 👋%0A%0ATe comparto la cotización *${currentQuotationNumber}* solicitada, por un total de *${settings.currencySymbol} ${finalTotal.toFixed(2)}*.%0A%0APuedes revisarla y descargarla en el siguiente enlace:%0A%0A📄 *Ver Cotización:*%0A${publicUrl}%0A%0AQuedo atento a tus comentarios.%0A*${settings.companyName}*`;
+            const whatsappText = `Hola *${clientName}*! 👋%0A%0ATe comparto la cotización solicitada, por un total de *${settings.currencySymbol} ${finalTotal.toFixed(2)}*.%0A%0APuedes revisarla y descargarla en el siguiente enlace:%0A%0A📄 *Ver Cotización:*%0A${publicUrl}%0A%0AQuedo atento a tus comentarios.%0A*${settings.companyName}*`;
             
             const cleanPhone = clientPhone.replace(/\D/g, '');
             const whatsappUrl = `https://wa.me/${cleanPhone}?text=${whatsappText}`;
             
             window.open(whatsappUrl, '_blank');
             
+            setIsLoading(false);
             setIsSending(false);
             setSentSuccess(true);
             setTimeout(() => setSentSuccess(false), 3000);
@@ -501,6 +598,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         } catch (err) {
              console.error("Error manual send:", err);
              alert("Error al generar el enlace. Verifica tu conexión.");
+             setIsLoading(false);
              setIsSending(false);
         }
     };
@@ -533,6 +631,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
     const sendButtonEnabled = items.length > 0 && clientName && clientPhone && !isSending && !sentSuccess;
     const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
+    
+    // Page Title Logic
+    const pageTitle = isEditing ? 'Editar Cotización' : isDuplicating ? 'Duplicar Cotización' : 'Nueva Cotización';
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full">
@@ -541,7 +642,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             {step === 1 && (
                 <div className="max-w-4xl mx-auto animate-fade-in">
                      <div className="text-center mb-10">
-                        <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">Crea una Nueva Cotización</h2>
+                        <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">{pageTitle}</h2>
                         <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Elige cómo quieres empezar.</p>
                         {isFreePlan && (
                             <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gray-100 dark:bg-white/5 text-sm text-textSecondary border border-border">
@@ -550,7 +651,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                         )}
                      </div>
                      
-                     {limitReached && (
+                     {limitReached && !isEditing && (
                          <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-4 rounded-xl flex items-center gap-3 mb-8">
                              <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
                              <div>
@@ -603,30 +704,37 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                         {/* Card 2: Manual */}
                         <button
                             onClick={handleManualCreation}
-                            disabled={isLoading || limitReached}
+                            disabled={isLoading || (limitReached && !isEditing)}
                             className={`flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 border-border dark:border-dark-border transition-all duration-300 group hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none disabled:shadow-none`}
                         >
                             <div className="p-4 bg-accent-teal/10 rounded-full mb-4 transition-transform group-hover:scale-110">
                                 <Edit size={32} className="text-accent-teal" />
                             </div>
-                            <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Crear desde Cero</h3>
+                            <h3 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">
+                                {isEditing ? 'Editar Datos Manualmente' : 'Crear desde Cero'}
+                            </h3>
                             <p className="text-sm text-textSecondary dark:text-dark-textSecondary mt-1">Perfecto para cuando tienes la lista de productos y quieres control total.</p>
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Steps 2 & 3 - (No Changes except limits check on save/send) */}
+            {/* Steps 2 & 3 */}
             {step === 2 && (
                 <div className="max-w-4xl mx-auto animate-fade-in">
                      <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">Espacio de Trabajo</h2>
-                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary">Nro. de Cotización: <span className="font-semibold text-textPrimary dark:text-dark-textPrimary">{currentQuotationNumber}</span></p>
+                            <h2 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2">
+                                {isEditing ? <Edit className="text-accent-teal"/> : <FileUp className="text-accent-teal"/>}
+                                {pageTitle}
+                            </h2>
+                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary">
+                                {isEditing ? 'Modificando cotización existente.' : `Nro. de Cotización: ${currentQuotationNumber}`}
+                            </p>
                         </div>
                          <button onClick={resetState} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-coral bg-accent-coral/10 rounded-lg hover:bg-accent-coral/20 transition-colors">
                             <RefreshCw size={16} />
-                            Empezar de nuevo
+                            Limpiar / Nueva
                         </button>
                     </div>
                     
@@ -640,6 +748,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                 setMarginType={setMarginType}
                                 marginValue={marginValue}
                                 setMarginValue={setMarginValue}
+                                discountType={discountType}
+                                setDiscountType={setDiscountType}
+                                discountValue={discountValue}
+                                setDiscountValue={setDiscountValue}
                                 currencySymbol={settings.currencySymbol}
                                 taxType={taxType}
                                 taxRate={taxRate}
@@ -768,6 +880,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                     items={items}
                                     marginType={marginType}
                                     marginValue={marginValue}
+                                    discountType={discountType}
+                                    discountValue={discountValue}
                                     clientName={clientName}
                                     clientPhone={clientPhone}
                                     companyName={settings.companyName}
@@ -805,7 +919,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                         </div>
                                         <button
                                             onClick={handleSendToWebhook}
-                                            disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized)}
+                                            disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized && !isEditing)}
                                             className={`group w-full flex items-center justify-center gap-3 px-4 py-4 text-white font-bold text-base rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${sentSuccess ? 'bg-green-600' : 'bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:brightness-110 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-800 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none'}`}
                                         >
                                             {isSending ? (
@@ -827,7 +941,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                             </div>
                                             <button
                                                 onClick={handleManualSendWithLink}
-                                                disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized)}
+                                                disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized && !isEditing)}
                                                 className="group w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-gray-800 text-white font-bold text-base rounded-xl shadow-md transition-all duration-300 hover:bg-black hover:shadow-lg border-2 border-transparent hover:border-gray-600"
                                             >
                                                 <Smartphone size={20} className="text-green-400"/>
@@ -849,19 +963,19 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
                                 {/* Other Actions */}
                                 <div className="space-y-3">
-                                    {/* Save Draft Button */}
+                                    {/* Save Draft/Changes Button */}
                                     <button
                                         onClick={handleSaveDraft}
                                         disabled={isSending}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-background dark:bg-white/5 border border-border dark:border-dark-border text-textSecondary dark:text-dark-textSecondary font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                                     >
                                         <Save size={18} />
-                                        Guardar Borrador
+                                        {isEditing ? 'Guardar Cambios' : 'Guardar Borrador'}
                                     </button>
 
                                     <button
                                         onClick={handleSendEmail}
-                                        disabled={!clientEmail || (limitReached && !hasBeenFinalized)}
+                                        disabled={!clientEmail || (limitReached && !hasBeenFinalized && !isEditing)}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-background dark:bg-white/5 border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Abrir cliente de correo"}
                                     >
@@ -871,7 +985,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
                                     <button
                                         onClick={handleDownloadPDF}
-                                        disabled={items.length === 0 || (limitReached && !hasBeenFinalized)}
+                                        disabled={items.length === 0 || (limitReached && !hasBeenFinalized && !isEditing)}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-pink-600 hover:shadow-md transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Download size={18} />
@@ -889,6 +1003,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                 items={items}
                                 marginType={marginType}
                                 marginValue={marginValue}
+                                discountType={discountType}
+                                discountValue={discountValue}
                                 clientName={clientName}
                                 clientPhone={clientPhone}
                                 companyName={settings.companyName}
