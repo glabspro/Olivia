@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, SavedQuotation } from '../types';
 import { getQuotations, deleteQuotation, updateQuotationStatus } from '../services/supabaseClient';
@@ -23,7 +24,10 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     setLoading(true);
     try {
         const data = await getQuotations(user.id);
-        setQuotes(data);
+        // FILTER OUT TASKS from the Sales Dashboard
+        // We only want to show actual quotations here. Tasks are in TasksPage.
+        const salesOnly = data.filter(q => !q.tags?.includes('task'));
+        setQuotes(salesOnly);
     } catch (error) {
         console.error("Error loading history:", error);
     } finally {
