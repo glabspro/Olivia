@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal, GripVertical, Plus, Save, X } from 'lucide-react';
+import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal, GripVertical, Plus, Save, X, Trash2 } from 'lucide-react';
 import { getQuotations, updateQuotationStatus, updateQuotationTags } from '../services/supabaseClient';
 import { SavedQuotation, User, CrmMeta } from '../types';
 
@@ -46,7 +46,7 @@ const TagBadge: React.FC<{ tagId: string }> = ({ tagId }) => {
     if (!tagDef) return null;
     const Icon = tagDef.icon;
     return (
-        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${tagDef.color}`}>
+        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${tagDef.color} cursor-pointer hover:opacity-80`}>
             <Icon size={8}/> {tagDef.label}
         </span>
     );
@@ -55,11 +55,16 @@ const TagBadge: React.FC<{ tagId: string }> = ({ tagId }) => {
 // --- Reusable Tags Component ---
 const QuoteTags: React.FC<{ 
     quote: SavedQuotation, 
-    onManageTags: (quote: SavedQuotation) => void 
-}> = ({ quote, onManageTags }) => {
+    onManageTags: (quote: SavedQuotation) => void,
+    onTagClick: (quote: SavedQuotation, tagId: string) => void
+}> = ({ quote, onManageTags, onTagClick }) => {
     return (
         <div className="flex flex-wrap gap-1 items-center relative z-10">
-            {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
+            {quote.tags?.map(tagId => (
+                <div key={tagId} onClick={(e) => { e.stopPropagation(); onTagClick(quote, tagId); }}>
+                    <TagBadge tagId={tagId} />
+                </div>
+            ))}
             
             <button 
                 onClick={(e) => { 
@@ -67,7 +72,7 @@ const QuoteTags: React.FC<{
                     onManageTags(quote); 
                 }}
                 className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors border border-transparent hover:border-primary/20"
-                title="Gestionar Etiquetas"
+                title="Agregar Etiqueta"
             >
                 <Tag size={12} />
             </button>
@@ -122,38 +127,57 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         }
     };
     
-    // Step 1: Open Selection Modal
+    // Step 1: Open Selection Modal (Add New)
     const openTagManager = (quote: SavedQuotation) => {
         setActiveQuote(quote);
         setShowSelectionModal(true);
     };
+    
+    // Step 1.5: Click Existing Tag (Edit/View)
+    const handleExistingTagClick = (quote: SavedQuotation, tagId: string) => {
+        setActiveQuote(quote);
+        setSelectedTagId(tagId);
+        
+        // Pre-fill data based on meta
+        const meta = quote.crm_meta || {};
+        const tagDef = CRM_TAGS.find(t => t.id === tagId);
+        
+        if (tagDef?.actionType === 'datetime') {
+            setTagInputValue(meta.next_followup || '');
+        } else if (tagDef?.actionType === 'text') {
+            setTagInputValue(meta.notes || '');
+        } else {
+            setTagInputValue('');
+        }
+        
+        setShowActionModal(true);
+    };
 
-    // Step 2: Select Tag from List
+    // Step 2: Select Tag from List (New)
     const handleTagSelect = (tagId: string) => {
         if (!activeQuote) return;
         
-        // Check if tag exists -> Toggle OFF directly
-        if (activeQuote.tags?.includes(tagId)) {
-             toggleTag(activeQuote.id, activeQuote.tags, tagId);
-             setShowSelectionModal(false);
-             return;
-        }
-
-        const tagDef = CRM_TAGS.find(t => t.id === tagId);
-        if (tagDef && tagDef.actionType !== 'none') {
-            // Needs extra info -> Open Action Modal
-            setSelectedTagId(tagId);
-            setTagInputValue('');
-            setShowSelectionModal(false);
-            setShowActionModal(true);
+        // If tag exists, just close selection (user should click the tag itself to edit/remove)
+        // OR we can toggle it off here. Let's just open the Action Modal to allow editing/removing.
+        setSelectedTagId(tagId);
+        
+        const currentTags = activeQuote.tags || [];
+        if (currentTags.includes(tagId)) {
+            // Already exists, populate data for editing
+            const meta = activeQuote.crm_meta || {};
+             const tagDef = CRM_TAGS.find(t => t.id === tagId);
+            if (tagDef?.actionType === 'datetime') setTagInputValue(meta.next_followup || '');
+            else if (tagDef?.actionType === 'text') setTagInputValue(meta.notes || '');
         } else {
-            // Toggle ON directly
-            toggleTag(activeQuote.id, activeQuote.tags, tagId);
-            setShowSelectionModal(false);
+            // New tag, clean input
+            setTagInputValue('');
         }
+        
+        setShowSelectionModal(false);
+        setShowActionModal(true);
     };
     
-    // Step 3: Confirm Action (Date/Note)
+    // Step 3: Confirm Action (Save Date/Note)
     const confirmTagAction = async () => {
         if (!activeQuote || !selectedTagId) return;
         
@@ -167,12 +191,12 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         }
 
         const currentTags = activeQuote.tags || [];
-        const newTags = [...currentTags, selectedTagId];
+        // Add tag if not present
+        const newTags = currentTags.includes(selectedTagId) ? currentTags : [...currentTags, selectedTagId];
         
         // Update local state
         setQuotes(quotes.map(q => q.id === activeQuote.id ? { ...q, tags: newTags, crm_meta: newMeta } : q));
-        setShowActionModal(false);
-        setActiveQuote(null);
+        closeModals();
         
         try {
             await updateQuotationTags(activeQuote.id, newTags, newMeta);
@@ -182,24 +206,30 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         }
     }
 
-    const toggleTag = async (quoteId: string, currentTags: string[] | undefined, tagId: string) => {
-        const tags = currentTags || [];
-        let newTags;
+    const removeTag = async () => {
+        if (!activeQuote || !selectedTagId) return;
         
-        if (tags.includes(tagId)) {
-            newTags = tags.filter(t => t !== tagId);
-        } else {
-            newTags = [...tags, tagId];
-        }
+        const currentTags = activeQuote.tags || [];
+        const newTags = currentTags.filter(t => t !== selectedTagId);
         
-        setQuotes(quotes.map(q => q.id === quoteId ? { ...q, tags: newTags } : q));
+        // Update local state
+        setQuotes(quotes.map(q => q.id === activeQuote.id ? { ...q, tags: newTags } : q));
+        closeModals();
         
         try {
-            await updateQuotationTags(quoteId, newTags);
+            await updateQuotationTags(activeQuote.id, newTags, activeQuote.crm_meta); // Keep meta or clear specific fields? Keep for now
         } catch (error) {
-            console.error("Failed to update tags", error);
+            console.error("Failed to remove tag", error);
             fetchData();
         }
+    };
+
+    const closeModals = () => {
+        setShowActionModal(false);
+        setShowSelectionModal(false);
+        setActiveQuote(null);
+        setSelectedTagId(null);
+        setTagInputValue('');
     };
 
     // --- Drag and Drop Handlers ---
@@ -298,7 +328,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
 
             {/* Tags Component */}
             <div className="mb-3">
-                <QuoteTags quote={quote} onManageTags={openTagManager} />
+                <QuoteTags quote={quote} onManageTags={openTagManager} onTagClick={handleExistingTagClick} />
             </div>
 
             <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
@@ -339,7 +369,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                 </div>
 
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                     <QuoteTags quote={quote} onManageTags={openTagManager} />
+                     <QuoteTags quote={quote} onManageTags={openTagManager} onTagClick={handleExistingTagClick} />
                      
                      <select 
                         value={quote.status}
@@ -363,24 +393,26 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
          );
     }
 
+    const selectedTagDef = selectedTagId ? getTagDef(selectedTagId) : null;
+
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-full md:h-[calc(100vh-64px)] md:overflow-hidden flex flex-col">
-            {/* MODAL 1: Selection */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-full flex flex-col">
+            {/* MODAL 1: Selection (List of Tags) */}
             {showSelectionModal && activeQuote && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="bg-surface dark:bg-dark-surface rounded-xl w-full max-w-xs shadow-2xl border border-border dark:border-dark-border overflow-hidden">
                          <div className="p-4 border-b border-border dark:border-dark-border flex justify-between items-center bg-gray-50 dark:bg-white/5">
                              <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary">Etiquetar Cotización</h3>
-                             <button onClick={() => setShowSelectionModal(false)}><X size={18} className="text-textSecondary"/></button>
+                             <button onClick={closeModals}><X size={18} className="text-textSecondary"/></button>
                         </div>
-                        <div className="p-2">
+                        <div className="p-2 max-h-[60vh] overflow-y-auto">
                             {CRM_TAGS.map(tag => {
                                 const isSelected = activeQuote.tags?.includes(tag.id);
                                 return (
                                     <button
                                         key={tag.id}
                                         onClick={() => handleTagSelect(tag.id)}
-                                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${isSelected ? 'bg-primary/10 border border-primary/30' : 'hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors mb-1 ${isSelected ? 'bg-primary/10 border border-primary/30' : 'hover:bg-gray-100 dark:hover:bg-white/5'}`}
                                     >
                                         <div className={`p-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-opacity-20 bg-')} ${tag.color.split(' ')[1]}`}>
                                             <tag.icon size={16} />
@@ -397,26 +429,23 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                 </div>
             )}
 
-            {/* MODAL 2: Actions (Date/Note) */}
-            {showActionModal && activeQuote && selectedTagId && (
+            {/* MODAL 2: Actions (Date/Note/Delete) */}
+            {showActionModal && activeQuote && selectedTagDef && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="bg-surface dark:bg-dark-surface rounded-xl w-full max-w-sm shadow-2xl border border-border dark:border-dark-border">
                         <div className="p-4 border-b border-border dark:border-dark-border flex justify-between items-center">
                              <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2">
-                                {(() => {
-                                    const TagIcon = getTagDef(selectedTagId)?.icon;
-                                    return TagIcon ? <TagIcon size={18} /> : null;
-                                })()}
-                                {getTagDef(selectedTagId)?.label}
+                                <selectedTagDef.icon size={18} />
+                                {selectedTagDef.label}
                              </h3>
-                             <button onClick={() => setShowActionModal(false)}><X size={18} className="text-textSecondary"/></button>
+                             <button onClick={closeModals}><X size={18} className="text-textSecondary"/></button>
                         </div>
                         <div className="p-4">
                             <p className="text-sm text-textSecondary dark:text-dark-textSecondary mb-3">
-                                {selectedTagId === 'call' || selectedTagId === 'meeting' ? '¿Cuándo programas esta acción?' : 'Añade una nota rápida:'}
+                                {selectedTagDef.id === 'call' || selectedTagDef.id === 'meeting' ? '¿Cuándo programas esta acción?' : 'Añade una nota rápida:'}
                             </p>
                             
-                            {selectedTagId === 'whatsapp' ? (
+                            {selectedTagDef.id === 'whatsapp' ? (
                                 <input 
                                     type="text" 
                                     value={tagInputValue}
@@ -434,13 +463,24 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                 />
                             )}
                             
-                            <button 
-                                onClick={confirmTagAction}
-                                disabled={!tagInputValue}
-                                className="w-full mt-4 py-2 bg-primary text-white font-bold rounded-lg shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Guardar
-                            </button>
+                            <div className="flex gap-2 mt-4">
+                                {activeQuote.tags?.includes(selectedTagDef.id) && (
+                                    <button 
+                                        onClick={removeTag}
+                                        className="flex items-center justify-center px-3 py-2 text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                                        title="Eliminar Etiqueta"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                                <button 
+                                    onClick={confirmTagAction}
+                                    disabled={!tagInputValue && selectedTagDef.id !== 'urgent'}
+                                    className="flex-grow py-2 bg-primary text-white font-bold rounded-lg shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Guardar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -514,7 +554,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
             </div>
 
             {/* Content Area */}
-            <div id="quotes-list-view" ref={quotesListRef} className="flex-grow flex flex-col md:overflow-hidden">
+            <div id="quotes-list-view" ref={quotesListRef} className="flex-grow flex flex-col md:h-[calc(100vh-350px)] md:overflow-hidden">
                 {quotes.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg shadow-sm border-dashed">
                         <div className="p-4 bg-black/5 dark:bg-white/5 rounded-full mb-4">
@@ -565,7 +605,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <QuoteTags quote={quote} onManageTags={openTagManager} />
+                                                    <QuoteTags quote={quote} onManageTags={openTagManager} onTagClick={handleExistingTagClick} />
                                                 </td>
                                                 <td className="px-6 py-4 text-right font-bold text-textPrimary dark:text-dark-textPrimary">
                                                     {quote.currency} {quote.total_amount.toFixed(2)}
