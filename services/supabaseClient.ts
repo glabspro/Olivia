@@ -373,7 +373,8 @@ export const saveQuotation = async (
     userId: string,
     clientData: { name: string; phone: string; email?: string },
     quoteData: { number: string; total: number; currency: string; items: QuotationItem[], discount?: number, discountType?: 'amount' | 'percentage' },
-    status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'negotiation' = 'sent'
+    status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'negotiation' = 'sent',
+    skipProductSave: boolean = false
 ) => {
     if (!supabase) throw new Error("Supabase no configurado");
 
@@ -435,20 +436,21 @@ export const saveQuotation = async (
 
     if (itemsError) throw new Error(`Error guardando items: ${itemsError.message}`);
 
-    // Only upsert products if we are actually sending/finalizing, or also on drafts? 
-    // Let's save on drafts too so the catalog builds up as they type.
-    const productsToUpsert = quoteData.items.map(item => ({
-        user_id: userId,
-        name: item.description,
-        unit_price: item.unitPrice,
-        currency: quoteData.currency
-    }));
+    // Only upsert products if NOT skipped (e.g. for Tasks)
+    if (!skipProductSave) {
+        const productsToUpsert = quoteData.items.map(item => ({
+            user_id: userId,
+            name: item.description,
+            unit_price: item.unitPrice,
+            currency: quoteData.currency
+        }));
 
-    const { error: productsError } = await supabase
-        .from('products')
-        .upsert(productsToUpsert, { onConflict: 'user_id, name' });
+        const { error: productsError } = await supabase
+            .from('products')
+            .upsert(productsToUpsert, { onConflict: 'user_id, name' });
 
-    if (productsError) console.warn("Error actualizando catálogo:", productsError);
+        if (productsError) console.warn("Error actualizando catálogo:", productsError);
+    }
 
     return newQuote.id;
 };

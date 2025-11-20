@@ -40,7 +40,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                     unitPrice: 0 
                 }]
             },
-            'draft' // Se guarda como borrador para no afectar métricas de ventas
+            'draft', // Se guarda como borrador para no afectar métricas de ventas
+            true // SKIP PRODUCT SAVE (No guardar en catálogo)
         );
 
         // 2. Asignar la etiqueta de Tarea y la fecha para que n8n lo detecte
