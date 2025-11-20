@@ -260,6 +260,9 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         }, 100);
     };
 
+    // Helper to safely get tag definition
+    const getTagDef = (id: string) => CRM_TAGS.find(t => t.id === id);
+
     const KanbanCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => (
         <div 
             className="kanban-card bg-white dark:bg-dark-surface p-4 rounded-lg shadow-sm border border-border dark:border-dark-border mb-3 group relative transition-shadow hover:shadow-md"
@@ -361,7 +364,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     }
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] md:overflow-hidden flex flex-col">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-full md:h-[calc(100vh-64px)] md:overflow-hidden flex flex-col">
             {/* MODAL 1: Selection */}
             {showSelectionModal && activeQuote && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
@@ -400,8 +403,11 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                     <div className="bg-surface dark:bg-dark-surface rounded-xl w-full max-w-sm shadow-2xl border border-border dark:border-dark-border">
                         <div className="p-4 border-b border-border dark:border-dark-border flex justify-between items-center">
                              <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2">
-                                {CRM_TAGS.find(t => t.id === selectedTagId)?.icon({size:18})}
-                                {CRM_TAGS.find(t => t.id === selectedTagId)?.label}
+                                {(() => {
+                                    const TagIcon = getTagDef(selectedTagId)?.icon;
+                                    return TagIcon ? <TagIcon size={18} /> : null;
+                                })()}
+                                {getTagDef(selectedTagId)?.label}
                              </h3>
                              <button onClick={() => setShowActionModal(false)}><X size={18} className="text-textSecondary"/></button>
                         </div>
@@ -416,7 +422,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                     value={tagInputValue}
                                     onChange={(e) => setTagInputValue(e.target.value)}
                                     placeholder="Ej. Catálogo enviado..."
-                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border"
+                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
                                     autoFocus
                                 />
                             ) : (
@@ -424,14 +430,14 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                     type="datetime-local"
                                     value={tagInputValue}
                                     onChange={(e) => setTagInputValue(e.target.value)}
-                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border"
+                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
                             )}
                             
                             <button 
                                 onClick={confirmTagAction}
                                 disabled={!tagInputValue}
-                                className="w-full mt-4 py-2 bg-primary text-white font-bold rounded-lg shadow hover:opacity-90 disabled:opacity-50"
+                                className="w-full mt-4 py-2 bg-primary text-white font-bold rounded-lg shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Guardar
                             </button>
