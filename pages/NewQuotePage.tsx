@@ -490,7 +490,13 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
             
-            const pdfBase64 = pdf.output('datauristring').split(',')[1];
+            // Upload to Supabase Storage (Better way for n8n)
+            const pdfBlob = pdf.output('blob');
+            const fileName = `Cotizacion_${currentQuotationNumber}_${Date.now()}.pdf`;
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            
+            const pdfUrl = await uploadQuotationPDF(file);
+            if (!pdfUrl) throw new Error("No se pudo subir el PDF a la nube.");
             
             await finalizeAndIncrementQuoteNumber();
 
@@ -507,7 +513,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             }
 
             const payload = {
-                user_phone: user.phone.replace(/\D/g, ''), // Clean phone for "Pro" Reply Link
+                user_phone: user.phone.replace(/\D/g, ''),
                 plan: user.permissions?.plan || 'free',
                 client: { name: clientName, phone: clientPhone.replace(/\D/g, '') },
                 company: {
@@ -525,7 +531,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                     methods: finalPaymentMethods,
                     message: whatsAppMessage
                 },
-                pdfBase64: pdfBase64
+                // Send URL instead of huge Base64 string
+                pdfUrl: pdfUrl,
+                pdfBase64: null 
             };
 
             console.log("--- ENVIANDO A N8N WEBHOOK ---", N8N_SEND_WHATSAPP_URL);
@@ -547,9 +555,16 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             setSentSuccess(true);
             setTimeout(() => setSentSuccess(false), 3000);
 
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error sending to webhook:", err);
-            alert("Hubo un problema al enviar el mensaje. Por favor, verifica tu conexión o intenta de nuevo.");
+            
+            // Specific CORS warning for user
+            if (err.message === 'Failed to fetch') {
+                 alert("Error de Conexión (CORS): n8n rechazó la conexión.\n\nSolución: Ve a tu Webhook en n8n > Node Options > Allowed Origins y pon '*'.");
+            } else {
+                 alert(`Hubo un problema al enviar: ${err.message}`);
+            }
+
             setIsLoading(false);
             setIsSending(false);
         }
