@@ -269,6 +269,32 @@ export const incrementAIUsage = async (userId: string) => {
         .eq('id', userId);
 };
 
+// --- Storage Functions ---
+
+export const uploadQuotationPDF = async (file: File): Promise<string | null> => {
+    if (!supabase) return null;
+
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.pdf`;
+
+    const { error } = await supabase.storage
+        .from('quotations')
+        .upload(fileName, file, {
+            contentType: 'application/pdf',
+            upsert: false
+        });
+
+    if (error) {
+        console.error("Error uploading PDF to Supabase:", error);
+        return null;
+    }
+
+    const { data } = supabase.storage
+        .from('quotations')
+        .getPublicUrl(fileName);
+
+    return data.publicUrl;
+};
+
 // --- Admin Functions ---
 
 export const getAllUsers = async (): Promise<User[]> => {

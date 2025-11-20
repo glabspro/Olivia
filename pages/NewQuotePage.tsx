@@ -5,8 +5,8 @@ import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { saveQuotation, getMonthlyQuoteCount, incrementAIUsage } from '../services/supabaseClient';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles } from 'lucide-react';
+import { saveQuotation, getMonthlyQuoteCount, incrementAIUsage, uploadQuotationPDF } from '../services/supabaseClient';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles, Smartphone, Bot, Zap, Share2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -345,6 +345,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         finalizeAndIncrementQuoteNumber();
     };
 
+    // --- Método Automático (Bot) ---
     const handleSendToWebhook = async () => {
         if (!clientPhone || isSending || sentSuccess) return;
         
@@ -405,7 +406,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
             console.log("--- ENVIANDO A N8N WEBHOOK ---", N8N_SEND_WHATSAPP_URL);
             
-            // Send to the real n8n webhook
             const response = await fetch(N8N_SEND_WHATSAPP_URL, {
                 method: 'POST',
                 headers: {
@@ -426,6 +426,51 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             console.error("Error sending to webhook:", err);
             alert("Hubo un problema al enviar el mensaje. Por favor, verifica tu conexión o intenta de nuevo.");
             setIsSending(false);
+        }
+    };
+    
+    // --- Método Manual con Link (Redirección) ---
+    const handleManualSendWithLink = async () => {
+        if (!clientPhone || isSending || sentSuccess) return;
+        setIsSending(true);
+
+        try {
+            const previewElement = pdfContainerRef.current;
+            if (!previewElement) throw new Error("Preview element not found");
+
+            const canvas = await html2canvas(previewElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+            
+            // Generate Blob
+            const pdfBlob = pdf.output('blob');
+            const fileName = `Cotizacion_${currentQuotationNumber}_${clientName.replace(/ /g,"_")}.pdf`;
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            
+            // Upload to Storage
+            const publicUrl = await uploadQuotationPDF(file);
+            if (!publicUrl) throw new Error("No se pudo generar el enlace público del PDF");
+
+            await finalizeAndIncrementQuoteNumber();
+            
+            // Create Professional Message with Line Breaks
+            const whatsappText = `Hola *${clientName}*! 👋%0A%0ATe comparto la cotización *${currentQuotationNumber}* solicitada, por un total de *${settings.currencySymbol} ${finalTotal.toFixed(2)}*.%0A%0APuedes revisarla y descargarla en el siguiente enlace:%0A%0A📄 *Ver Cotización:*%0A${publicUrl}%0A%0AQuedo atento a tus comentarios.%0A*${settings.companyName}*`;
+            
+            const cleanPhone = clientPhone.replace(/\D/g, '');
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${whatsappText}`;
+            
+            window.open(whatsappUrl, '_blank');
+            
+            setIsSending(false);
+            setSentSuccess(true);
+            setTimeout(() => setSentSuccess(false), 3000);
+
+        } catch (err) {
+             console.error("Error manual send:", err);
+             alert("Error al generar el enlace. Verifica tu conexión.");
+             setIsSending(false);
         }
     };
     
@@ -456,31 +501,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
     const textareaClasses = `${inputClasses} min-h-[100px] resize-y`;
 
     const sendButtonEnabled = items.length > 0 && clientName && clientPhone && !isSending && !sentSuccess;
-    
-    let buttonContent;
-    if (sentSuccess) {
-        buttonContent = (
-            <>
-                <CheckCircle size={24} />
-                ¡Enviado con Éxito!
-            </>
-        );
-    } else if (isSending) {
-        buttonContent = (
-            <>
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
-                Enviando...
-            </>
-        );
-    } else {
-        buttonContent = (
-            <>
-                <MessageSquare size={24} />
-                Generar y Enviar por WhatsApp
-            </>
-        );
-    }
-
+    const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full">
@@ -744,41 +765,66 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                             <div className="bg-surface dark:bg-dark-surface p-6 rounded-xl shadow-md border border-border dark:border-dark-border sticky top-24">
                                 <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary mb-4">Opciones de Envío</h3>
                                 
-                                {/* WhatsApp Section */}
-                                <div className="mb-6">
-                                    <label className="text-xs font-semibold text-textSecondary dark:text-dark-textSecondary uppercase tracking-wider mb-2 block">
-                                        Mensaje (WhatsApp)
-                                    </label>
-                                    <textarea 
-                                        value={whatsAppMessage}
-                                        onChange={(e) => setWhatsAppMessage(e.target.value)}
-                                        className={`${textareaClasses} text-sm h-24 mb-3`}
-                                        placeholder="Mensaje para el cliente..."
-                                    />
-                                    <button
-                                        onClick={handleSendToWebhook}
-                                        disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized)}
-                                        className={`group w-full flex items-center justify-center gap-3 px-4 py-4 text-white font-bold text-lg rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${sentSuccess ? 'bg-green-600' : 'bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:brightness-110 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-800 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none'}`}
-                                    >
-                                        {limitReached && !hasBeenFinalized ? (
-                                            <><Lock size={20}/> Límite Alcanzado</>
-                                        ) : (
-                                            buttonContent
-                                        )}
-                                    </button>
+                                <div className="space-y-4 mb-6">
+                                    {/* Button 1: Auto Bot (Default) */}
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-xs font-semibold text-textSecondary uppercase tracking-wide">Envío Automático</span>
+                                            {isPro && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">MARCA BLANCA</span>}
+                                        </div>
+                                        <button
+                                            onClick={handleSendToWebhook}
+                                            disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized)}
+                                            className={`group w-full flex items-center justify-center gap-3 px-4 py-4 text-white font-bold text-base rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${sentSuccess ? 'bg-green-600' : 'bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:brightness-110 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-800 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none'}`}
+                                        >
+                                            {isSending ? (
+                                                <><div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div> Enviando...</>
+                                            ) : sentSuccess ? (
+                                                <><CheckCircle size={20} /> Enviado</>
+                                            ) : (
+                                                <><Bot size={20}/> {isPro ? 'Enviar Rápido (Bot)' : 'Generar y Enviar'}</>
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {/* Button 2: Manual Link (PRO Only) */}
+                                    {isPro && (
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <span className="text-xs font-semibold text-textSecondary uppercase tracking-wide">Envío Directo</span>
+                                                <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><Zap size={10}/> PRO</span>
+                                            </div>
+                                            <button
+                                                onClick={handleManualSendWithLink}
+                                                disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized)}
+                                                className="group w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-gray-800 text-white font-bold text-base rounded-xl shadow-md transition-all duration-300 hover:bg-black hover:shadow-lg border-2 border-transparent hover:border-gray-600"
+                                            >
+                                                <Smartphone size={20} className="text-green-400"/>
+                                                Enviar desde mi número
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <hr className="border-border dark:border-dark-border mb-6"/>
+                                {!isPro && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                                        <p className="text-xs text-center text-blue-800 dark:text-blue-300">
+                                            🔒 <span className="font-bold">¿Quieres enviar desde tu propio número?</span> <br/>Actualiza a PRO para desbloquear el envío directo y quitar la publicidad.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <hr className="border-border dark:border-dark-border my-6"/>
 
                                 {/* Other Actions */}
                                 <div className="space-y-3">
                                     <button
                                         onClick={handleSendEmail}
                                         disabled={!clientEmail || (limitReached && !hasBeenFinalized)}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-background dark:bg-white/5 border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Abrir cliente de correo"}
                                     >
-                                        <Mail size={20} />
+                                        <Mail size={18} />
                                         Enviar por Correo
                                     </button>
 
@@ -787,7 +833,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                                         disabled={items.length === 0 || (limitReached && !hasBeenFinalized)}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-pink-600 hover:shadow-md transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <Download size={20} />
+                                        <Download size={18} />
                                         Descargar PDF
                                     </button>
                                 </div>
