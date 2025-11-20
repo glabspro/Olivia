@@ -372,7 +372,8 @@ export const getMonthlyQuoteCount = async (userId: string): Promise<number> => {
 export const saveQuotation = async (
     userId: string,
     clientData: { name: string; phone: string; email?: string },
-    quoteData: { number: string; total: number; currency: string; items: QuotationItem[] }
+    quoteData: { number: string; total: number; currency: string; items: QuotationItem[] },
+    status: 'draft' | 'sent' | 'accepted' | 'rejected' = 'sent'
 ) => {
     if (!supabase) throw new Error("Supabase no configurado");
 
@@ -411,7 +412,7 @@ export const saveQuotation = async (
             quotation_number: quoteData.number,
             total_amount: quoteData.total,
             currency: quoteData.currency,
-            status: 'sent'
+            status: status
         })
         .select('id')
         .single();
@@ -432,6 +433,8 @@ export const saveQuotation = async (
 
     if (itemsError) throw new Error(`Error guardando items: ${itemsError.message}`);
 
+    // Only upsert products if we are actually sending/finalizing, or also on drafts? 
+    // Let's save on drafts too so the catalog builds up as they type.
     const productsToUpsert = quoteData.items.map(item => ({
         user_id: userId,
         name: item.description,

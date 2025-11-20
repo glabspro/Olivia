@@ -6,7 +6,7 @@ import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
 import { saveQuotation, getMonthlyQuoteCount, incrementAIUsage, uploadQuotationPDF } from '../services/supabaseClient';
-import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles, Smartphone, Bot, Zap, Share2 } from 'lucide-react';
+import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles, Smartphone, Bot, Zap, Share2, Save } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -182,11 +182,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
         }
     }, [clientName, finalTotal, settings.companyName, settings.currencySymbol, currentQuotationNumber]);
 
-    const saveToDatabase = async () => {
+    const saveToDatabase = async (status: 'draft' | 'sent' = 'sent') => {
         if(hasBeenFinalized) return;
         
         try {
-            console.log("Guardando en Supabase...");
+            console.log("Guardando en Supabase...", status);
             await saveQuotation(
                 user.id, 
                 { name: clientName, phone: clientPhone, email: clientEmail },
@@ -195,19 +195,20 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                     total: finalTotal, 
                     currency: settings.currencySymbol, 
                     items: items 
-                }
+                },
+                status
             );
             console.log("Guardado exitoso.");
         } catch (err) {
             console.error("Error guardando en base de datos:", err);
-            // No bloqueamos la UI si falla el guardado en BD, puede ser error de red o de permisos simulados
+            throw err;
         }
     };
 
     const finalizeAndIncrementQuoteNumber = async () => {
         if (hasBeenFinalized) return;
 
-        await saveToDatabase();
+        await saveToDatabase('sent');
 
         const newSettings = {
             ...settings,
@@ -222,6 +223,36 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             setQuoteCount(count);
         } catch (e) {
             console.error("Failed to save incremented quote number", e);
+        }
+    };
+
+    const handleSaveDraft = async () => {
+        if (!clientName || !clientPhone) {
+             alert("Por favor ingresa al menos el Nombre y Teléfono del cliente para guardar el borrador.");
+             return;
+        }
+        setIsLoading(true);
+        try {
+            await saveToDatabase('draft');
+            
+            // Increment number so the draft keeps its number and next quote gets a new one
+            const newSettings = {
+                ...settings,
+                quotationNextNumber: settings.quotationNextNumber + 1,
+            };
+            localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
+            setSettings(newSettings);
+            
+            // Update limit UI if needed (drafts might not count towards limit, but let's refresh anyway)
+            const count = await getMonthlyQuoteCount(user.id);
+            setQuoteCount(count);
+
+            alert("Borrador guardado correctamente.");
+            resetState();
+        } catch (error) {
+            alert("Hubo un error al guardar el borrador.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -818,6 +849,16 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
                                 {/* Other Actions */}
                                 <div className="space-y-3">
+                                    {/* Save Draft Button */}
+                                    <button
+                                        onClick={handleSaveDraft}
+                                        disabled={isSending}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-background dark:bg-white/5 border border-border dark:border-dark-border text-textSecondary dark:text-dark-textSecondary font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
+                                    >
+                                        <Save size={18} />
+                                        Guardar Borrador
+                                    </button>
+
                                     <button
                                         onClick={handleSendEmail}
                                         disabled={!clientEmail || (limitReached && !hasBeenFinalized)}
