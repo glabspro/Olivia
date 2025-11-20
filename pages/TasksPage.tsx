@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, DbTask } from '../types';
 import { getTasks, deleteTask, updateTaskCompletion } from '../services/supabaseClient';
-import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing } from 'lucide-react';
 
 interface TasksPageProps {
     user: User;
@@ -30,14 +30,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
     const handleComplete = async (id: string) => {
         try {
-            // Optimistically remove or mark done
             await updateTaskCompletion(id, true);
-            // Ideally we move it to a "completed" list or delete it. For now, let's remove from view
-            // or just delete as per user request "completar/eliminar" often means "done with it".
-            // But standard is: mark completed. 
-            // Let's just delete for simplicity if that's what was intended, OR mark completed.
-            // The previous logic was deleting. Let's stick to marking completed visually or removing.
-            // Let's remove from the pending list.
             setTasks(tasks.filter(t => t.id !== id));
         } catch (error) {
             console.error("Error completing task:", error);
@@ -57,8 +50,6 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 
     // Group Tasks
     const now = new Date();
-    // Filter out completed tasks if we were fetching them, but for now getTasks returns all.
-    // Let's assume we want to show active ones.
     const activeTasks = tasks.filter(t => !t.is_completed);
     
     const overdue = activeTasks.filter(t => t.due_date && new Date(t.due_date) < now);
@@ -133,9 +124,16 @@ const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDel
     return (
         <div className={`bg-surface dark:bg-dark-surface p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${isOverdue ? 'border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10' : 'border-border dark:border-dark-border'}`}>
             <div className="flex-grow min-w-0">
-                <p className={`font-medium text-base truncate ${isOverdue ? 'text-red-700 dark:text-red-400' : 'text-textPrimary dark:text-dark-textPrimary'}`}>
-                    {task.description}
-                </p>
+                <div className="flex items-start gap-2">
+                    <p className={`font-medium text-base truncate ${isOverdue ? 'text-red-700 dark:text-red-400' : 'text-textPrimary dark:text-dark-textPrimary'}`}>
+                        {task.description}
+                    </p>
+                    {task.reminder_sent && (
+                        <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 mt-0.5" title="Recordatorio enviado por WhatsApp">
+                            <BellRing size={10} /> Enviado
+                        </span>
+                    )}
+                </div>
                 {date && (
                      <p className={`text-xs mt-1 flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
                         <Clock size={12} />
