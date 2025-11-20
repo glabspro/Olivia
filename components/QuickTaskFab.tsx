@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles } from 'lucide-react';
+import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText } from 'lucide-react';
 import { User } from '../types';
 import { createTask } from '../services/supabaseClient';
 
@@ -8,10 +8,13 @@ interface QuickTaskFabProps {
   user: User;
 }
 
+type TaskType = 'note' | 'call' | 'meeting' | 'urgent' | 'email';
+
 const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [note, setNote] = useState('');
   const [date, setDate] = useState('');
+  const [taskType, setTaskType] = useState<TaskType>('note');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -24,8 +27,18 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         // Fix Timezone: Convert local input to ISO UTC string
         const isoDate = date ? new Date(date).toISOString() : undefined;
 
+        // Prefix description based on type
+        let finalDescription = note;
+        switch (taskType) {
+            case 'call': finalDescription = `📞 ${note}`; break;
+            case 'meeting': finalDescription = `📅 ${note}`; break;
+            case 'urgent': finalDescription = `⚠️ ${note}`; break;
+            case 'email': finalDescription = `✉️ ${note}`; break;
+            case 'note': finalDescription = `📝 ${note}`; break;
+        }
+
         // Now saving to dedicated 'tasks' table
-        await createTask(user.id, note, isoDate);
+        await createTask(user.id, finalDescription, isoDate);
 
         setSuccess(true);
         setTimeout(() => {
@@ -33,6 +46,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             setIsOpen(false);
             setNote('');
             setDate('');
+            setTaskType('note');
         }, 1500);
 
     } catch (error) {
@@ -51,15 +65,27 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       return `Te avisaré a las ${reminderTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
   };
 
+  const openModal = () => {
+      setNote('');
+      setDate('');
+      setTaskType('note');
+      setSuccess(false);
+      setIsOpen(true);
+  };
+
+  const taskTypes: { id: TaskType; label: string; icon: React.ElementType; color: string }[] = [
+      { id: 'note', label: 'Nota', icon: FileText, color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+      { id: 'call', label: 'Llamar', icon: Phone, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+      { id: 'meeting', label: 'Reunión', icon: Briefcase, color: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' },
+      { id: 'email', label: 'Correo', icon: Mail, color: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' },
+      { id: 'urgent', label: 'Urgente', icon: AlertTriangle, color: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
+  ];
+
   return (
     <>
       {/* Floating Button */}
       <button
-        onClick={() => {
-            setNote('');
-            setDate('');
-            setIsOpen(true);
-        }}
+        onClick={openModal}
         className={`fixed bottom-20 md:bottom-8 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-primary text-white hover:bg-pink-600 hover:scale-105`}
         title="Abrir Oliv-IA"
       >
@@ -106,6 +132,33 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 ) : (
                     <form onSubmit={handleSave} className="space-y-5">
                         <div>
+                            <label className="block text-xs font-bold text-textSecondary dark:text-dark-textSecondary mb-2 uppercase tracking-wider">
+                                Tipo de Actividad
+                            </label>
+                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                {taskTypes.map((type) => (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => setTaskType(type.id)}
+                                        className={`flex flex-col items-center justify-center p-2 rounded-lg min-w-[60px] transition-all border ${
+                                            taskType === type.id 
+                                            ? 'border-primary ring-1 ring-primary bg-primary/5' 
+                                            : 'border-transparent hover:bg-gray-100 dark:hover:bg-white/5'
+                                        }`}
+                                    >
+                                        <div className={`p-1.5 rounded-full mb-1 ${type.color}`}>
+                                            <type.icon size={16} />
+                                        </div>
+                                        <span className={`text-[10px] font-medium ${taskType === type.id ? 'text-primary' : 'text-textSecondary'}`}>
+                                            {type.label}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
                             <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
                                 ¿Qué necesitas recordar?
                             </label>
@@ -114,7 +167,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 autoFocus
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                placeholder="Ej. Pagar recibo de luz..."
+                                placeholder={taskType === 'call' ? 'Ej. Llamar a Juan Pérez...' : taskType === 'email' ? 'Ej. Enviar correo a...' : 'Escribe aquí...'}
                                 className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
                             />
                         </div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, DbTask } from '../types';
 import { getTasks, deleteTask, updateTaskCompletion } from '../services/supabaseClient';
-import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText } from 'lucide-react';
 
 interface TasksPageProps {
     user: User;
@@ -121,25 +121,44 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
 const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDelete: (id: string) => void, isOverdue?: boolean }> = ({ task, onComplete, onDelete, isOverdue }) => {
     const date = task.due_date ? new Date(task.due_date) : null;
 
+    // Determine type from prefix
+    const getTaskType = (desc: string) => {
+        if (desc.startsWith('📞')) return { icon: Phone, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' };
+        if (desc.startsWith('📅')) return { icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' };
+        if (desc.startsWith('⚠️')) return { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' };
+        if (desc.startsWith('✉️')) return { icon: Mail, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' };
+        if (desc.startsWith('📝')) return { icon: FileText, color: 'text-gray-600', bg: 'bg-gray-100 dark:bg-gray-800' };
+        return { icon: ClipboardList, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' };
+    };
+
+    const cleanDescription = task.description.replace(/^(📞|📅|⚠️|✉️|📝)\s*/, '');
+    const typeStyle = getTaskType(task.description);
+    const TypeIcon = typeStyle.icon;
+
     return (
         <div className={`bg-surface dark:bg-dark-surface p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${isOverdue ? 'border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10' : 'border-border dark:border-dark-border'}`}>
-            <div className="flex-grow min-w-0">
-                <div className="flex items-start gap-2">
-                    <p className={`font-medium text-base truncate ${isOverdue ? 'text-red-700 dark:text-red-400' : 'text-textPrimary dark:text-dark-textPrimary'}`}>
-                        {task.description}
-                    </p>
-                    {task.reminder_sent && (
-                        <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 mt-0.5" title="Recordatorio enviado por WhatsApp">
-                            <BellRing size={10} /> Enviado
-                        </span>
+            <div className="flex-grow min-w-0 flex items-start gap-3">
+                 <div className={`p-2 rounded-lg flex-shrink-0 ${typeStyle.bg} ${typeStyle.color}`}>
+                    <TypeIcon size={18} />
+                 </div>
+                 <div className="min-w-0">
+                    <div className="flex items-start gap-2">
+                        <p className={`font-medium text-base truncate ${isOverdue ? 'text-red-700 dark:text-red-400' : 'text-textPrimary dark:text-dark-textPrimary'}`}>
+                            {cleanDescription}
+                        </p>
+                        {task.reminder_sent && (
+                            <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 mt-0.5" title="Recordatorio enviado por WhatsApp">
+                                <BellRing size={10} />
+                            </span>
+                        )}
+                    </div>
+                    {date && (
+                        <p className={`text-xs mt-1 flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
+                            <Clock size={12} />
+                            {date.toLocaleString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
                     )}
-                </div>
-                {date && (
-                     <p className={`text-xs mt-1 flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
-                        <Clock size={12} />
-                        {date.toLocaleString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                )}
+                 </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
                 <button 
