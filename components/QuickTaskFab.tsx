@@ -21,8 +21,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
     setLoading(true);
     try {
+        // Fix Timezone: Convert local input to ISO UTC string
+        const isoDate = date ? new Date(date).toISOString() : undefined;
+
         // Now saving to dedicated 'tasks' table
-        await createTask(user.id, note, date || undefined);
+        await createTask(user.id, note, isoDate);
 
         setSuccess(true);
         setTimeout(() => {
@@ -30,8 +33,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             setIsOpen(false);
             setNote('');
             setDate('');
-            // Optionally refresh task list if user is on Tasks page, but simpler to just let them refresh
-            // or use global state, but for MVP this is fine.
         }, 1500);
 
     } catch (error) {
