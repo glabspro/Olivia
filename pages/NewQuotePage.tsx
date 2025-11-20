@@ -838,12 +838,21 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                             </div>
                         </div>
 
-                         {/* Move to Preview Button */}
-                         <div className="pt-6 border-t border-border dark:border-dark-border flex justify-end">
+                         {/* Action Buttons Step 2 */}
+                         <div className="pt-6 border-t border-border dark:border-dark-border flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <button
+                                onClick={handleSaveDraft}
+                                disabled={!clientName}
+                                className="w-full sm:w-auto px-6 py-4 border border-border dark:border-dark-border text-textSecondary dark:text-dark-textSecondary font-bold rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                <Save size={18} />
+                                {isEditing ? 'Guardar Cambios' : 'Guardar Borrador'}
+                            </button>
+                            
                             <button
                                 onClick={() => setStep(3)}
                                 disabled={items.length === 0 || !clientName || !clientPhone}
-                                className="px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all duration-300 disabled:bg-gray-300 dark:disabled:bg-gray-700 flex items-center gap-2"
+                                className="w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all duration-300 disabled:bg-gray-300 dark:disabled:bg-gray-700 flex items-center justify-center gap-2"
                             >
                                 <Eye size={20} />
                                 Continuar a Vista Previa
