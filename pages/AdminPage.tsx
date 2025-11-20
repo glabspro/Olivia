@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions } from '../types';
 import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
-import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X } from 'lucide-react';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -13,6 +13,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Notification State
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -23,15 +26,28 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
     fetchUsers();
   }, []);
 
+  // Auto-dismiss notification
+  useEffect(() => {
+    if (notification) {
+        const timer = setTimeout(() => setNotification(null), 3000);
+        return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   const fetchUsers = async () => {
     try {
       const data = await getAllUsers();
       setUsers(data);
     } catch (error) {
       console.error(error);
+      showNotification('error', 'Error cargando usuarios');
     } finally {
       setLoading(false);
     }
+  };
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+      setNotification({ type, message });
   };
 
   const handlePermissionChange = async (userId: string, currentPermissions: UserPermissions | undefined, field: keyof UserPermissions) => {
@@ -43,10 +59,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
 
       try {
           await updateUserPermissions(userId, newPerms);
-      } catch (error) {
+          showNotification('success', 'Permisos actualizados');
+      } catch (error: any) {
           console.error("Failed to update permissions", error);
           // Revert on error
           setUsers(users.map(u => u.id === userId ? { ...u, permissions: oldPerms } : u));
+          showNotification('error', `Error: ${error.message || 'No se pudo actualizar'}`);
       }
   };
 
@@ -54,13 +72,17 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
       const oldPerms = currentPermissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true };
       const newPerms = { ...oldPerms, plan: newPlan };
 
+      // Optimistic UI Update
       setUsers(users.map(u => u.id === userId ? { ...u, permissions: newPerms } : u));
 
       try {
           await updateUserPermissions(userId, newPerms);
-      } catch (error) {
+          showNotification('success', `Plan cambiado a ${newPlan.toUpperCase()}`);
+      } catch (error: any) {
           console.error("Failed to update plan", error);
+          // Revert UI
           setUsers(users.map(u => u.id === userId ? { ...u, permissions: oldPerms } : u));
+          showNotification('error', `Error guardando plan: ${error.message}`);
       }
   };
 
@@ -69,9 +91,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
           try {
               await deleteUserProfile(userId);
               setUsers(users.filter(u => u.id !== userId));
-          } catch (error) {
+              showNotification('success', 'Usuario eliminado correctamente');
+          } catch (error: any) {
               console.error("Error deleting user:", error);
-              alert("Error al eliminar usuario. Puede tener datos relacionados.");
+              showNotification('error', `Error al eliminar: ${error.message}`);
           }
       }
   };
@@ -95,9 +118,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
           setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...editForm } : u));
           setShowEditModal(false);
           setEditingUser(null);
-      } catch (error) {
+          showNotification('success', 'Usuario actualizado');
+      } catch (error: any) {
           console.error("Error updating user:", error);
-          alert("No se pudo actualizar el usuario.");
+          showNotification('error', `Error: ${error.message}`);
       } finally {
           setSaving(false);
       }
@@ -128,7 +152,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-24">
+    <div className="container mx-auto px-4 py-8 pb-24 relative">
+      
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-24 right-4 z-50 px-6 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-bounce ${
+            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+            {notification.type === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
+            <span className="font-bold">{notification.message}</span>
+        </div>
+      )}
+
       {/* Header & Stats */}
       <div className="mb-8">
          <div className="flex justify-between items-start mb-6">
@@ -217,7 +252,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                            <select
                                 value={perms.plan}
                                 onChange={(e) => handlePlanChange(user.id, user.permissions, e.target.value as any)}
-                                className={`w-full border-2 border-transparent font-bold rounded-lg px-3 py-3 focus:outline-none uppercase text-center ${
+                                className={`w-full border-2 border-transparent font-bold rounded-lg px-3 py-3 focus:outline-none uppercase text-center cursor-pointer ${
                                     perms.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
                                     'bg-white text-gray-800 shadow-sm border-gray-200'
                                 }`}
