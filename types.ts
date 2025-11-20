@@ -106,6 +106,16 @@ export interface DbProduct {
   currency: string;
 }
 
+export interface DbTask {
+  id: string;
+  user_id: string;
+  description: string;
+  due_date?: string;
+  is_completed: boolean;
+  reminder_sent?: boolean;
+  created_at: string;
+}
+
 export interface CrmMeta {
     next_followup?: string; // ISO string date
     notes?: string;

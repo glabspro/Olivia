@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles } from 'lucide-react';
 import { User } from '../types';
-import { saveQuotation, updateQuotationTags } from '../services/supabaseClient';
+import { createTask } from '../services/supabaseClient';
 
 interface QuickTaskFabProps {
   user: User;
@@ -17,42 +17,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!note || !date) return;
+    if (!note) return;
 
     setLoading(true);
     try {
-        // 1. Crear una estructura de cotización "Fantasma" para el recordatorio
-        const quoteId = await saveQuotation(
-            user.id,
-            { 
-                name: "Mis Recordatorios", // Cliente especial
-                phone: user.phone,         // Tu propio teléfono
-                email: user.email 
-            },
-            {
-                number: "NOTE-" + Date.now().toString().slice(-6), // ID único temporal
-                total: 0,
-                currency: 'S/',
-                items: [{ 
-                    id: 'note-1', 
-                    description: note, // La nota va aquí
-                    quantity: 1, 
-                    unitPrice: 0 
-                }]
-            },
-            'draft', // Se guarda como borrador para no afectar métricas de ventas
-            true // SKIP PRODUCT SAVE (No guardar en catálogo)
-        );
-
-        // 2. Asignar la etiqueta de Tarea y la fecha para que n8n lo detecte
-        await updateQuotationTags(
-            quoteId, 
-            ['task'], 
-            { 
-                next_followup: date,
-                notes: note
-            }
-        );
+        // Now saving to dedicated 'tasks' table
+        await createTask(user.id, note, date || undefined);
 
         setSuccess(true);
         setTimeout(() => {
@@ -60,7 +30,9 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             setIsOpen(false);
             setNote('');
             setDate('');
-        }, 2000);
+            // Optionally refresh task list if user is on Tasks page, but simpler to just let them refresh
+            // or use global state, but for MVP this is fine.
+        }, 1500);
 
     } catch (error) {
         console.error("Error saving quick task:", error);
@@ -124,7 +96,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                     <div className="flex flex-col items-center justify-center py-8 text-green-500 animate-fade-in">
                         <CheckCircle size={48} className="mb-3" />
                         <p className="font-bold text-lg">¡Anotado!</p>
-                        <p className="text-sm text-textSecondary text-center mt-1">Te enviaré un WhatsApp 30 min antes.</p>
+                        <p className="text-sm text-textSecondary text-center mt-1">Tarea guardada correctamente.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSave} className="space-y-5">
@@ -144,7 +116,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                         
                         <div>
                             <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
-                                ¿Cuándo es el evento?
+                                ¿Cuándo es el evento? (Opcional)
                             </label>
                             <div className="relative">
                                 <input 
@@ -165,7 +137,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                         <button 
                             type="submit" 
-                            disabled={!note || !date || loading}
+                            disabled={!note || loading}
                             className="w-full py-3.5 bg-primary hover:bg-pink-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg"
                         >
                             {loading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}

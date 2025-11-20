@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Theme } from '../types';
-import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown, ClipboardList } from 'lucide-react';
 import Logo from './Logo';
 import QuickTaskFab from './QuickTaskFab';
 
@@ -11,7 +11,7 @@ interface LayoutProps {
   theme: Theme;
   toggleTheme: () => void;
   activePage: string;
-  setActivePage: (page: 'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin') => void;
+  setActivePage: (page: 'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin' | 'tasks') => void;
   children: React.ReactNode;
 }
 
@@ -38,6 +38,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
 
   const navItems = [
     { id: 'history', label: 'Dashboard', icon: LayoutDashboard, colorClass: 'text-accent-coral' },
+    { id: 'tasks', label: 'Tareas', icon: ClipboardList, colorClass: 'text-cyan-500' },
     { id: 'new_quote', label: 'Crear', icon: FilePlus, colorClass: 'text-accent-teal' },
     { id: 'products', label: 'Catálogo', icon: Package, colorClass: 'text-purple-500' },
     { id: 'clients', label: 'Clientes', icon: Users, colorClass: 'text-blue-500' },

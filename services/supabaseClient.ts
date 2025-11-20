@@ -1,6 +1,6 @@
 
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
-import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta } from '../types';
+import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta, DbTask } from '../types';
 
 // -----------------------------------------------------------------------------
 // ¡IMPORTANTE! Reemplaza estos valores con las credenciales de tu proyecto de Supabase.
@@ -342,13 +342,11 @@ export const updateUserProfile = async (userId: string, data: { fullName: string
 
 export const deleteUserProfile = async (userId: string) => {
     if (!supabase) return;
-    // Nota: En un sistema real con integridad referencial, esto podría fallar si hay tablas relacionadas 
-    // sin "ON DELETE CASCADE". Asumimos que profiles es la tabla principal.
     const { error } = await supabase.from('profiles').delete().eq('id', userId);
     if (error) throw error;
 };
 
-// --- Database Functions ---
+// --- Database Functions (Quotations) ---
 
 export const getMonthlyQuoteCount = async (userId: string): Promise<number> => {
     if (!supabase) return 0;
@@ -436,7 +434,7 @@ export const saveQuotation = async (
 
     if (itemsError) throw new Error(`Error guardando items: ${itemsError.message}`);
 
-    // Only upsert products if NOT skipped (e.g. for Tasks)
+    // Only upsert products if NOT skipped
     if (!skipProductSave) {
         const productsToUpsert = quoteData.items.map(item => ({
             user_id: userId,
@@ -517,6 +515,12 @@ export const updateQuotationTags = async (quotationId: string, tags: string[], m
     if (error) throw error;
 };
 
+export const deleteQuotation = async (quotationId: string) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('quotations').delete().eq('id', quotationId);
+    if (error) throw error;
+};
+
 export const getQuotations = async (userId: string): Promise<SavedQuotation[]> => {
     if (!supabase) return [];
 
@@ -538,6 +542,9 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
                 name,
                 phone,
                 email
+            ),
+            quotation_items (
+                description
             )
         `)
         .eq('user_id', userId)
@@ -564,7 +571,8 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
             name: q.clients?.name || 'Cliente Desconocido',
             phone: q.clients?.phone,
             email: q.clients?.email
-        }
+        },
+        items: q.quotation_items?.map((i: any) => ({ description: i.description }))
     }));
 };
 
@@ -600,6 +608,43 @@ export const getQuotationById = async (quotationId: string) => {
         status: quote.status
     };
 };
+
+// --- TASKS FUNCTIONS (NEW TABLE) ---
+
+export const getTasks = async (userId: string): Promise<DbTask[]> => {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+    
+    if (error) return [];
+    return data || [];
+}
+
+export const createTask = async (userId: string, description: string, dueDate?: string) => {
+    if (!supabase) throw new Error("Supabase not ready");
+    const { error } = await supabase.from('tasks').insert({
+        user_id: userId,
+        description,
+        due_date: dueDate
+    });
+    if (error) throw error;
+}
+
+export const updateTaskCompletion = async (taskId: string, isCompleted: boolean) => {
+    if (!supabase) throw new Error("Supabase not ready");
+    const { error } = await supabase.from('tasks').update({ is_completed: isCompleted }).eq('id', taskId);
+    if (error) throw error;
+}
+
+export const deleteTask = async (taskId: string) => {
+    if (!supabase) throw new Error("Supabase not ready");
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    if (error) throw error;
+}
+
 
 // --- Client Management Functions ---
 

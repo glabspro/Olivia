@@ -9,6 +9,7 @@ import HistoryPage from './pages/HistoryPage';
 import ClientsPage from './pages/ClientsPage';
 import ProductsPage from './pages/ProductsPage';
 import OnboardingPage from './pages/OnboardingPage';
+import TasksPage from './pages/TasksPage';
 import AdminPage from './pages/AdminPage';
 import { supabase, getProfile } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -19,7 +20,7 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>(Theme.LIGHT);
-  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin'>('history');
+  const [activePage, setActivePage] = useState<'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin' | 'tasks'>('history');
 
   // CRM State: Quote Editing / Duplicating
   const [quoteIdToEdit, setQuoteIdToEdit] = useState<string | null>(null);
@@ -181,6 +182,8 @@ const App: React.FC = () => {
         return <ClientsPage user={profile} />;
       case 'products':
         return <ProductsPage user={profile} />;
+      case 'tasks':
+        return <TasksPage user={profile} />;
       case 'settings':
         return <SettingsPage user={profile} />;
       case 'admin':
