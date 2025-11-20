@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot } from 'lucide-react';
+import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles } from 'lucide-react';
 import { User } from '../types';
 import { saveQuotation, updateQuotationTags } from '../services/supabaseClient';
 
@@ -22,7 +22,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
     setLoading(true);
     try {
         // 1. Crear una estructura de cotización "Fantasma" para el recordatorio
-        // Esto permite reutilizar la infraestructura de n8n existente
         const quoteId = await saveQuotation(
             user.id,
             { 
@@ -83,12 +82,15 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-20 md:bottom-8 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white`}
-        title="Crear Recordatorio Rápido"
+        className={`fixed bottom-20 md:bottom-8 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-primary text-white hover:bg-pink-600 hover:scale-105`}
+        title="Abrir Oliv-IA"
       >
-        <Bot size={28} className="animate-pulse" />
-        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-            Asistente
+        <div className="relative">
+            <Bot size={28} />
+            <Sparkles size={12} className="absolute -top-1 -right-1 text-yellow-300 animate-pulse" />
+        </div>
+        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-sm">
+            Oliv-IA
         </span>
       </button>
 
@@ -103,10 +105,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
           <div className="relative w-full sm:w-96 bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up">
             
             {/* Header */}
-            <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-4 flex justify-between items-center text-white">
+            <div className="bg-primary p-4 flex justify-between items-center text-white">
                 <div className="flex items-center gap-2">
-                    <Bot size={24} />
-                    <h3 className="font-bold text-lg">Asistente Olivia</h3>
+                    <div className="p-1.5 bg-white/20 rounded-full">
+                        <Bot size={20} />
+                    </div>
+                    <h3 className="font-bold text-lg tracking-wide">Oliv-IA</h3>
                 </div>
                 <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded-full transition-colors">
                     <X size={20} />
@@ -118,13 +122,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 {success ? (
                     <div className="flex flex-col items-center justify-center py-8 text-green-500 animate-fade-in">
                         <CheckCircle size={48} className="mb-3" />
-                        <p className="font-bold text-lg">¡Recordatorio Creado!</p>
-                        <p className="text-sm text-textSecondary">Te avisaré por WhatsApp.</p>
+                        <p className="font-bold text-lg">¡Anotado!</p>
+                        <p className="text-sm text-textSecondary text-center mt-1">Te enviaré un WhatsApp 30 min antes.</p>
                     </div>
                 ) : (
-                    <form onSubmit={handleSave} className="space-y-4">
+                    <form onSubmit={handleSave} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">
+                            <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
                                 ¿Qué necesitas recordar?
                             </label>
                             <input 
@@ -133,12 +137,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 placeholder="Ej. Pagar recibo de luz..."
-                                className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none text-textPrimary dark:text-dark-textPrimary"
+                                className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
                             />
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1">
+                            <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
                                 ¿Cuándo es el evento?
                             </label>
                             <div className="relative">
@@ -146,12 +150,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     type="datetime-local"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
-                                    className="w-full px-4 py-3 pl-10 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none text-textPrimary dark:text-dark-textPrimary"
+                                    className="w-full px-4 py-3 pl-10 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
                                 />
                                 <Calendar className="absolute left-3 top-3.5 text-gray-400" size={18} />
                             </div>
                             {date && (
-                                <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-2 flex items-center gap-1">
+                                <p className="text-xs text-primary dark:text-pink-400 mt-2 flex items-center gap-1 bg-primary/5 dark:bg-primary/10 p-2 rounded-lg">
                                     <Bell size={12} />
                                     {getReminderText()} (30 min antes)
                                 </p>
@@ -161,7 +165,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                         <button 
                             type="submit" 
                             disabled={!note || !date || loading}
-                            className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-3.5 bg-primary hover:bg-pink-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg"
                         >
                             {loading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
                             Crear Recordatorio
