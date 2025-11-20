@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Settings as SettingsType, MarginType, Template, QuotationItem, TaxType } from '../types';
 import AppSettings from '../components/Settings';
@@ -17,6 +18,9 @@ const sampleItems: QuotationItem[] = [
 ];
 const sampleClientName = "Cliente de Muestra S.A.C.";
 const sampleClientPhone = "51987654321";
+const sampleClientDocument = "20100100100";
+const sampleClientAddress = "Av. Javier Prado 1234, Lima";
+
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const [settings, setSettings] = useState<SettingsType>({
@@ -177,6 +181,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         currencySymbol={settings.currencySymbol}
                                         clientName={sampleClientName}
                                         clientPhone={sampleClientPhone}
+                                        clientAddress={sampleClientAddress}
+                                        clientDocument={sampleClientDocument}
                                         companyName={settings.companyName}
                                         companyLogo={settings.companyLogo}
                                         companyAddress={settings.companyAddress}

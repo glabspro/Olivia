@@ -11,6 +11,8 @@ interface QuotationPreviewProps {
   currencySymbol?: string;
   clientName: string;
   clientPhone: string;
+  clientAddress?: string;
+  clientDocument?: string;
   companyName: string;
   companyLogo: string | null;
   companyAddress?: string;
@@ -38,6 +40,8 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
   currencySymbol = 'S/',
   clientName,
   clientPhone,
+  clientAddress,
+  clientDocument,
   companyName,
   companyLogo,
   companyAddress,
@@ -165,7 +169,9 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         <section className="mb-6">
             <h3 className="font-semibold text-gray-500 uppercase text-[8pt] tracking-wider mb-1">Cliente</h3>
             <p className="font-bold text-gray-900 text-base">{clientName}</p>
+            {clientDocument && <p className="text-gray-600 text-[8.5pt] mt-0.5"><span className="font-semibold">ID:</span> {clientDocument}</p>}
             <p className="text-gray-600">{clientPhone}</p>
+            {clientAddress && <p className="text-gray-500 text-[8.5pt] mt-0.5"><span className="font-semibold">Dirección:</span> {clientAddress}</p>}
         </section>
         <main className="flex-grow"><ItemsTable /></main>
         <section className="flex justify-end mt-6">
@@ -197,9 +203,11 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
         <div className="w-full h-px bg-gray-300 my-3"></div>
         <section className="grid grid-cols-2 gap-8 mb-5 text-[8.5pt]">
             <div>
-              <h3 className="font-bold text-gray-600">PARA:</h3>
-              <p>{clientName}</p>
+              <h3 className="font-bold text-gray-600 uppercase">Para:</h3>
+              <p className="font-bold text-lg">{clientName}</p>
+              {clientDocument && <p><span className="font-semibold">ID:</span> {clientDocument}</p>}
               <p>{clientPhone}</p>
+              {clientAddress && <p><span className="font-semibold">Dir:</span> {clientAddress}</p>}
             </div>
             <div className="text-right">
               <h3 className="font-bold text-gray-600">COTIZACIÓN NRO:</h3>
@@ -237,7 +245,9 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             <div>
                 <p className="text-gray-500 tracking-wider uppercase text-[7pt] mb-1">Para</p>
                 <p className="font-semibold text-base text-gray-900">{clientName}</p>
+                {clientDocument && <p className="text-gray-600">ID: {clientDocument}</p>}
                 <p>{clientPhone}</p>
+                {clientAddress && <p className="text-gray-500">{clientAddress}</p>}
             </div>
              <div className="text-right">
                 <p className="text-gray-500 tracking-wider uppercase text-[7pt] mb-1">Fecha</p>
@@ -300,6 +310,11 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
             <section className="mb-8 border-t border-b border-gray-100 py-3">
                 <p className="text-xs text-gray-500 tracking-wider">CLIENTE</p>
                 <p className="text-lg font-medium text-gray-800">{clientName}</p>
+                <div className="text-sm text-gray-600 mt-1 flex flex-col gap-0.5">
+                    {clientDocument && <span>ID: {clientDocument}</span>}
+                    <span>{clientPhone}</span>
+                </div>
+                {clientAddress && <p className="text-sm text-gray-500 mt-1">{clientAddress}</p>}
             </section>
 
             <main className="flex-grow"><ItemsTable borders="none" headerBgColor="transparent" headerTextColor={themeColor} /></main>
@@ -349,7 +364,9 @@ const QuotationPreview: React.FC<QuotationPreviewProps> = ({
                  <div>
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">PARA:</p>
                     <h3 className="text-xl font-bold">{clientName}</h3>
+                    {clientDocument && <p className="text-sm text-gray-600 mt-1 font-mono bg-gray-100 inline-block px-1">ID: {clientDocument}</p>}
                     <p className="text-sm text-gray-600 mt-1">{clientPhone}</p>
+                    {clientAddress && <p className="text-sm text-gray-600">Dir: {clientAddress}</p>}
                  </div>
             </section>
             
