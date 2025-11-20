@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions } from '../types';
 import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
-import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle } from 'lucide-react';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -15,6 +15,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
   
   // Notification State
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  // Error Handling for RLS (Row Level Security)
+  const [rlsError, setRlsError] = useState(false);
 
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -29,7 +32,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
   // Auto-dismiss notification
   useEffect(() => {
     if (notification) {
-        const timer = setTimeout(() => setNotification(null), 3000);
+        const timer = setTimeout(() => setNotification(null), 4000);
         return () => clearTimeout(timer);
     }
   }, [notification]);
@@ -50,6 +53,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
       setNotification({ type, message });
   };
 
+  const handleRlsError = (error: any) => {
+      console.error("Admin Action Failed:", error);
+      const msg = error.message || '';
+      // Detect if it's a permission/RLS issue based on the error thrown by supabaseClient
+      if (msg.includes("Permiso denegado") || msg.includes("violates row-level security") || msg.includes("new row violates")) {
+          setRlsError(true);
+          showNotification('error', 'BLOQUEO DE BASE DE DATOS DETECTADO');
+      } else {
+          showNotification('error', `Error: ${msg}`);
+      }
+  };
+
   const handlePermissionChange = async (userId: string, currentPermissions: UserPermissions | undefined, field: keyof UserPermissions) => {
       const oldPerms = currentPermissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true };
       const newPerms = { ...oldPerms, [field]: !oldPerms[field] };
@@ -60,11 +75,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
       try {
           await updateUserPermissions(userId, newPerms);
           showNotification('success', 'Permisos actualizados');
+          setRlsError(false); // Clear error if successful
       } catch (error: any) {
-          console.error("Failed to update permissions", error);
           // Revert on error
           setUsers(users.map(u => u.id === userId ? { ...u, permissions: oldPerms } : u));
-          showNotification('error', `Error: ${error.message || 'No se pudo actualizar'}`);
+          handleRlsError(error);
       }
   };
 
@@ -78,11 +93,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
       try {
           await updateUserPermissions(userId, newPerms);
           showNotification('success', `Plan cambiado a ${newPlan.toUpperCase()}`);
+          setRlsError(false);
       } catch (error: any) {
-          console.error("Failed to update plan", error);
           // Revert UI
           setUsers(users.map(u => u.id === userId ? { ...u, permissions: oldPerms } : u));
-          showNotification('error', `Error guardando plan: ${error.message}`);
+          handleRlsError(error);
       }
   };
 
@@ -92,9 +107,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
               await deleteUserProfile(userId);
               setUsers(users.filter(u => u.id !== userId));
               showNotification('success', 'Usuario eliminado correctamente');
+              setRlsError(false);
           } catch (error: any) {
-              console.error("Error deleting user:", error);
-              showNotification('error', `Error al eliminar: ${error.message}`);
+              handleRlsError(error);
           }
       }
   };
@@ -119,9 +134,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
           setShowEditModal(false);
           setEditingUser(null);
           showNotification('success', 'Usuario actualizado');
+          setRlsError(false);
       } catch (error: any) {
-          console.error("Error updating user:", error);
-          showNotification('error', `Error: ${error.message}`);
+          handleRlsError(error);
       } finally {
           setSaving(false);
       }
@@ -182,6 +197,42 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                  </div>
             </div>
          </div>
+
+         {/* RLS ERROR BANNER (Corrective Action) */}
+         {rlsError && (
+            <div className="mb-8 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r shadow-md animate-fade-in">
+                <div className="flex items-start gap-3">
+                    <div className="bg-red-100 dark:bg-red-800 p-2 rounded-full">
+                        <Terminal size={20} className="text-red-600 dark:text-red-200"/>
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-red-700 dark:text-red-300 font-bold text-lg mb-1">⚠️ Error de Permisos (RLS) Detectado</h3>
+                        <p className="text-red-600 dark:text-red-400 text-sm mb-3">
+                            La base de datos está bloqueando tus cambios porque las políticas de seguridad están activas. 
+                            Como "Super Admin" en modo simulación, necesitas desactivar esto temporalmente.
+                        </p>
+                        <div className="bg-gray-900 rounded-lg p-3 relative group">
+                            <code className="text-green-400 font-mono text-xs sm:text-sm block break-all">
+                                ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
+                            </code>
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText("ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;");
+                                    showNotification('success', 'Código copiado al portapapeles');
+                                }}
+                                className="absolute top-2 right-2 p-1.5 bg-gray-700 hover:bg-gray-600 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Copiar SQL"
+                            >
+                                <Copy size={14} />
+                            </button>
+                        </div>
+                        <p className="text-xs text-red-500 dark:text-red-400 mt-2">
+                            👉 Ejecuta esto en el <strong>SQL Editor</strong> de tu proyecto Supabase.
+                        </p>
+                    </div>
+                </div>
+            </div>
+         )}
 
          <div className="grid grid-cols-3 gap-2 md:gap-4 mb-8">
             <div className="bg-surface dark:bg-dark-surface p-3 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm flex flex-col md:flex-row items-center justify-between text-center md:text-left">
