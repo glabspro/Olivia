@@ -90,6 +90,9 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
     const [tagInputValue, setTagInputValue] = useState('');
 
+    // Status Dropdown State (Desktop)
+    const [activeStatusDropdown, setActiveStatusDropdown] = useState<string | null>(null);
+
     const quotesListRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -109,6 +112,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     const handleStatusChange = async (id: string, newStatus: string) => {
         // Optimistic update
         setQuotes(quotes.map(q => q.id === id ? { ...q, status: newStatus as any } : q));
+        setActiveStatusDropdown(null); // Close dropdown on selection
         
         try {
             await updateQuotationStatus(id, newStatus);
@@ -541,6 +545,8 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                     {filteredQuotes.map((quote) => {
                                         const statusInfo = STATUS_CONFIG[quote.status] || STATUS_CONFIG['sent'];
                                         const StatusIcon = statusInfo.icon;
+                                        const isDropdownOpen = activeStatusDropdown === quote.id;
+
                                         return (
                                             <tr key={quote.id} className="border-b border-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                                                 <td className="px-6 py-4 font-medium text-textPrimary dark:text-dark-textPrimary">
@@ -559,22 +565,43 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                                     {quote.currency} {quote.total_amount.toFixed(2)}
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <div className="relative group inline-block">
-                                                        <button className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${statusInfo.color} shadow-sm`}>
+                                                    <div className="relative inline-block">
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActiveStatusDropdown(isDropdownOpen ? null : quote.id);
+                                                            }}
+                                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${statusInfo.color} shadow-sm hover:brightness-95 active:scale-95`}
+                                                        >
                                                             <StatusIcon size={12}/> {statusInfo.label}
                                                         </button>
-                                                        <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-50 py-1">
-                                                            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-                                                                <button
-                                                                    key={key}
-                                                                    onClick={() => handleStatusChange(quote.id, key)}
-                                                                    className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.status === key ? 'font-bold text-primary' : ''}`}
-                                                                >
-                                                                    <val.icon size={14} className={quote.status === key ? 'text-primary' : 'text-gray-400'}/>
-                                                                    {val.label}
-                                                                </button>
-                                                            ))}
-                                                        </div>
+                                                        
+                                                        {isDropdownOpen && (
+                                                            <>
+                                                                <div 
+                                                                    className="fixed inset-0 z-40 cursor-default" 
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setActiveStatusDropdown(null);
+                                                                    }}
+                                                                ></div>
+                                                                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 py-1 animate-fade-in">
+                                                                    {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                                                                        <button
+                                                                            key={key}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleStatusChange(quote.id, key);
+                                                                            }}
+                                                                            className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.status === key ? 'font-bold text-primary' : 'text-textPrimary dark:text-dark-textPrimary'}`}
+                                                                        >
+                                                                            <val.icon size={14} className={quote.status === key ? 'text-primary' : 'text-gray-400'}/>
+                                                                            {val.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
