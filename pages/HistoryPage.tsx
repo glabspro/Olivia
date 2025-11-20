@@ -297,6 +297,34 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
 
     // Helper to safely get tag definition
     const getTagDef = (id: string) => CRM_TAGS.find(t => t.id === id);
+    
+    // Reminder Calculation Helper
+    const getReminderMessage = () => {
+        if (!tagInputValue) return null;
+        const eventDate = new Date(tagInputValue);
+        const now = new Date();
+        
+        // Logic: Task = 30 min before, Others = 2 hours before
+        const isTask = selectedTagId === 'task';
+        const minutesBefore = isTask ? 30 : 120;
+        
+        const reminderDate = new Date(eventDate.getTime() - minutesBefore * 60000);
+        
+        // If reminder time is in past but event is future, it's an immediate reminder
+        if (reminderDate <= now && eventDate > now) {
+             return <span className="text-amber-600 dark:text-amber-400">⚠️ Evento próximo. El recordatorio se enviará en la siguiente ronda (aprox. 10 min).</span>;
+        }
+        
+        if (eventDate <= now) {
+            return <span className="text-red-500">La fecha del evento ya pasó.</span>;
+        }
+
+        return (
+            <span>
+                Te enviaremos un WhatsApp el <strong>{reminderDate.toLocaleDateString()}</strong> a las <strong>{reminderDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong> ({minutesBefore} min antes).
+            </span>
+        );
+    }
 
     const KanbanCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => (
         <div 
@@ -469,7 +497,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                     />
                                     <div className="mt-3 flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-xs text-blue-600 dark:text-blue-400">
                                         <Bell size={14} className="mt-0.5 flex-shrink-0"/>
-                                        <p>Te enviaremos un <strong>WhatsApp 20 min antes</strong>.</p>
+                                        <p>{getReminderMessage()}</p>
                                     </div>
                                 </>
                             )}
