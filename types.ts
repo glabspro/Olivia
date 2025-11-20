@@ -106,6 +106,11 @@ export interface DbProduct {
   currency: string;
 }
 
+export interface CrmMeta {
+    next_followup?: string; // ISO string date
+    notes?: string;
+}
+
 export interface SavedQuotation {
   id: string;
   quotation_number: string;
@@ -118,4 +123,5 @@ export interface SavedQuotation {
   discount?: number;
   discount_type?: 'amount' | 'percentage';
   tags?: string[];
+  crm_meta?: CrmMeta;
 }

@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal, GripVertical, Plus, Save, X } from 'lucide-react';
 import { getQuotations, updateQuotationStatus, updateQuotationTags } from '../services/supabaseClient';
-import { SavedQuotation, User } from '../types';
+import { SavedQuotation, User, CrmMeta } from '../types';
 
 interface HistoryPageProps {
     user: User;
@@ -11,10 +11,10 @@ interface HistoryPageProps {
 }
 
 const CRM_TAGS = [
-    { id: 'call', label: 'Llamar', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Phone },
-    { id: 'whatsapp', label: 'WhatsApp', color: 'bg-green-100 text-green-700 border-green-200', icon: MessageCircle },
-    { id: 'meeting', label: 'Reunión', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Briefcase },
-    { id: 'urgent', label: 'Urgente', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle },
+    { id: 'call', label: 'Llamar', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Phone, actionType: 'datetime' },
+    { id: 'whatsapp', label: 'WhatsApp', color: 'bg-green-100 text-green-700 border-green-200', icon: MessageCircle, actionType: 'text' },
+    { id: 'meeting', label: 'Reunión', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Briefcase, actionType: 'datetime' },
+    { id: 'urgent', label: 'Urgente', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle, actionType: 'none' },
 ];
 
 const STATUS_CONFIG: Record<string, { label: string, color: string, icon: any }> = {
@@ -55,6 +55,12 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
     const [draggedQuoteId, setDraggedQuoteId] = useState<string | null>(null);
+    
+    // Tag Action Modal State
+    const [showTagModal, setShowTagModal] = useState(false);
+    const [tagActionQuote, setTagActionQuote] = useState<SavedQuotation | null>(null);
+    const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+    const [tagInputValue, setTagInputValue] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -81,10 +87,60 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
             fetchData(); // Revert on error
         }
     };
+    
+    const handleTagClick = (quote: SavedQuotation, tagId: string) => {
+        const tagDef = CRM_TAGS.find(t => t.id === tagId);
+        if (!tagDef) return;
+        
+        // Check if tag already exists to toggle off
+        if (quote.tags?.includes(tagId)) {
+             toggleTag(quote.id, quote.tags, tagId); // Just remove it
+             return;
+        }
+
+        // If tag needs action, open modal
+        if (tagDef.actionType !== 'none') {
+            setTagActionQuote(quote);
+            setSelectedTagId(tagId);
+            setTagInputValue('');
+            setShowTagModal(true);
+        } else {
+            // Simple toggle for simple tags
+            toggleTag(quote.id, quote.tags, tagId);
+        }
+    }
+    
+    const confirmTagAction = async () => {
+        if (!tagActionQuote || !selectedTagId) return;
+        
+        const currentMeta = tagActionQuote.crm_meta || {};
+        let newMeta: CrmMeta = { ...currentMeta };
+        
+        if (selectedTagId === 'call' || selectedTagId === 'meeting') {
+            newMeta.next_followup = tagInputValue;
+        } else if (selectedTagId === 'whatsapp') {
+            newMeta.notes = tagInputValue;
+        }
+
+        const currentTags = tagActionQuote.tags || [];
+        const newTags = [...currentTags, selectedTagId];
+        
+        // Update local state
+        setQuotes(quotes.map(q => q.id === tagActionQuote.id ? { ...q, tags: newTags, crm_meta: newMeta } : q));
+        setShowTagModal(false);
+        
+        try {
+            await updateQuotationTags(tagActionQuote.id, newTags, newMeta);
+        } catch (error) {
+            console.error("Failed to update tags with meta", error);
+            fetchData();
+        }
+    }
 
     const toggleTag = async (quoteId: string, currentTags: string[] | undefined, tagId: string) => {
         const tags = currentTags || [];
         let newTags;
+        // When toggling off, we don't clear meta necessarily, or we could. Keeping it simple.
         if (tags.includes(tagId)) {
             newTags = tags.filter(t => t !== tagId);
         } else {
@@ -105,6 +161,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     const handleDragStart = (e: React.DragEvent, quoteId: string) => {
         setDraggedQuoteId(quoteId);
         e.dataTransfer.effectAllowed = 'move';
+        // Set a ghost image if desired
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -139,42 +196,62 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         q.client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         q.quotation_number.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    
+    const formatDate = (isoString?: string) => {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        return date.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
 
     const KanbanCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => (
         <div 
-            draggable 
-            onDragStart={(e) => handleDragStart(e, quote.id)}
-            className="bg-white dark:bg-dark-surface p-4 rounded-lg shadow-sm border border-border dark:border-dark-border mb-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-dark-surface p-4 rounded-lg shadow-sm border border-border dark:border-dark-border mb-3 group relative"
         >
             <div className="flex justify-between items-start mb-2">
                 <span className="text-xs font-mono text-textSecondary dark:text-dark-textSecondary bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded">{quote.quotation_number}</span>
-                <div className="relative group">
-                     <button className="text-textSecondary hover:text-primary"><MoreHorizontal size={16}/></button>
-                     <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10 py-1">
-                        <button onClick={() => onEditQuote?.(quote.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"><Edit2 size={12}/> Editar</button>
-                        <button onClick={() => onDuplicateQuote?.(quote.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700"><Copy size={12}/> Duplicar</button>
-                     </div>
+                <div 
+                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-gray-400 hover:text-primary"
+                    draggable="true"
+                    onDragStart={(e) => handleDragStart(e, quote.id)}
+                    title="Arrastrar para mover"
+                >
+                     <GripVertical size={16}/>
                 </div>
             </div>
+            
             <h4 className="font-bold text-textPrimary dark:text-dark-textPrimary truncate mb-1">{quote.client.name}</h4>
             <p className="text-sm font-bold text-textPrimary dark:text-dark-textPrimary mb-3">{quote.currency} {quote.total_amount.toFixed(2)}</p>
             
+            {/* CRM Meta Info Display */}
+            {quote.crm_meta?.next_followup && quote.tags?.some(t => t === 'call' || t === 'meeting') && (
+                <div className="mb-2 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded flex items-center gap-1">
+                    <Calendar size={10}/>
+                    {formatDate(quote.crm_meta.next_followup)}
+                </div>
+            )}
+             {quote.crm_meta?.notes && quote.tags?.includes('whatsapp') && (
+                <div className="mb-2 text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-2 py-1 rounded flex items-center gap-1 truncate">
+                    <MessageCircle size={10}/>
+                    {quote.crm_meta.notes}
+                </div>
+            )}
+
             {/* Tags */}
             <div className="flex flex-wrap gap-1 mb-3">
                 {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
                 
                 {/* Add Tag Button */}
-                <div className="relative group">
-                    <button className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary hover:bg-primary/10">
-                        <Tag size={10} />
+                <div className="relative group/tags">
+                    <button className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">
+                        <Plus size={10} />
                     </button>
-                    <div className="absolute left-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-20 py-1">
-                         <p className="text-[10px] text-gray-500 px-3 py-1 uppercase font-bold">Etiquetas</p>
+                    <div className="absolute left-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover/tags:block z-20 py-1">
+                         <p className="text-[10px] text-gray-500 px-3 py-1 uppercase font-bold">Acciones Rápidas</p>
                          {CRM_TAGS.map(tag => (
                              <button 
                                 key={tag.id}
-                                onClick={() => toggleTag(quote.id, quote.tags, tag.id)}
-                                className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : ''}`}
+                                onClick={() => handleTagClick(quote, tag.id)}
+                                className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 text-left ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : 'text-gray-600 dark:text-gray-300'}`}
                             >
                                 <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
                                 {tag.label}
@@ -184,8 +261,13 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                 </div>
             </div>
 
-            <div className="text-[10px] text-textSecondary dark:text-dark-textSecondary flex justify-between items-center">
-                 <span>{new Date(quote.created_at).toLocaleDateString('es-PE')}</span>
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <span className="text-[10px] text-textSecondary dark:text-dark-textSecondary">{new Date(quote.created_at).toLocaleDateString('es-PE')}</span>
+                
+                <div className="flex gap-1">
+                    <button onClick={() => onEditQuote?.(quote.id)} className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="Editar"><Edit2 size={12}/></button>
+                    <button onClick={() => onDuplicateQuote?.(quote.id)} className="p-1.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors" title="Duplicar"><Copy size={12}/></button>
+                </div>
             </div>
         </div>
     );
@@ -200,6 +282,53 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)] overflow-hidden flex flex-col">
+            {/* Modal for Tag Actions */}
+            {showTagModal && tagActionQuote && selectedTagId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-surface dark:bg-dark-surface rounded-xl w-full max-w-sm shadow-2xl border border-border dark:border-dark-border">
+                        <div className="p-4 border-b border-border dark:border-dark-border flex justify-between items-center">
+                             <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2">
+                                {CRM_TAGS.find(t => t.id === selectedTagId)?.icon({size:18})}
+                                {CRM_TAGS.find(t => t.id === selectedTagId)?.label}
+                             </h3>
+                             <button onClick={() => setShowTagModal(false)}><X size={18} className="text-textSecondary"/></button>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-sm text-textSecondary dark:text-dark-textSecondary mb-3">
+                                {selectedTagId === 'call' || selectedTagId === 'meeting' ? '¿Cuándo programas esta acción?' : 'Añade una nota rápida:'}
+                            </p>
+                            
+                            {selectedTagId === 'whatsapp' ? (
+                                <input 
+                                    type="text" 
+                                    value={tagInputValue}
+                                    onChange={(e) => setTagInputValue(e.target.value)}
+                                    placeholder="Ej. Catálogo enviado..."
+                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border"
+                                    autoFocus
+                                />
+                            ) : (
+                                <input 
+                                    type="datetime-local"
+                                    value={tagInputValue}
+                                    onChange={(e) => setTagInputValue(e.target.value)}
+                                    className="w-full p-2 border rounded bg-background dark:bg-dark-background border-border dark:border-dark-border"
+                                />
+                            )}
+                            
+                            <button 
+                                onClick={confirmTagAction}
+                                disabled={!tagInputValue}
+                                className="w-full mt-4 py-2 bg-primary text-white font-bold rounded-lg shadow hover:opacity-90 disabled:opacity-50"
+                            >
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
             <div className="flex-shrink-0 mb-6">
                 <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
                     <div>
@@ -308,21 +437,6 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-1">
                                                      {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
-                                                     <div className="relative group">
-                                                        <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-gray-400"><Tag size={14}/></button>
-                                                        <div className="absolute left-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-20 py-1">
-                                                            {CRM_TAGS.map(tag => (
-                                                                <button 
-                                                                    key={tag.id}
-                                                                    onClick={() => toggleTag(quote.id, quote.tags, tag.id)}
-                                                                    className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : ''}`}
-                                                                >
-                                                                    <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
-                                                                    {tag.label}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right font-bold text-textPrimary dark:text-dark-textPrimary">

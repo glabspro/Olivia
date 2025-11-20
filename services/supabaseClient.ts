@@ -1,6 +1,6 @@
 
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
-import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions } from '../types';
+import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta } from '../types';
 
 // -----------------------------------------------------------------------------
 // ¡IMPORTANTE! Reemplaza estos valores con las credenciales de tu proyecto de Supabase.
@@ -501,11 +501,16 @@ export const updateQuotationStatus = async (quotationId: string, status: string)
     if (error) throw error;
 };
 
-export const updateQuotationTags = async (quotationId: string, tags: string[]) => {
+export const updateQuotationTags = async (quotationId: string, tags: string[], meta?: CrmMeta) => {
     if (!supabase) return;
+    const updateData: any = { tags };
+    if (meta) {
+        updateData.crm_meta = meta;
+    }
+    
     const { error } = await supabase
         .from('quotations')
-        .update({ tags })
+        .update(updateData)
         .eq('id', quotationId);
     if (error) throw error;
 };
@@ -525,6 +530,7 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
             discount,
             discount_type,
             tags,
+            crm_meta,
             clients (
                 id,
                 name,
@@ -550,6 +556,7 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
         discount: q.discount || 0,
         discount_type: q.discount_type || 'amount',
         tags: q.tags || [],
+        crm_meta: q.crm_meta || {},
         client: {
             id: q.clients?.id,
             name: q.clients?.name || 'Cliente Desconocido',
