@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { LayoutDashboard, Search, TrendingUp, FileText, Calendar, ArrowUpRight, DollarSign, Edit2, Copy, MoreVertical, CheckCircle, XCircle, Clock, Send, Tag, List, Kanban, Handshake, Phone, MessageCircle, Briefcase, AlertTriangle, MoreHorizontal, GripVertical, Plus, Save, X } from 'lucide-react';
 import { getQuotations, updateQuotationStatus, updateQuotationTags } from '../services/supabaseClient';
 import { SavedQuotation, User, CrmMeta } from '../types';
@@ -46,6 +46,44 @@ const TagBadge: React.FC<{ tagId: string }> = ({ tagId }) => {
         <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${tagDef.color}`}>
             <Icon size={8}/> {tagDef.label}
         </span>
+    );
+};
+
+// --- Reusable Tags Component ---
+const QuoteTags: React.FC<{ 
+    quote: SavedQuotation, 
+    onTagClick: (quote: SavedQuotation, tagId: string) => void 
+}> = ({ quote, onTagClick }) => {
+    return (
+        <div className="flex flex-wrap gap-1 items-center relative z-10">
+            {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
+            
+            <div className="relative group/tags inline-block">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); }}
+                    className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                >
+                    <Plus size={10} />
+                </button>
+                {/* Dropdown */}
+                <div className="absolute left-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover/tags:block z-50 py-1">
+                        <p className="text-[10px] text-gray-500 px-3 py-1 uppercase font-bold">Acciones Rápidas</p>
+                        {CRM_TAGS.map(tag => (
+                            <button 
+                            key={tag.id}
+                            onClick={(e) => {
+                                e.stopPropagation(); // Prevent drag or row click
+                                onTagClick(quote, tag.id);
+                            }}
+                            className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 text-left ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : 'text-gray-600 dark:text-gray-300'}`}
+                        >
+                            <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
+                            {tag.label}
+                            </button>
+                        ))}
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -161,7 +199,14 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
     const handleDragStart = (e: React.DragEvent, quoteId: string) => {
         setDraggedQuoteId(quoteId);
         e.dataTransfer.effectAllowed = 'move';
-        // Set a ghost image if desired
+        // Try to set the drag image to the card parent if possible, 
+        // but usually the browser handles the element being dragged.
+        // Since we drag the Handle, the Handle is the ghost image by default.
+        // To improve this, we can set the drag image to the card element.
+        const cardElement = (e.target as HTMLElement).closest('.kanban-card');
+        if (cardElement) {
+            e.dataTransfer.setDragImage(cardElement, 20, 20);
+        }
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -205,7 +250,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
 
     const KanbanCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => (
         <div 
-            className="bg-white dark:bg-dark-surface p-4 rounded-lg shadow-sm border border-border dark:border-dark-border mb-3 group relative"
+            className="kanban-card bg-white dark:bg-dark-surface p-4 rounded-lg shadow-sm border border-border dark:border-dark-border mb-3 group relative transition-shadow hover:shadow-md"
         >
             <div className="flex justify-between items-start mb-2">
                 <span className="text-xs font-mono text-textSecondary dark:text-dark-textSecondary bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded">{quote.quotation_number}</span>
@@ -236,29 +281,9 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                 </div>
             )}
 
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1 mb-3">
-                {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
-                
-                {/* Add Tag Button */}
-                <div className="relative group/tags">
-                    <button className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">
-                        <Plus size={10} />
-                    </button>
-                    <div className="absolute left-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover/tags:block z-20 py-1">
-                         <p className="text-[10px] text-gray-500 px-3 py-1 uppercase font-bold">Acciones Rápidas</p>
-                         {CRM_TAGS.map(tag => (
-                             <button 
-                                key={tag.id}
-                                onClick={() => handleTagClick(quote, tag.id)}
-                                className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 text-left ${quote.tags?.includes(tag.id) ? 'text-primary font-bold' : 'text-gray-600 dark:text-gray-300'}`}
-                            >
-                                <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0].replace('bg-', 'bg-')}`}></div>
-                                {tag.label}
-                             </button>
-                         ))}
-                    </div>
-                </div>
+            {/* Tags Component */}
+            <div className="mb-3">
+                <QuoteTags quote={quote} onTagClick={handleTagClick} />
             </div>
 
             <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
@@ -271,6 +296,49 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
             </div>
         </div>
     );
+    
+    const MobileListCard: React.FC<{ quote: SavedQuotation }> = ({ quote }) => {
+        const statusInfo = STATUS_CONFIG[quote.status] || STATUS_CONFIG['sent'];
+        const StatusIcon = statusInfo.icon;
+        return (
+            <div className="bg-white dark:bg-dark-surface p-4 rounded-lg border border-border dark:border-dark-border shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                    <div>
+                        <h4 className="font-bold text-textPrimary dark:text-dark-textPrimary">{quote.client.name}</h4>
+                        <p className="text-xs text-textSecondary dark:text-dark-textSecondary">{quote.quotation_number} • {new Date(quote.created_at).toLocaleDateString('es-PE')}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold border ${statusInfo.color}`}>
+                        <StatusIcon size={10}/> {statusInfo.label}
+                    </span>
+                </div>
+                
+                <div className="flex justify-between items-end mt-3">
+                     <div>
+                        <p className="text-xs text-textSecondary dark:text-dark-textSecondary mb-1">Total:</p>
+                        <p className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">{quote.currency} {quote.total_amount.toFixed(2)}</p>
+                     </div>
+                     <div className="flex gap-2">
+                         <button onClick={() => onEditQuote?.(quote.id)} className="p-2 bg-gray-100 dark:bg-white/5 rounded-lg text-blue-600"><Edit2 size={16}/></button>
+                         <button onClick={() => onDuplicateQuote?.(quote.id)} className="p-2 bg-gray-100 dark:bg-white/5 rounded-lg text-purple-600"><Copy size={16}/></button>
+                     </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                     <QuoteTags quote={quote} onTagClick={handleTagClick} />
+                     
+                     <select 
+                        value={quote.status}
+                        onChange={(e) => handleStatusChange(quote.id, e.target.value)}
+                        className="text-xs bg-transparent border-none focus:ring-0 text-textSecondary dark:text-dark-textSecondary text-right pr-0 cursor-pointer"
+                     >
+                         {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                             <option key={k} value={k}>{v.label}</option>
+                         ))}
+                     </select>
+                </div>
+            </div>
+        );
+    }
 
     if (loading) {
          return (
@@ -284,7 +352,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-64px)] overflow-hidden flex flex-col">
             {/* Modal for Tag Actions */}
             {showTagModal && tagActionQuote && selectedTagId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="bg-surface dark:bg-dark-surface rounded-xl w-full max-w-sm shadow-2xl border border-border dark:border-dark-border">
                         <div className="p-4 border-b border-border dark:border-dark-border flex justify-between items-center">
                              <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2">
@@ -407,84 +475,92 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                         </p>
                     </div>
                 ) : viewMode === 'list' ? (
-                    <div className="bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border shadow-sm overflow-hidden h-full overflow-y-auto">
-                        <table className="w-full text-sm text-left text-textSecondary dark:text-dark-textSecondary">
-                            <thead className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase bg-gray-50 dark:bg-white/5 sticky top-0 z-10">
-                                <tr>
-                                    <th className="px-6 py-4 font-semibold">Nro.</th>
-                                    <th className="px-6 py-4 font-semibold">Cliente</th>
-                                    <th className="px-6 py-4 font-semibold">Etiquetas</th>
-                                    <th className="px-6 py-4 font-semibold text-right">Monto</th>
-                                    <th className="px-6 py-4 font-semibold text-center">Estado</th>
-                                    <th className="px-6 py-4 font-semibold text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredQuotes.map((quote) => {
-                                    const statusInfo = STATUS_CONFIG[quote.status] || STATUS_CONFIG['sent'];
-                                    const StatusIcon = statusInfo.icon;
-                                    return (
-                                        <tr key={quote.id} className="border-b border-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-textPrimary dark:text-dark-textPrimary">
-                                                {quote.quotation_number}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-textPrimary dark:text-dark-textPrimary">{quote.client.name}</span>
-                                                    <span className="text-xs opacity-75">{quote.client.phone}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1">
-                                                     {quote.tags?.map(tagId => <TagBadge key={tagId} tagId={tagId} />)}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-bold text-textPrimary dark:text-dark-textPrimary">
-                                                {quote.currency} {quote.total_amount.toFixed(2)}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <div className="relative group inline-block">
-                                                     <button className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${statusInfo.color} shadow-sm`}>
-                                                        <StatusIcon size={12}/> {statusInfo.label}
-                                                     </button>
-                                                     <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10 py-1">
-                                                         {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-                                                             <button
-                                                                key={key}
-                                                                onClick={() => handleStatusChange(quote.id, key)}
-                                                                className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.status === key ? 'font-bold text-primary' : ''}`}
-                                                             >
-                                                                 <val.icon size={14} className={quote.status === key ? 'text-primary' : 'text-gray-400'}/>
-                                                                 {val.label}
-                                                             </button>
-                                                         ))}
-                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button 
-                                                        onClick={() => onEditQuote && onEditQuote(quote.id)}
-                                                        className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
-                                                        title="Editar"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => onDuplicateQuote && onDuplicateQuote(quote.id)}
-                                                        className="p-1.5 text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-md transition-colors"
-                                                        title="Duplicar"
-                                                    >
-                                                        <Copy size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                    <>
+                        {/* Mobile List View */}
+                        <div className="md:hidden h-full overflow-y-auto space-y-3 pb-20">
+                            {filteredQuotes.map(quote => (
+                                <MobileListCard key={quote.id} quote={quote} />
+                            ))}
+                        </div>
+
+                        {/* Desktop List View */}
+                        <div className="hidden md:block bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border shadow-sm overflow-hidden h-full overflow-y-auto">
+                            <table className="w-full text-sm text-left text-textSecondary dark:text-dark-textSecondary">
+                                <thead className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase bg-gray-50 dark:bg-white/5 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="px-6 py-4 font-semibold">Nro.</th>
+                                        <th className="px-6 py-4 font-semibold">Cliente</th>
+                                        <th className="px-6 py-4 font-semibold">Etiquetas</th>
+                                        <th className="px-6 py-4 font-semibold text-right">Monto</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Estado</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredQuotes.map((quote) => {
+                                        const statusInfo = STATUS_CONFIG[quote.status] || STATUS_CONFIG['sent'];
+                                        const StatusIcon = statusInfo.icon;
+                                        return (
+                                            <tr key={quote.id} className="border-b border-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-textPrimary dark:text-dark-textPrimary">
+                                                    {quote.quotation_number}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-textPrimary dark:text-dark-textPrimary">{quote.client.name}</span>
+                                                        <span className="text-xs opacity-75">{quote.client.phone}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <QuoteTags quote={quote} onTagClick={handleTagClick} />
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-bold text-textPrimary dark:text-dark-textPrimary">
+                                                    {quote.currency} {quote.total_amount.toFixed(2)}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <div className="relative group inline-block">
+                                                        <button className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${statusInfo.color} shadow-sm`}>
+                                                            <StatusIcon size={12}/> {statusInfo.label}
+                                                        </button>
+                                                        <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden group-hover:block z-50 py-1">
+                                                            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                                                                <button
+                                                                    key={key}
+                                                                    onClick={() => handleStatusChange(quote.id, key)}
+                                                                    className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 ${quote.status === key ? 'font-bold text-primary' : ''}`}
+                                                                >
+                                                                    <val.icon size={14} className={quote.status === key ? 'text-primary' : 'text-gray-400'}/>
+                                                                    {val.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button 
+                                                            onClick={() => onEditQuote && onEditQuote(quote.id)}
+                                                            className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                                            title="Editar"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => onDuplicateQuote && onDuplicateQuote(quote.id)}
+                                                            className="p-1.5 text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-md transition-colors"
+                                                            title="Duplicar"
+                                                        >
+                                                            <Copy size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 ) : (
                     <div className="flex h-full gap-4 overflow-x-auto pb-4">
                         {Object.entries(STATUS_CONFIG).map(([statusKey, config]) => {
