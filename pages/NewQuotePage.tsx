@@ -496,7 +496,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
             
             const pdfUrl = await uploadQuotationPDF(file);
-            if (!pdfUrl) throw new Error("No se pudo subir el PDF a la nube.");
+            if (!pdfUrl) throw new Error("No se pudo subir el PDF a la nube. Verifica los permisos (RLS) en Supabase.");
             
             await finalizeAndIncrementQuoteNumber();
 
@@ -547,6 +547,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             });
 
             if (!response.ok) {
+                if (response.status >= 500) {
+                    throw new Error(`Error Servidor n8n (${response.status}). Revisa las credenciales de Evolution API en n8n.`);
+                }
                 throw new Error(`Error del servidor: ${response.status}`);
             }
 
@@ -561,8 +564,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             // Specific CORS warning for user
             if (err.message === 'Failed to fetch') {
                  alert("Error de Conexión (CORS): n8n rechazó la conexión.\n\nSolución: Ve a tu Webhook en n8n > Node Options > Allowed Origins y pon '*'.");
+            } else if (err.message.includes("No se pudo subir el PDF")) {
+                 alert("Error de Permisos (Supabase): Ejecuta el script SQL para permitir subidas públicas en 'quotations'.");
             } else {
-                 alert(`Hubo un problema al enviar: ${err.message}`);
+                 alert(`Problema al enviar: ${err.message}`);
             }
 
             setIsLoading(false);
@@ -610,9 +615,13 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             setSentSuccess(true);
             setTimeout(() => setSentSuccess(false), 3000);
 
-        } catch (err) {
+        } catch (err: any) {
              console.error("Error manual send:", err);
-             alert("Error al generar el enlace. Verifica tu conexión.");
+             if (err.message && err.message.includes("Error Storage")) {
+                alert(`Error de almacenamiento: ${err.message}. Revisa los permisos en Supabase.`);
+             } else {
+                alert("Error al generar el enlace. Verifica tu conexión.");
+             }
              setIsLoading(false);
              setIsSending(false);
         }
