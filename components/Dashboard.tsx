@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Theme } from '../types';
 import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown, ClipboardList } from 'lucide-react';
 import Logo from './Logo';
 import QuickTaskFab from './QuickTaskFab';
+import { getPendingTaskCount } from '../services/supabaseClient';
 
 interface LayoutProps {
   user: User;
@@ -15,7 +16,7 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = false, colorClass }: any) => {
+const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = false, colorClass, badge }: any) => {
     const isActive = activePage === id;
     return (
         <button
@@ -26,7 +27,14 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
                 : 'text-textSecondary dark:text-dark-textSecondary hover:bg-black/5 dark:hover:bg-white/5'
             }`}
         >
-        <Icon size={isMobile ? 20 : 20} className={`${isActive ? 'text-primary' : colorClass}`} />
+        <div className="relative">
+            <Icon size={isMobile ? 20 : 20} className={`${isActive ? 'text-primary' : colorClass}`} />
+            {badge > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-surface dark:border-dark-surface">
+                    {badge}
+                </span>
+            )}
+        </div>
         <span className={isMobile ? 'text-[10px] mt-0.5 leading-tight text-center' : 'text-sm'}>{label}</span>
         </button>
     );
@@ -35,10 +43,23 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
 
 const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, activePage, setActivePage, children }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [pendingTasks, setPendingTasks] = useState(0);
+
+  useEffect(() => {
+      const fetchCount = async () => {
+          const count = await getPendingTaskCount(user.id);
+          setPendingTasks(count);
+      };
+      fetchCount();
+      // Refresh every time active page changes to 'tasks' to ensure count is accurate
+      if (activePage === 'tasks' || activePage === 'history') {
+          fetchCount();
+      }
+  }, [user.id, activePage]);
 
   const navItems = [
     { id: 'history', label: 'Dashboard', icon: LayoutDashboard, colorClass: 'text-accent-coral' },
-    { id: 'tasks', label: 'Tareas', icon: ClipboardList, colorClass: 'text-cyan-500' },
+    { id: 'tasks', label: 'Tareas', icon: ClipboardList, colorClass: 'text-cyan-500', badge: pendingTasks },
     { id: 'new_quote', label: 'Crear', icon: FilePlus, colorClass: 'text-accent-teal' },
     { id: 'products', label: 'Catálogo', icon: Package, colorClass: 'text-purple-500' },
     { id: 'clients', label: 'Clientes', icon: Users, colorClass: 'text-blue-500' },
