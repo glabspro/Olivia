@@ -218,14 +218,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                                 value={perms.plan}
                                 onChange={(e) => handlePlanChange(user.id, user.permissions, e.target.value as any)}
                                 className={`w-full border-2 border-transparent font-bold rounded-lg px-3 py-3 focus:outline-none uppercase text-center ${
-                                    perms.plan === 'enterprise' ? 'bg-purple-100 text-purple-800' :
                                     perms.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
                                     'bg-white text-gray-800 shadow-sm border-gray-200'
                                 }`}
                             >
                                 <option value="free">GRATIS (Free)</option>
                                 <option value="pro">PRO</option>
-                                <option value="enterprise">EMPRESARIAL</option>
                             </select>
                       </div>
 
@@ -300,14 +298,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser }) => {
                                         value={perms.plan}
                                         onChange={(e) => handlePlanChange(user.id, user.permissions, e.target.value as any)}
                                         className={`cursor-pointer border border-border dark:border-dark-border text-xs font-semibold rounded px-2 py-1 focus:outline-none uppercase ${
-                                            perms.plan === 'enterprise' ? 'bg-purple-100 text-purple-800' :
                                             perms.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
                                             'bg-gray-100 text-gray-800'
                                         }`}
                                     >
                                         <option value="free">Free</option>
                                         <option value="pro">Pro</option>
-                                        <option value="enterprise">Enterprise</option>
                                     </select>
                                 </td>
 

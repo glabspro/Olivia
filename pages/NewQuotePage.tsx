@@ -10,6 +10,9 @@ import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Perce
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+// URL del Webhook de n8n para el ENVÍO DE COTIZACIONES
+const N8N_SEND_WHATSAPP_URL = 'https://webhook.red51.site/webhook/send-quote-whatsapp';
+
 interface NewQuotePageProps {
     user: User;
 }
@@ -379,6 +382,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
             }
 
             const payload = {
+                user_phone: user.phone.replace(/\D/g, ''), // Clean phone for "Pro" Reply Link
+                plan: user.permissions?.plan || 'free',
                 client: { name: clientName, phone: clientPhone.replace(/\D/g, '') },
                 company: {
                     name: settings.companyName,
@@ -398,9 +403,20 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
                 pdfBase64: pdfBase64
             };
 
-            console.log("--- SIMULANDO ENVÍO A N8N WEBHOOK ---");
+            console.log("--- ENVIANDO A N8N WEBHOOK ---", N8N_SEND_WHATSAPP_URL);
             
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Send to the real n8n webhook
+            const response = await fetch(N8N_SEND_WHATSAPP_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
 
             setIsSending(false);
             setSentSuccess(true);
@@ -408,7 +424,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user }) => {
 
         } catch (err) {
             console.error("Error sending to webhook:", err);
-            alert("Hubo un problema al preparar los datos para el envío. Por favor, intente de nuevo.");
+            alert("Hubo un problema al enviar el mensaje. Por favor, verifica tu conexión o intenta de nuevo.");
             setIsSending(false);
         }
     };
