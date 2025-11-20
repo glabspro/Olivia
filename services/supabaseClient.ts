@@ -323,28 +323,52 @@ export const getAllUsers = async (): Promise<User[]> => {
 
 export const updateUserPermissions = async (userId: string, permissions: UserPermissions) => {
     if (!supabase) return;
-    const { error } = await supabase.from('profiles').update({ permissions }).eq('id', userId);
+    // Use select() to ensure rows were actually updated (check against RLS)
+    const { data, error } = await supabase
+        .from('profiles')
+        .update({ permissions })
+        .eq('id', userId)
+        .select();
+
     if (error) throw error;
+    
+    if (!data || data.length === 0) {
+        throw new Error("Permiso denegado: La base de datos ignoró la actualización. Verifica las políticas RLS.");
+    }
 };
 
 export const updateUserProfile = async (userId: string, data: { fullName: string, companyName: string, phone: string }) => {
     if (!supabase) return;
-    const { error } = await supabase
+    const { data: updatedData, error } = await supabase
         .from('profiles')
         .update({ 
             full_name: data.fullName, 
             company_name: data.companyName, 
             phone: data.phone 
         })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select();
     
     if (error) throw error;
+
+    if (!updatedData || updatedData.length === 0) {
+        throw new Error("Permiso denegado: No se pudo actualizar el perfil. Verifica las políticas RLS.");
+    }
 }
 
 export const deleteUserProfile = async (userId: string) => {
     if (!supabase) return;
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    const { data, error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+        .select();
+
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+        throw new Error("Permiso denegado: No se pudo eliminar el usuario. Verifica las políticas RLS.");
+    }
 };
 
 // --- Database Functions (Quotations) ---
