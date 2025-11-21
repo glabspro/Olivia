@@ -160,6 +160,31 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
     useEffect(() => {
         try {
+            // PRIORITY 1: Load from Cloud Settings (User Profile)
+            // This ensures cross-device synchronization
+            if (user.settings && Object.keys(user.settings).length > 0) {
+                const cloudSettings = user.settings;
+                
+                // Ensure legacy arrays are initialized
+                if (!cloudSettings.paymentTerms) cloudSettings.paymentTerms = [];
+                if (!cloudSettings.paymentMethods) cloudSettings.paymentMethods = [];
+
+                setSettings(prev => ({ ...prev, ...cloudSettings }));
+                setMarginType(cloudSettings.defaultMarginType);
+                setMarginValue(cloudSettings.defaultMarginValue);
+                setTaxType(cloudSettings.taxType);
+                setTaxRate(cloudSettings.taxRate);
+
+                if (cloudSettings.paymentTerms.length > 0) {
+                    setSelectedTermId(cloudSettings.paymentTerms[0].id);
+                }
+                if (cloudSettings.paymentMethods.length > 0) {
+                    setSelectedMethodId(cloudSettings.paymentMethods[0].id);
+                }
+                return; // Stop here if cloud settings loaded successfully
+            }
+
+            // PRIORITY 2: Fallback to LocalStorage (Legacy/Offline support)
             const savedSettings = localStorage.getItem(`oliviaSettings_${user.id}`);
             if (savedSettings) {
                 let parsedSettings = JSON.parse(savedSettings);
@@ -176,29 +201,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 }
 
                 const completeSettings = {
-                    ...{ // Defaults for new fields
-                        quotationPrefix: 'COT-',
-                        quotationNextNumber: 1,
-                        quotationPadding: 6,
-                        companyAddress: '',
-                        companyPhone: '',
-                        companyEmail: '',
-                        companyWebsite: '',
-                        companyDocumentType: '',
-                        companyDocumentNumber: '',
-                        themeColor: '#EC4899',
-                        headerImage: null,
-                        paymentTerms: [
-                            { id: 'term-cash', name: 'Contado', details: 'Pago al 100% contra entrega del producto o servicio.' },
-                            { id: 'term-credit', name: 'Crédito 15 Días', details: 'Crédito a 15 días calendario. Requiere orden de compra aprobada.' }
-                        ],
-                        paymentMethods: [
-                            { id: 'method-bcp', name: 'Transferencia BCP', details: 'Banco de Crédito del Perú (BCP)\nCuenta Soles: 191-XXXXXXXX-0-XX\nCCI: 002-191-XXXXXXXXXXXX-XX\nTitular: Mi Empresa S.A.C.' },
-                            { id: 'method-wallet', name: 'Yape / Plin', details: 'Número: 999 999 999\nTitular: Nombre del Titular\n(Enviar constancia al WhatsApp)' }
-                        ],
-                        taxType: TaxType.INCLUDED,
-                        taxRate: 18,
-                    },
+                    ...settings, // keep defaults
                     ...parsedSettings,
                 };
                 setSettings(completeSettings);
@@ -213,14 +216,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 if (completeSettings.paymentMethods.length > 0) {
                     setSelectedMethodId(completeSettings.paymentMethods[0].id);
                 }
-                
             } else {
+                // Initial default state
                 setSettings(prev => ({...prev, companyName: user.companyName}));
             }
         } catch (e) {
-            console.error("Failed to load settings from localStorage", e);
+            console.error("Failed to load settings", e);
         }
-    }, [user.id, user.companyName]);
+    }, [user.id, user.companyName, user.settings]);
     
     const finalPaymentTerms = selectedTermId === 'other' 
         ? customTerm 
@@ -431,10 +434,12 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         if (!previewElement) return;
 
         setIsLoading(true);
+        // FIX: Force windowWidth to ensure desktop layout on mobile
         html2canvas(previewElement, { 
           scale: 2, 
           useCORS: true, 
           backgroundColor: '#ffffff',
+          windowWidth: 1200 
         })
         .then(canvas => {
             const imgData = canvas.toDataURL('image/png');
@@ -485,7 +490,13 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             const previewElement = pdfContainerRef.current;
             if (!previewElement) throw new Error("Preview element not found");
 
-            const canvas = await html2canvas(previewElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            // FIX: Force windowWidth
+            const canvas = await html2canvas(previewElement, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#ffffff',
+                windowWidth: 1200 
+            });
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
@@ -586,7 +597,13 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             const previewElement = pdfContainerRef.current;
             if (!previewElement) throw new Error("Preview element not found");
 
-            const canvas = await html2canvas(previewElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            // FIX: Force windowWidth
+            const canvas = await html2canvas(previewElement, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#ffffff',
+                windowWidth: 1200
+            });
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
