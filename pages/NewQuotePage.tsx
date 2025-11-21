@@ -663,7 +663,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const pageTitle = isEditing ? 'Editar Cotización' : isDuplicating ? 'Duplicar Cotización' : 'Nueva Cotización';
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full pb-32">
             {isLoading && <Spinner message="Procesando..." />}
             
             {step === 1 && (
@@ -925,7 +925,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Live Preview Container */}
                         <div className="flex-1 order-2 lg:order-1 bg-gray-100 dark:bg-zinc-900 rounded-xl p-4 md:p-8 overflow-x-auto shadow-inner border border-border dark:border-dark-border">
-                             <div className="min-w-[700px] md:min-w-full bg-white shadow-lg mx-auto max-w-[210mm] origin-top transform scale-95 md:scale-100">
+                             {/* Scale Transform for Mobile to fit A4 width (~800px) into screen width (~360px) */}
+                             <div className="min-w-[700px] md:min-w-full bg-white shadow-lg mx-auto max-w-[210mm] origin-top-left transform scale-[0.45] sm:scale-75 md:scale-100">
                                 <QuotationPreview
                                     items={items}
                                     marginType={marginType}
