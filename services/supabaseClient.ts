@@ -608,6 +608,44 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
     }));
 };
 
+// --- Specific Client History ---
+export const getClientQuotations = async (clientId: string): Promise<SavedQuotation[]> => {
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+        .from('quotations')
+        .select(`
+            id,
+            quotation_number,
+            total_amount,
+            currency,
+            status,
+            created_at,
+            tags,
+            quotation_items (description)
+        `)
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching client history:", error);
+        return [];
+    }
+
+    // Adapt structure to SavedQuotation (simplified for display)
+    return data.map((q: any) => ({
+        id: q.id,
+        quotation_number: q.quotation_number,
+        total_amount: q.total_amount,
+        currency: q.currency,
+        status: q.status,
+        created_at: q.created_at,
+        tags: q.tags || [],
+        client: { id: clientId, name: '', phone: '' }, // Placeholder
+        items: q.quotation_items?.map((i: any) => ({ description: i.description }))
+    }));
+};
+
 export const getQuotationById = async (quotationId: string) => {
     if (!supabase) return null;
     
