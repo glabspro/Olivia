@@ -599,12 +599,20 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
             await finalizeAndIncrementQuoteNumber();
             
-            const whatsappText = `Hola *${clientName}*! 👋%0A%0ATe comparto la cotización solicitada, por un total de *${settings.currencySymbol} ${finalTotal.toFixed(2)}*.%0A%0APuedes revisarla y descargarla en el siguiente enlace:%0A%0A📄 *Ver Cotización:*%0A${publicUrl}%0A%0AQuedo atento a tus comentarios.%0A*${settings.companyName}*`;
+            // Construct message safely for URL
+            const message = `Hola *${clientName}*! 👋\n\nTe comparto la cotización solicitada, por un total de *${settings.currencySymbol} ${finalTotal.toFixed(2)}*.\n\nPuedes revisarla y descargarla en el siguiente enlace:\n\n📄 *Ver Cotización:*\n${publicUrl}\n\nQuedo atento a tus comentarios.\n*${settings.companyName}*`;
             
+            const encodedMessage = encodeURIComponent(message);
             const cleanPhone = clientPhone.replace(/\D/g, '');
-            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${whatsappText}`;
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
             
-            window.open(whatsappUrl, '_blank');
+            // Try to open
+            const newWindow = window.open(whatsappUrl, '_blank');
+            
+            // Check if blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') { 
+                alert("El navegador bloqueó la ventana de WhatsApp. Por favor, habilita las ventanas emergentes para este sitio o intenta de nuevo.");
+            }
             
             setIsLoading(false);
             setIsSending(false);
