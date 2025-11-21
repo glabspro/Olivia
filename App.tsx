@@ -11,7 +11,7 @@ import ProductsPage from './pages/ProductsPage';
 import OnboardingPage from './pages/OnboardingPage';
 import TasksPage from './pages/TasksPage';
 import AdminPage from './pages/AdminPage';
-import { supabase, getProfile } from './services/supabaseClient';
+import { supabase, getProfile, getUserByPhone } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
 
@@ -75,8 +75,21 @@ const App: React.FC = () => {
             // Check simulated session
             const savedProfile = localStorage.getItem('olivia_simulated_profile');
             if(savedProfile) {
-                setProfile(JSON.parse(savedProfile));
+                const parsedUser = JSON.parse(savedProfile);
+                // 1. Load local cache immediately for speed
+                setProfile(parsedUser);
                 setSession({ access_token: 'simulated' } as any);
+                
+                // 2. Background Sync: Fetch latest data from Cloud (Supabase) to get settings updates from other devices
+                if (parsedUser.phone) {
+                    getUserByPhone(parsedUser.phone).then(freshUser => {
+                        if (freshUser) {
+                            console.log("Perfil sincronizado con la nube");
+                            setProfile(freshUser);
+                            localStorage.setItem('olivia_simulated_profile', JSON.stringify(freshUser));
+                        }
+                    }).catch(err => console.error("Error syncing profile", err));
+                }
             }
             setLoading(false);
         }
@@ -178,9 +191,14 @@ const App: React.FC = () => {
                         if(updated) setProfile(updated);
                     } else {
                         // Update local state for simulated user
-                        setProfile({ ...profile, is_onboarded: true });
-                        const updatedLocal = { ...profile, is_onboarded: true };
-                        localStorage.setItem('olivia_simulated_profile', JSON.stringify(updatedLocal));
+                        // Fetch fresh from DB to ensure settings are captured
+                        const freshUser = await getUserByPhone(profile.phone);
+                        if (freshUser) {
+                            setProfile(freshUser);
+                            localStorage.setItem('olivia_simulated_profile', JSON.stringify(freshUser));
+                        } else {
+                            setProfile({ ...profile, is_onboarded: true });
+                        }
                     }
                 }} 
               />
