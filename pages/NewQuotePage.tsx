@@ -12,6 +12,8 @@ import html2canvas from 'html2canvas';
 
 // URL del Webhook de n8n para el ENVÍO DE COTIZACIONES
 const N8N_SEND_WHATSAPP_URL = 'https://webhook.red51.site/webhook/send-quote-whatsapp';
+// URL del Webhook de n8n para el ENVÍO DE CORREOS (Brevo)
+const N8N_SEND_EMAIL_URL = 'https://webhook.red51.site/webhook/send-quote-email';
 
 interface NewQuotePageProps {
     user: User;
@@ -51,7 +53,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [isSendingEmail, setIsSendingEmail] = useState(false); // State specifically for email
     const [sentSuccess, setSentSuccess] = useState(false);
+    const [emailSuccess, setEmailSuccess] = useState(false); // Success state for email
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     
@@ -227,9 +231,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     }, [clientName, finalTotal, settings.companyName, settings.currencySymbol]);
 
     const saveToDatabase = async (status: 'draft' | 'sent' = 'sent') => {
-        // We allow multiple saves if editing to update the same record
-        // if(hasBeenFinalized && !isEditing) return; 
-        
         try {
             const clientData = { 
                 name: clientName, 
@@ -457,18 +458,88 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         });
     };
 
-    const handleSendEmail = () => {
+    const handleSendEmailViaWebhook = async () => {
         if (limitReached && !isEditing) {
              alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
              return;
         }
-
-        const subject = `Cotización - ${settings.companyName}`;
-        const body = `Estimado(a) ${clientName},\n\nAdjunto encontrarás la cotización solicitada.\n\n${whatsAppMessage}\n\nAtentamente,\n${settings.companyName}`;
         
-        const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.open(mailtoLink, '_blank');
-        finalizeAndIncrementQuoteNumber();
+        if (!clientEmail) {
+            alert("Por favor, ingresa un correo electrónico válido para el cliente.");
+            return;
+        }
+
+        setIsLoading(true);
+        setIsSendingEmail(true);
+
+        try {
+            const previewElement = pdfContainerRef.current;
+            if (!previewElement) throw new Error("Preview element not found");
+
+            // 1. Generate PDF
+            const canvas = await html2canvas(previewElement, { 
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: '#ffffff',
+                windowWidth: 1200 
+            });
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+            
+            const pdfBlob = pdf.output('blob');
+            const fileName = `Cotizacion_${currentQuotationNumber}.pdf`;
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            
+            // 2. Upload PDF to Supabase
+            const pdfUrl = await uploadQuotationPDF(file);
+            if (!pdfUrl) throw new Error("No se pudo subir el PDF a la nube. Verifica los permisos (RLS) en Supabase.");
+            
+            await finalizeAndIncrementQuoteNumber();
+
+            // 3. Prepare Payload for n8n (Email)
+            const payload = {
+                user_phone: user.phone.replace(/\D/g, ''),
+                client: { name: clientName, email: clientEmail },
+                company: {
+                    name: settings.companyName,
+                    address: settings.companyAddress,
+                    phone: settings.companyPhone
+                },
+                quote: {
+                    number: currentQuotationNumber,
+                    total: finalTotal,
+                    currency: settings.currencySymbol,
+                    message: whatsAppMessage // Reuse the friendly message logic
+                },
+                pdfUrl: pdfUrl
+            };
+
+            // 4. Send to n8n Webhook
+            console.log("--- ENVIANDO A N8N EMAIL WEBHOOK ---", N8N_SEND_EMAIL_URL);
+            const response = await fetch(N8N_SEND_EMAIL_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error del servidor de correo: ${response.status}`);
+            }
+
+            setEmailSuccess(true);
+            setTimeout(() => setEmailSuccess(false), 4000);
+
+        } catch (err: any) {
+            console.error("Error sending email:", err);
+            alert(`Error al enviar correo: ${err.message}`);
+        } finally {
+            setIsLoading(false);
+            setIsSendingEmail(false);
+        }
     };
 
     // --- Método Automático (Bot) ---
@@ -680,7 +751,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full pb-32">
-            {isLoading && <Spinner message="Procesando..." />}
+            {isLoading && <Spinner message={isSendingEmail ? "Enviando Correo..." : "Procesando..."} />}
             
             {step === 1 && (
                 <div className="max-w-4xl mx-auto animate-fade-in">
@@ -1043,13 +1114,17 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                                     </button>
 
                                     <button
-                                        onClick={handleSendEmail}
-                                        disabled={!clientEmail || (limitReached && !hasBeenFinalized && !isEditing)}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-background dark:bg-white/5 border border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Abrir cliente de correo"}
+                                        onClick={handleSendEmailViaWebhook}
+                                        disabled={!clientEmail || isSendingEmail || emailSuccess || (limitReached && !hasBeenFinalized && !isEditing)}
+                                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 border font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                            emailSuccess 
+                                            ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:border-green-800' 
+                                            : 'bg-background dark:bg-white/5 border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary hover:bg-gray-50 dark:hover:bg-white/10'
+                                        }`}
+                                        title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Enviar correo con PDF"}
                                     >
-                                        <Mail size={18} />
-                                        Enviar por Correo
+                                        {emailSuccess ? <CheckCircle size={18}/> : <Mail size={18} />}
+                                        {emailSuccess ? 'Enviado' : isSendingEmail ? 'Enviando...' : 'Enviar por Correo'}
                                     </button>
 
                                     <button
