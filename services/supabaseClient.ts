@@ -733,6 +733,7 @@ export const getTasks = async (userId: string): Promise<DbTask[]> => {
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
+        .order('is_important', { ascending: false }) // Sort by importance first
         .order('created_at', { ascending: false });
     
     if (error) return [];
@@ -751,12 +752,13 @@ export const getPendingTaskCount = async (userId: string): Promise<number> => {
     return count || 0;
 }
 
-export const createTask = async (userId: string, description: string, dueDate?: string) => {
+export const createTask = async (userId: string, description: string, dueDate?: string, isImportant: boolean = false) => {
     if (!supabase) throw new Error("Supabase not ready");
     const { error } = await supabase.from('tasks').insert({
         user_id: userId,
         description,
-        due_date: dueDate
+        due_date: dueDate,
+        is_important: isImportant
     });
     if (error) throw error;
 }
@@ -764,6 +766,12 @@ export const createTask = async (userId: string, description: string, dueDate?: 
 export const updateTaskCompletion = async (taskId: string, isCompleted: boolean) => {
     if (!supabase) throw new Error("Supabase not ready");
     const { error } = await supabase.from('tasks').update({ is_completed: isCompleted }).eq('id', taskId);
+    if (error) throw error;
+}
+
+export const updateTaskImportance = async (taskId: string, isImportant: boolean) => {
+    if (!supabase) throw new Error("Supabase not ready");
+    const { error } = await supabase.from('tasks').update({ is_important: isImportant }).eq('id', taskId);
     if (error) throw error;
 }
 

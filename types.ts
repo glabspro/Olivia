@@ -115,6 +115,7 @@ export interface DbTask {
   description: string;
   due_date?: string;
   is_completed: boolean;
+  is_important?: boolean; // New field
   reminder_sent?: boolean;
   created_at: string;
 }

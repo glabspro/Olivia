@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, DbTask } from '../types';
-import { getTasks, deleteTask, updateTaskCompletion } from '../services/supabaseClient';
-import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText } from 'lucide-react';
+import { getTasks, deleteTask, updateTaskCompletion, updateTaskImportance } from '../services/supabaseClient';
+import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star } from 'lucide-react';
 
 interface TasksPageProps {
     user: User;
@@ -37,6 +37,17 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         }
     };
 
+    const handleToggleImportant = async (id: string, currentStatus: boolean) => {
+        try {
+            // Optimistic update
+            setTasks(tasks.map(t => t.id === id ? { ...t, is_important: !currentStatus } : t));
+            await updateTaskImportance(id, !currentStatus);
+        } catch (error) {
+            console.error("Error updating importance:", error);
+            fetchTasks(); // Revert on error
+        }
+    };
+
     const handleDelete = async (id: string) => {
         if (window.confirm('¿Eliminar esta tarea permanentemente?')) {
             try {
@@ -54,6 +65,14 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     
     const overdue = activeTasks.filter(t => t.due_date && new Date(t.due_date) < now);
     const upcoming = activeTasks.filter(t => !t.due_date || new Date(t.due_date) >= now);
+
+    // Sort: Important first, then by date
+    const sortTasks = (taskList: DbTask[]) => {
+        return [...taskList].sort((a, b) => {
+            if (a.is_important !== b.is_important) return a.is_important ? -1 : 1;
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
+    };
 
     if (loading) return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>;
 
@@ -92,8 +111,8 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                                     <Clock size={16}/> Vencidos
                                 </h3>
                                 <div className="space-y-3">
-                                    {overdue.map(task => (
-                                        <TaskCard key={task.id} task={task} onComplete={handleComplete} onDelete={handleDelete} isOverdue />
+                                    {sortTasks(overdue).map(task => (
+                                        <TaskCard key={task.id} task={task} onComplete={handleComplete} onDelete={handleDelete} onToggleImportant={handleToggleImportant} isOverdue />
                                     ))}
                                 </div>
                             </section>
@@ -105,8 +124,8 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                                     <Calendar size={16}/> Próximos / Sin Fecha
                                 </h3>
                                 <div className="space-y-3">
-                                    {upcoming.map(task => (
-                                        <TaskCard key={task.id} task={task} onComplete={handleComplete} onDelete={handleDelete} />
+                                    {sortTasks(upcoming).map(task => (
+                                        <TaskCard key={task.id} task={task} onComplete={handleComplete} onDelete={handleDelete} onToggleImportant={handleToggleImportant} />
                                     ))}
                                 </div>
                             </section>
@@ -118,7 +137,13 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     );
 };
 
-const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDelete: (id: string) => void, isOverdue?: boolean }> = ({ task, onComplete, onDelete, isOverdue }) => {
+const TaskCard: React.FC<{ 
+    task: DbTask, 
+    onComplete: (id: string) => void, 
+    onDelete: (id: string) => void, 
+    onToggleImportant: (id: string, current: boolean) => void,
+    isOverdue?: boolean 
+}> = ({ task, onComplete, onDelete, onToggleImportant, isOverdue }) => {
     const date = task.due_date ? new Date(task.due_date) : null;
 
     // Determine type from prefix
@@ -150,7 +175,13 @@ const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDel
     };
 
     return (
-        <div className={`bg-surface dark:bg-dark-surface p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${isOverdue ? 'border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10' : 'border-border dark:border-dark-border'}`}>
+        <div className={`bg-surface dark:bg-dark-surface p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${
+            task.is_important 
+            ? 'border-l-4 border-l-yellow-400 border-y-border border-r-border dark:border-y-dark-border dark:border-r-dark-border' 
+            : isOverdue 
+                ? 'border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10' 
+                : 'border-border dark:border-dark-border'
+        }`}>
             <div className="flex-grow min-w-0 flex items-start gap-3">
                  <div className={`p-2 rounded-lg flex-shrink-0 ${typeStyle.bg} ${typeStyle.color}`}>
                     <TypeIcon size={18} />
@@ -175,6 +206,13 @@ const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDel
                  </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                    onClick={() => onToggleImportant(task.id, !!task.is_important)}
+                    className={`p-2 rounded-lg transition-colors ${task.is_important ? 'text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/10' : 'text-gray-300 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}
+                    title={task.is_important ? "Desmarcar importancia" : "Marcar como importante"}
+                >
+                    <Star size={20} fill={task.is_important ? "currentColor" : "none"} />
+                </button>
                 <button 
                     onClick={() => onComplete(task.id)}
                     className="p-2 text-green-600 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 rounded-lg transition-colors"

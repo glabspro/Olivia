@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText } from 'lucide-react';
+import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText, Star } from 'lucide-react';
 import { User } from '../types';
 import { createTask } from '../services/supabaseClient';
 
@@ -15,6 +15,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [note, setNote] = useState('');
   const [date, setDate] = useState('');
   const [taskType, setTaskType] = useState<TaskType>('note');
+  const [isImportant, setIsImportant] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -37,8 +38,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             case 'note': finalDescription = `📝 ${note}`; break;
         }
 
-        // Now saving to dedicated 'tasks' table
-        await createTask(user.id, finalDescription, isoDate);
+        // Now saving to dedicated 'tasks' table with importance flag
+        await createTask(user.id, finalDescription, isoDate, isImportant);
 
         setSuccess(true);
         setTimeout(() => {
@@ -65,6 +66,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       setNote('');
       setDate('');
       setTaskType('note');
+      setIsImportant(false);
       setSuccess(false);
       setIsOpen(true);
   };
@@ -77,6 +79,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
           setNote('');
           setDate('');
           setTaskType('note');
+          setIsImportant(false);
           setSuccess(false);
           setLoading(false);
       }, 300);
@@ -171,14 +174,24 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
                                 ¿Qué necesitas recordar?
                             </label>
-                            <input 
-                                type="text" 
-                                autoFocus
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                placeholder={taskType === 'call' ? 'Ej. Llamar a Juan Pérez...' : taskType === 'email' ? 'Ej. Enviar correo a...' : 'Escribe aquí...'}
-                                className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
-                            />
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    autoFocus
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    placeholder={taskType === 'call' ? 'Ej. Llamar a Juan Pérez...' : taskType === 'email' ? 'Ej. Enviar correo a...' : 'Escribe aquí...'}
+                                    className="w-full px-4 py-3 pr-10 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setIsImportant(!isImportant)}
+                                    className={`absolute right-3 top-3.5 transition-colors ${isImportant ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                                    title="Marcar como importante"
+                                >
+                                    <Star size={20} fill={isImportant ? "currentColor" : "none"} />
+                                </button>
+                            </div>
                         </div>
                         
                         <div>
