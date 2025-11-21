@@ -42,17 +42,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         setSuccess(true);
         setTimeout(() => {
-            setSuccess(false);
-            setIsOpen(false);
-            setNote('');
-            setDate('');
-            setTaskType('note');
+            handleClose(); // Use handleClose to clean up
         }, 1500);
 
     } catch (error) {
         console.error("Error saving quick task:", error);
         alert("No se pudo guardar el recordatorio.");
-    } finally {
         setLoading(false);
     }
   };
@@ -66,11 +61,25 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   };
 
   const openModal = () => {
+      // Double ensure clean state on open
       setNote('');
       setDate('');
       setTaskType('note');
       setSuccess(false);
       setIsOpen(true);
+  };
+
+  // Robust close handler to prevent "sticky" data
+  const handleClose = () => {
+      setIsOpen(false);
+      // Small delay to clear state after animation starts/ends to avoid flicker
+      setTimeout(() => {
+          setNote('');
+          setDate('');
+          setTaskType('note');
+          setSuccess(false);
+          setLoading(false);
+      }, 300);
   };
 
   const taskTypes: { id: TaskType; label: string; icon: React.ElementType; color: string }[] = [
@@ -103,7 +112,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end sm:p-6">
           <div 
             className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" 
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
           ></div>
           
           <div className="relative w-full sm:w-96 bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up">
@@ -116,7 +125,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                     </div>
                     <h3 className="font-bold text-lg tracking-wide">Oliv-IA</h3>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded-full transition-colors">
+                <button onClick={handleClose} className="hover:bg-white/20 p-1 rounded-full transition-colors">
                     <X size={20} />
                 </button>
             </div>

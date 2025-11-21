@@ -135,6 +135,20 @@ const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDel
     const typeStyle = getTaskType(task.description);
     const TypeIcon = typeStyle.icon;
 
+    // Manual Date Formatting to ensure visibility of YEAR and TIME
+    const formatDate = (d: Date) => {
+        const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+        const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        
+        const dayName = days[d.getDay()];
+        const dayNum = d.getDate();
+        const monthName = months[d.getMonth()];
+        const year = d.getFullYear();
+        const time = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        return `${dayName}, ${dayNum} ${monthName} ${year}, ${time}`;
+    };
+
     return (
         <div className={`bg-surface dark:bg-dark-surface p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${isOverdue ? 'border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10' : 'border-border dark:border-dark-border'}`}>
             <div className="flex-grow min-w-0 flex items-start gap-3">
@@ -155,7 +169,7 @@ const TaskCard: React.FC<{ task: DbTask, onComplete: (id: string) => void, onDel
                     {date && (
                         <p className={`text-xs mt-1 flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-textSecondary dark:text-dark-textSecondary'}`}>
                             <Clock size={12} />
-                            {date.toLocaleString('es-PE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {formatDate(date)}
                         </p>
                     )}
                  </div>
