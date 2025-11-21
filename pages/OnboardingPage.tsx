@@ -42,7 +42,7 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ user, onComplete }) => 
         paymentMethods: [],
         taxType: 'included' as any,
         taxRate: 18,
-        companyDocumentType: '',
+        companyDocumentType: '' as 'RUC' | 'DNI' | '',
         companyDocumentNumber: '',
         companyEmail: '',
         companyWebsite: '',

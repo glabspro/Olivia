@@ -87,4 +87,107 @@ const App: React.FC = () => {
   useEffect(() => {
     if (theme === Theme.DARK) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('olivia_theme
+      localStorage.setItem('olivia_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('olivia_theme', 'light');
+    }
+  }, [theme]);
+
+  const handleLogout = () => {
+    if (supabase) supabase.auth.signOut();
+    localStorage.removeItem('olivia_simulated_profile');
+    localStorage.removeItem('olivia_god_mode'); // Clear admin mode if active
+    setSession(null);
+    setProfile(null);
+    setActivePage('history');
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === Theme.LIGHT ? Theme.DARK : Theme.LIGHT);
+  };
+
+  // Navigation Handlers
+  const handleEditQuote = (id: string) => {
+      setQuoteIdToEdit(id);
+      setIsDuplicating(false);
+      setActivePage('new_quote');
+  };
+
+  const handleDuplicateQuote = (id: string) => {
+      setQuoteIdToEdit(id);
+      setIsDuplicating(true);
+      setActivePage('new_quote');
+  };
+
+  const clearEditState = () => {
+      setQuoteIdToEdit(null);
+      setIsDuplicating(false);
+  };
+
+  if (loading) return <div className="h-screen flex items-center justify-center bg-background dark:bg-dark-background"><div className="animate-spin rounded-full h-12 w-12 border-t-4 border-primary"></div></div>;
+
+  if (!profile) {
+    return <Auth onLogin={(user) => { 
+        setProfile(user); 
+        setSession({ access_token: 'simulated' } as any);
+        // Persist simulated login for refresh
+        localStorage.setItem('olivia_simulated_profile', JSON.stringify(user));
+    }} />;
+  }
+
+  return (
+    <Layout 
+        user={profile} 
+        onLogout={handleLogout} 
+        theme={theme} 
+        toggleTheme={toggleTheme}
+        activePage={activePage}
+        setActivePage={setActivePage}
+    >
+      {activePage === 'new_quote' && (
+        <NewQuotePage 
+            user={profile} 
+            quoteIdToEdit={quoteIdToEdit} 
+            isDuplicating={isDuplicating}
+            clearEditState={clearEditState}
+        />
+      )}
+      {activePage === 'history' && (
+        <HistoryPage 
+            user={profile} 
+            onEditQuote={handleEditQuote}
+            onDuplicateQuote={handleDuplicateQuote}
+        />
+      )}
+      {activePage === 'settings' && <SettingsPage user={profile} />}
+      {activePage === 'clients' && <ClientsPage user={profile} />}
+      {activePage === 'products' && <ProductsPage user={profile} />}
+      {activePage === 'tasks' && <TasksPage user={profile} />}
+      {activePage === 'admin' && <AdminPage currentUser={profile} />}
+      
+      {/* Onboarding Overlay */}
+      {!profile.is_onboarded && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-background dark:bg-dark-background">
+              <OnboardingPage 
+                user={profile} 
+                onComplete={async () => {
+                    // Refresh profile to get updated is_onboarded status
+                    if (session?.user) {
+                        const updated = await getProfile(session.user);
+                        if(updated) setProfile(updated);
+                    } else {
+                        // Update local state for simulated user
+                        setProfile({ ...profile, is_onboarded: true });
+                        const updatedLocal = { ...profile, is_onboarded: true };
+                        localStorage.setItem('olivia_simulated_profile', JSON.stringify(updatedLocal));
+                    }
+                }} 
+              />
+          </div>
+      )}
+    </Layout>
+  );
+};
+
+export default App;
