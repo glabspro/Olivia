@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, MarginType, Template, PaymentOption, TaxType } from '../types';
-import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, RefreshCw, Tag } from 'lucide-react';
+import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, Save } from 'lucide-react';
 
 interface SettingsProps {
   currentSettings: Settings;
