@@ -345,6 +345,7 @@ export const updateUserPermissions = async (userId: string, permissions: UserPer
 
     if (error) throw error;
     
+    // If no data returned, it means RLS blocked the update (or ID doesn't exist)
     if (!data || data.length === 0) {
         throw new Error("Permiso denegado: La base de datos ignoró la actualización. Verifica las políticas RLS.");
     }
@@ -425,7 +426,7 @@ export const saveQuotation = async (
 
     if (existingClient) {
         clientId = existingClient.id;
-        // Optional: Update client info if provided (ignoring this for now based on previous logic, but can be enabled)
+        // Optional: Update client info if provided
     } else {
         const { data: newClient, error: clientError } = await supabase
             .from('clients')
