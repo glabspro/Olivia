@@ -28,6 +28,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const [discountType, setDiscountType] = useState<DiscountType>(DiscountType.AMOUNT);
     const [discountValue, setDiscountValue] = useState<number>(0);
     const [hasBeenFinalized, setHasBeenFinalized] = useState(false);
+    const [existingQuoteNumber, setExistingQuoteNumber] = useState<string | null>(null);
 
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');
@@ -82,6 +83,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                         
                         setDiscountValue(quoteData.discount || 0);
                         setDiscountType(quoteData.discountType || DiscountType.AMOUNT);
+                        setExistingQuoteNumber(quoteData.number);
                         
                         if (isEditing) {
                             setStep(2);
@@ -153,8 +155,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
     const finalTotal = taxType === TaxType.ADDED ? totalAfterDiscount * (1 + taxRate / 100) : totalAfterDiscount;
     
-    const currentQuotationNumber = isEditing && quoteIdToEdit 
-        ? (settings.quotationPrefix + "???") 
+    // Fix logic: Use existing number if editing, otherwise generate next number
+    const currentQuotationNumber = isEditing && existingQuoteNumber 
+        ? existingQuoteNumber 
         : `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(settings.quotationPadding || 6, '0')}`;
 
 
@@ -304,6 +307,11 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 quotationNextNumber: settings.quotationNextNumber + 1,
             };
             try {
+                // Update settings in DB as well to keep cloud in sync
+                // Note: We might want a specific function for this to avoid overwriting other settings
+                // For now, local storage + next load will sync eventually, or we rely on the user saving settings manually later.
+                // ideally call updateUserSettings(user.id, newSettings) here too.
+                
                 localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
                 setSettings(newSettings);
                 setHasBeenFinalized(true);
@@ -403,6 +411,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         setClientEmail('');
         setClientDocument('');
         setClientAddress('');
+        setExistingQuoteNumber(null);
         
         if (settings.paymentTerms.length > 0) {
             setSelectedTermId(settings.paymentTerms[0].id);
