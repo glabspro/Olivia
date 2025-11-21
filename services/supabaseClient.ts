@@ -1,6 +1,6 @@
 
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
-import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta, DbTask } from '../types';
+import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta, DbTask, Settings } from '../types';
 
 // -----------------------------------------------------------------------------
 // ¡IMPORTANTE! Reemplaza estos valores con las credenciales de tu proyecto de Supabase.
@@ -88,7 +88,8 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
             is_onboarded: data.is_onboarded,
             permissions: data.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
             is_verified: data.is_verified,
-            ai_usage_count: data.ai_usage_count || 0
+            ai_usage_count: data.ai_usage_count || 0,
+            settings: data.settings // Load settings from cloud
         };
     }
 
@@ -247,8 +248,19 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         is_onboarded: data.is_onboarded,
         permissions: data.permissions,
         is_verified: data.is_verified,
-        ai_usage_count: data.ai_usage_count || 0
+        ai_usage_count: data.ai_usage_count || 0,
+        settings: data.settings // Fetch settings
     };
+};
+
+export const updateUserSettings = async (userId: string, settings: Settings) => {
+    if (!supabase) return;
+    const { error } = await supabase
+        .from('profiles')
+        .update({ settings })
+        .eq('id', userId);
+    
+    if (error) throw error;
 };
 
 export const completeOnboarding = async (userId: string) => {
@@ -317,7 +329,8 @@ export const getAllUsers = async (): Promise<User[]> => {
         is_onboarded: u.is_onboarded,
         permissions: u.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
         is_verified: u.is_verified,
-        ai_usage_count: u.ai_usage_count || 0
+        ai_usage_count: u.ai_usage_count || 0,
+        settings: u.settings
     }));
 };
 

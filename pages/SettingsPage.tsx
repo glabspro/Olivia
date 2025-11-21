@@ -6,6 +6,7 @@ import QuotationPreview from '../components/QuotationPreview';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Download } from 'lucide-react';
+import { updateUserSettings } from '../services/supabaseClient';
 
 interface SettingsPageProps {
     user: User;
@@ -56,63 +57,39 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const previewRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        try {
-            const savedSettings = localStorage.getItem(`oliviaSettings_${user.id}`);
-            if (savedSettings) {
-                let parsedSettings = JSON.parse(savedSettings);
-
-                // Ensure backward compatibility with old settings objects
-                if (typeof parsedSettings.paymentTerms === 'string') {
-                    parsedSettings.paymentTerms = parsedSettings.paymentTerms ? [{ id: 'migrated-term', name: 'Predeterminado', details: parsedSettings.paymentTerms }] : [];
+        // 1. Try to load from Cloud (User Profile)
+        if (user.settings && Object.keys(user.settings).length > 0) {
+            setSettings(prev => ({ ...prev, ...user.settings }));
+        } 
+        // 2. Fallback to LocalStorage (Migration path)
+        else {
+            try {
+                const savedSettings = localStorage.getItem(`oliviaSettings_${user.id}`);
+                if (savedSettings) {
+                    let parsedSettings = JSON.parse(savedSettings);
+                    setSettings(prev => ({ ...prev, ...parsedSettings }));
+                } else {
+                    setSettings(prev => ({...prev, companyName: user.companyName}));
                 }
-                 if (typeof parsedSettings.paymentMethods === 'string') {
-                    parsedSettings.paymentMethods = parsedSettings.paymentMethods ? [{ id: 'migrated-method', name: 'Predeterminado', details: parsedSettings.paymentMethods }] : [];
-                }
-
-                const completeSettings = {
-                    ...{ // Defaults for new fields
-                        defaultTemplate: Template.MODERN,
-                        paymentTerms: [
-                            { id: 'term-cash', name: 'Contado', details: 'Pago al 100% contra entrega del producto o servicio.' },
-                            { id: 'term-credit', name: 'Crédito 15 Días', details: 'Crédito a 15 días calendario. Requiere orden de compra aprobada.' }
-                        ],
-                        paymentMethods: [
-                            { id: 'method-bcp', name: 'Transferencia BCP', details: 'Banco de Crédito del Perú (BCP)\nCuenta Soles: 191-XXXXXXXX-0-XX\nCCI: 002-191-XXXXXXXXXXXX-XX\nTitular: Mi Empresa S.A.C.' },
-                            { id: 'method-wallet', name: 'Yape / Plin', details: 'Número: 999 999 999\nTitular: Nombre del Titular\n(Enviar constancia al WhatsApp)' }
-                        ],
-                        quotationPrefix: 'COT-',
-                        quotationNextNumber: 1,
-                        quotationPadding: 6,
-                        companyAddress: '',
-                        companyPhone: '',
-                        companyEmail: '',
-                        companyWebsite: '',
-                        companyDocumentType: '',
-                        companyDocumentNumber: '',
-                        themeColor: '#EC4899',
-                        headerImage: null,
-                        taxType: TaxType.INCLUDED,
-                        taxRate: 18,
-                    },
-                    ...parsedSettings,
-                };
-                setSettings(completeSettings);
-            } else {
-                setSettings(prev => ({...prev, companyName: user.companyName}));
+            } catch (e) {
+                console.error("Failed to load settings from localStorage", e);
             }
-        } catch (e) {
-            console.error("Failed to load settings from localStorage", e);
         }
-    }, [user.id, user.companyName]);
+    }, [user]);
 
-    const handleSaveSettings = (newSettings: SettingsType) => {
+    const handleSaveSettings = async (newSettings: SettingsType) => {
         setSettings(newSettings);
+        setSaveMessage('Guardando...');
         try {
+            // Save to Cloud
+            await updateUserSettings(user.id, newSettings);
+            // Update LocalStorage as cache/backup
             localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
-            setSaveMessage('¡Configuración guardada!');
+            
+            setSaveMessage('¡Configuración guardada en la nube!');
             setTimeout(() => setSaveMessage(''), 3000);
         } catch (e) {
-            console.error("Failed to save settings to localStorage", e);
+            console.error("Failed to save settings", e);
             setSaveMessage('Error al guardar la configuración.');
         }
     };

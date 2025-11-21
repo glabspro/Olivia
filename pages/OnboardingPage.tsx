@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User } from '../types';
-import { completeOnboarding } from '../services/supabaseClient';
+import { completeOnboarding, updateUserSettings } from '../services/supabaseClient';
 import { PartyPopper, Building, Palette, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface OnboardingPageProps {
@@ -13,8 +13,6 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ user, onComplete }) => 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  // Basic local state for the wizard. In a real app, you'd save this progressively.
-  // For now, we will simulate saving these preferences to localStorage at the end.
   const [config, setConfig] = useState({
       address: '',
       color: '#EC4899',
@@ -26,32 +24,49 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ user, onComplete }) => 
   const handleFinish = async () => {
       setLoading(true);
       
-      // 1. Update Local Storage Settings with new info
+      // Construct the settings object
       const defaultSettings = {
         companyName: user.companyName,
         companyLogo: config.logo,
         companyAddress: config.address,
         themeColor: config.color,
-        // ...defaults
+        // Default values
         companyPhone: user.phone,
         quotationPrefix: 'COT-',
         quotationNextNumber: 1,
         currencySymbol: 'S/',
-        defaultMarginType: 'percentage',
+        defaultMarginType: 'percentage' as any,
         defaultMarginValue: 20,
-        defaultTemplate: 'modern',
+        defaultTemplate: 'modern' as any,
         paymentTerms: [],
         paymentMethods: [],
-        taxType: 'included',
-        taxRate: 18
+        taxType: 'included' as any,
+        taxRate: 18,
+        companyDocumentType: '',
+        companyDocumentNumber: '',
+        companyEmail: '',
+        companyWebsite: '',
+        headerImage: null,
+        quotationPadding: 6
       };
-      localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(defaultSettings));
 
-      // 2. Update DB Status
-      await completeOnboarding(user.id);
-      
-      setLoading(false);
-      onComplete();
+      try {
+          // 1. Save to Cloud
+          await updateUserSettings(user.id, defaultSettings);
+          
+          // 2. Save to Local Storage (as backup/cache)
+          localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(defaultSettings));
+
+          // 3. Mark onboarding as complete
+          await completeOnboarding(user.id);
+          
+          onComplete();
+      } catch (e) {
+          console.error("Onboarding save failed", e);
+          alert("Hubo un problema guardando la configuración. Intenta de nuevo.");
+      } finally {
+          setLoading(false);
+      }
   };
   
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

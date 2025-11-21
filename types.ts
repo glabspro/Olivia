@@ -89,6 +89,7 @@ export interface User {
   verify_token?: string;
   is_verified?: boolean;
   ai_usage_count?: number;
+  settings?: Settings; // Cloud Settings
 }
 
 // Database Types
