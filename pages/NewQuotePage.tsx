@@ -464,6 +464,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
              return;
         }
         
+        // Even if email is missing, we allow trying so user sees the validation
         if (!clientEmail) {
             alert("Por favor, ingresa un correo electrónico válido para el cliente.");
             return;
@@ -498,15 +499,21 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
             
             await finalizeAndIncrementQuoteNumber();
 
-            // 3. Prepare Payload for n8n (Email)
+            // 3. Prepare Payload for n8n (Email) with ROBUST FALLBACKS
+            // Fallback order: Settings > User Profile > Generic Default
+            const companyName = settings.companyName || user.companyName || 'Mi Empresa';
+            const companyEmail = settings.companyEmail || user.email || 'no-reply@olivia.app'; 
+            const companyAddress = settings.companyAddress || '';
+            const companyPhone = settings.companyPhone || user.phone || '';
+
             const payload = {
                 user_phone: user.phone.replace(/\D/g, ''),
                 client: { name: clientName, email: clientEmail },
                 company: {
-                    name: settings.companyName,
-                    address: settings.companyAddress,
-                    phone: settings.companyPhone,
-                    email: settings.companyEmail // NEW: Send Company Email for Reply-To
+                    name: companyName,
+                    address: companyAddress,
+                    phone: companyPhone,
+                    email: companyEmail 
                 },
                 quote: {
                     number: currentQuotationNumber,
@@ -1116,13 +1123,13 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
                                     <button
                                         onClick={handleSendEmailViaWebhook}
-                                        disabled={!clientEmail || isSendingEmail || emailSuccess || (limitReached && !hasBeenFinalized && !isEditing)}
+                                        disabled={isSendingEmail || emailSuccess || (limitReached && !hasBeenFinalized && !isEditing)}
                                         className={`w-full flex items-center justify-center gap-2 px-4 py-3 border font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                             emailSuccess 
                                             ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:border-green-800' 
                                             : 'bg-background dark:bg-white/5 border-border dark:border-dark-border text-textPrimary dark:text-dark-textPrimary hover:bg-gray-50 dark:hover:bg-white/10'
                                         }`}
-                                        title={!clientEmail ? "Ingresa un correo en el paso anterior" : "Enviar correo con PDF"}
+                                        title={!clientEmail ? "Se solicitará el correo si no lo has ingresado" : "Enviar correo con PDF"}
                                     >
                                         {emailSuccess ? <CheckCircle size={18}/> : <Mail size={18} />}
                                         {emailSuccess ? 'Enviado' : isSendingEmail ? 'Enviando...' : 'Enviar por Correo'}
