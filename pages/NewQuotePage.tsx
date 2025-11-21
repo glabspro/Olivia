@@ -465,10 +465,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         }
         
         // Even if email is missing, we allow trying so user sees the validation
-        if (!clientEmail) {
-            alert("Por favor, ingresa un correo electrónico válido para el cliente.");
-            return;
-        }
+        // if (!clientEmail) {
+        //     alert("Por favor, ingresa un correo electrónico válido para el cliente.");
+        //     return;
+        // }
 
         setIsLoading(true);
         setIsSendingEmail(true);
@@ -758,7 +758,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const pageTitle = isEditing ? 'Editar Cotización' : isDuplicating ? 'Duplicar Cotización' : 'Nueva Cotización';
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full pb-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full pb-40">
             {isLoading && <Spinner message={isSendingEmail ? "Enviando Correo..." : "Procesando..."} />}
             
             {step === 1 && (

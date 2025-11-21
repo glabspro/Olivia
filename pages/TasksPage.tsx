@@ -175,12 +175,12 @@ const TaskCard: React.FC<{
     };
 
     return (
-        <div className={`bg-surface dark:bg-dark-surface p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${
+        <div className={`p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${
             task.is_important 
-            ? 'border-l-4 border-l-yellow-400 border-y-border border-r-border dark:border-y-dark-border dark:border-r-dark-border' 
+            ? 'bg-yellow-50 dark:bg-yellow-900/10 border-l-4 border-l-yellow-400 border-y-yellow-200 border-r-yellow-200 dark:border-y-yellow-900/30 dark:border-r-yellow-900/30' 
             : isOverdue 
-                ? 'border-red-200 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10' 
-                : 'border-border dark:border-dark-border'
+                ? 'bg-red-50/30 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' 
+                : 'bg-surface dark:bg-dark-surface border-border dark:border-dark-border'
         }`}>
             <div className="flex-grow min-w-0 flex items-start gap-3">
                  <div className={`p-2 rounded-lg flex-shrink-0 ${typeStyle.bg} ${typeStyle.color}`}>
@@ -208,7 +208,7 @@ const TaskCard: React.FC<{
             <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                     onClick={() => onToggleImportant(task.id, !!task.is_important)}
-                    className={`p-2 rounded-lg transition-colors ${task.is_important ? 'text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/10' : 'text-gray-300 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}
+                    className={`p-2 rounded-lg transition-colors ${task.is_important ? 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30' : 'text-gray-300 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}
                     title={task.is_important ? "Desmarcar importancia" : "Marcar como importante"}
                 >
                     <Star size={20} fill={task.is_important ? "currentColor" : "none"} />
