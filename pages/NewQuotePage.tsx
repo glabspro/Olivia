@@ -505,7 +505,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 company: {
                     name: settings.companyName,
                     address: settings.companyAddress,
-                    phone: settings.companyPhone
+                    phone: settings.companyPhone,
+                    email: settings.companyEmail // NEW: Send Company Email for Reply-To
                 },
                 quote: {
                     number: currentQuotationNumber,
