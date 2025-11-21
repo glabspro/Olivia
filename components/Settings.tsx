@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, MarginType, Template, PaymentOption, TaxType } from '../types';
-import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent } from 'lucide-react';
+import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, RefreshCw, Tag } from 'lucide-react';
 
 interface SettingsProps {
   currentSettings: Settings;
@@ -172,6 +173,14 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
       }));
   };
 
+  const setQuickSeries = (prefix: string) => {
+      setSettings(prev => ({
+          ...prev,
+          quotationPrefix: prefix,
+          quotationNextNumber: 1
+      }));
+  };
+
   const inputClasses = "w-full px-2.5 py-1.5 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary text-textPrimary dark:text-dark-textPrimary text-sm transition";
   const labelClasses = "block text-xs font-medium text-textSecondary dark:text-dark-textSecondary mb-1";
   const generatedTemplatePreviews = templatePreviews(settings.themeColor || '#EC4899');
@@ -268,21 +277,99 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
             </div>
         </div>
 
-        {/* Quotation Numbering */}
-        <div className="space-y-3">
+        {/* Quotation Numbering & Series Management */}
+        <div className="space-y-4">
              <h3 className="text-lg font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 border-b border-border dark:border-dark-border pb-2">
                 <Hash size={18} className="text-accent-coral" />
-                Numeración de Cotizaciones
+                Series y Numeración
             </h3>
-            <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-1">
-                    <label htmlFor="quotationPrefix" className={labelClasses}>Prefijo</label>
-                    <input type="text" id="quotationPrefix" name="quotationPrefix" value={settings.quotationPrefix} onChange={handleInputChange} className={inputClasses}/>
+            
+            {/* Visual Preview Box */}
+            <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                    <span className="text-xs text-textSecondary uppercase font-bold tracking-wider">Próxima Cotización:</span>
+                    <p className="text-2xl font-mono font-bold text-primary dark:text-dark-primary mt-1">
+                        {settings.quotationPrefix}{String(settings.quotationNextNumber).padStart(settings.quotationPadding || 6, '0')}
+                    </p>
                 </div>
-                <div className="col-span-2">
-                    <label htmlFor="quotationNextNumber" className={labelClasses}>Siguiente Número</label>
-                    <input type="number" id="quotationNextNumber" name="quotationNextNumber" value={settings.quotationNextNumber} onChange={handleInputChange} className={inputClasses}/>
+                <div className="text-right">
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded font-bold">ACTIVO</span>
                 </div>
+            </div>
+
+            {/* Series Configuration Form */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                    <div>
+                        <label htmlFor="quotationPrefix" className={labelClasses}>Prefijo de Serie</label>
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="text" 
+                                id="quotationPrefix" 
+                                name="quotationPrefix" 
+                                value={settings.quotationPrefix} 
+                                onChange={handleInputChange} 
+                                className={inputClasses}
+                                placeholder="Ej. F001-"
+                            />
+                        </div>
+                        <p className="text-[10px] text-textSecondary mt-1">Ejemplos comunes: COT-, F001-, B001-</p>
+                    </div>
+                    
+                    <div>
+                        <label htmlFor="quotationNextNumber" className={labelClasses}>Correlativo Inicial</label>
+                        <input 
+                            type="number" 
+                            id="quotationNextNumber" 
+                            name="quotationNextNumber" 
+                            value={settings.quotationNextNumber} 
+                            onChange={handleInputChange} 
+                            className={inputClasses}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <label className={labelClasses}>Formatos Sugeridos (Crear Serie)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button type="button" onClick={() => setQuickSeries('COT-')} className="p-2 border border-dashed border-border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+                            <span className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary">Interno</span>
+                            <span className="text-[10px] text-textSecondary">COT-000001</span>
+                        </button>
+                        <button type="button" onClick={() => setQuickSeries('F001-')} className="p-2 border border-dashed border-border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+                            <span className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary">Factura</span>
+                            <span className="text-[10px] text-textSecondary">F001-000001</span>
+                        </button>
+                        <button type="button" onClick={() => setQuickSeries('B001-')} className="p-2 border border-dashed border-border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+                            <span className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary">Boleta</span>
+                            <span className="text-[10px] text-textSecondary">B001-000001</span>
+                        </button>
+                        <button type="button" onClick={() => setQuickSeries('P001-')} className="p-2 border border-dashed border-border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+                            <span className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary">Proforma</span>
+                            <span className="text-[10px] text-textSecondary">P001-000001</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Formatting Options */}
+            <div>
+                <label className={labelClasses}>Longitud del Número (Relleno con Ceros)</label>
+                <div className="flex items-center gap-4 mt-2">
+                    {[4, 6, 8].map(len => (
+                        <label key={len} className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="padding" 
+                                checked={(settings.quotationPadding || 6) === len} 
+                                onChange={() => setSettings(prev => ({ ...prev, quotationPadding: len }))}
+                                className="text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-textPrimary dark:text-dark-textPrimary">{len} dígitos</span>
+                        </label>
+                    ))}
+                </div>
+                <p className="text-[10px] text-textSecondary mt-1">Define cuántos ceros a la izquierda tendrá el número.</p>
             </div>
         </div>
 
@@ -412,9 +499,10 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
       <div className="mt-6 flex justify-end">
         <button
           type="submit"
-          className="px-5 py-2 bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-all"
+          className="px-5 py-2 bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-all flex items-center gap-2"
         >
-          Guardar Cambios
+          <Save size={18} />
+          Guardar Configuración
         </button>
       </div>
     </form>

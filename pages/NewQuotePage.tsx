@@ -131,6 +131,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         ],
         quotationPrefix: 'COT-',
         quotationNextNumber: 1,
+        quotationPadding: 6,
         themeColor: '#EC4899',
         headerImage: null,
         taxType: TaxType.INCLUDED,
@@ -154,7 +155,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     
     const currentQuotationNumber = isEditing && quoteIdToEdit 
         ? (settings.quotationPrefix + "???") 
-        : `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(4, '0')}`;
+        : `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(settings.quotationPadding || 6, '0')}`;
 
 
     useEffect(() => {
@@ -178,6 +179,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                     ...{ // Defaults for new fields
                         quotationPrefix: 'COT-',
                         quotationNextNumber: 1,
+                        quotationPadding: 6,
                         companyAddress: '',
                         companyPhone: '',
                         companyEmail: '',

@@ -62,6 +62,7 @@ export interface Settings {
   paymentMethods: PaymentOption[];
   quotationPrefix: string;
   quotationNextNumber: number;
+  quotationPadding?: number; // New field for zero padding (e.g., 0001 vs 000001)
   themeColor: string;
   headerImage: string | null;
   taxType: TaxType;

@@ -46,6 +46,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         ],
         quotationPrefix: 'COT-',
         quotationNextNumber: 1,
+        quotationPadding: 6,
         themeColor: '#EC4899',
         headerImage: null,
         taxType: TaxType.INCLUDED,
@@ -81,6 +82,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                         ],
                         quotationPrefix: 'COT-',
                         quotationNextNumber: 1,
+                        quotationPadding: 6,
                         companyAddress: '',
                         companyPhone: '',
                         companyEmail: '',
@@ -138,7 +140,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
         });
     };
 
-    const sampleQuotationNumber = `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(4, '0')}`;
+    const sampleQuotationNumber = `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(settings.quotationPadding || 6, '0')}`;
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
