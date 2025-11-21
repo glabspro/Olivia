@@ -415,19 +415,48 @@ export const saveQuotation = async (
 ) => {
     if (!supabase) throw new Error("Supabase no configurado");
 
-    let clientId: string;
+    let clientId: string | null = null;
 
-    const { data: existingClient, error: searchError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('name', clientData.name)
-        .maybeSingle();
+    // 1. ROBUST CLIENT MATCHING
+    // Priority: Match by Document (Unique ID)
+    if (clientData.document) {
+        const { data: clientByDoc } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('document', clientData.document)
+            .maybeSingle();
+        
+        if (clientByDoc) clientId = clientByDoc.id;
+    }
 
-    if (existingClient) {
-        clientId = existingClient.id;
-        // Optional: Update client info if provided
+    // Secondary: Match by Name (if no document found or provided)
+    if (!clientId && clientData.name) {
+        const { data: clientByName } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('name', clientData.name)
+            .maybeSingle();
+        
+        if (clientByName) clientId = clientByName.id;
+    }
+
+    // 2. CLIENT UPSERT (Create or Update)
+    if (clientId) {
+        // Update existing client with latest info
+        await supabase
+            .from('clients')
+            .update({
+                name: clientData.name,
+                phone: clientData.phone,
+                email: clientData.email,
+                address: clientData.address,
+                document: clientData.document
+            })
+            .eq('id', clientId);
     } else {
+        // Create new client
         const { data: newClient, error: clientError } = await supabase
             .from('clients')
             .insert({
@@ -445,6 +474,7 @@ export const saveQuotation = async (
         clientId = newClient.id;
     }
 
+    // 3. INSERT QUOTATION
     const { data: newQuote, error: quoteError } = await supabase
         .from('quotations')
         .insert({
@@ -462,6 +492,7 @@ export const saveQuotation = async (
 
     if (quoteError) throw new Error(`Error guardando cotización: ${quoteError.message}`);
 
+    // 4. INSERT ITEMS
     const itemsToInsert = quoteData.items.map(item => ({
         quotation_id: newQuote.id,
         description: item.description,
@@ -476,7 +507,7 @@ export const saveQuotation = async (
 
     if (itemsError) throw new Error(`Error guardando items: ${itemsError.message}`);
 
-    // Only upsert products if NOT skipped
+    // 5. UPSERT PRODUCTS (Catalog) - Only if NOT skipped (e.g. tasks)
     if (!skipProductSave) {
         const productsToUpsert = quoteData.items.map(item => ({
             user_id: userId,
@@ -492,6 +523,7 @@ export const saveQuotation = async (
         if (productsError) console.warn("Error actualizando catálogo:", productsError);
     }
 
+    // Return ID so frontend can switch to "Edit Mode"
     return newQuote.id;
 };
 

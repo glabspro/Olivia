@@ -5,7 +5,7 @@ import QuotationEditor from '../components/QuotationEditor';
 import QuotationPreview from '../components/QuotationPreview';
 import Spinner from '../components/Spinner';
 import { extractItemsFromFile } from '../services/geminiService';
-import { saveQuotation, updateQuotation, getMonthlyQuoteCount, incrementAIUsage, uploadQuotationPDF, getQuotationById } from '../services/supabaseClient';
+import { saveQuotation, updateQuotation, getMonthlyQuoteCount, incrementAIUsage, uploadQuotationPDF, getQuotationById, updateUserSettings } from '../services/supabaseClient';
 import { Edit, RefreshCw, User as UserIcon, Download, MessageSquare, Info, Percent, FileUp, Eye, Mail, ArrowLeft, CheckCircle, Lock, AlertCircle, Sparkles, Smartphone, Bot, Zap, Share2, Save, Copy } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -29,6 +29,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const [discountValue, setDiscountValue] = useState<number>(0);
     const [hasBeenFinalized, setHasBeenFinalized] = useState(false);
     const [existingQuoteNumber, setExistingQuoteNumber] = useState<string | null>(null);
+
+    // Internal state to track if we switched from creating new to editing the same draft
+    const [internalQuoteId, setInternalQuoteId] = useState<string | null>(null);
 
     const [clientName, setClientName] = useState('');
     const [clientPhone, setClientPhone] = useState('');
@@ -64,7 +67,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const aiLimitReached = isFreePlan && currentAiUsage >= aiUsageLimit;
 
     // Determine if we are updating an existing quote
-    const isEditing = !!quoteIdToEdit && !isDuplicating;
+    const isEditing = (!!quoteIdToEdit || !!internalQuoteId) && !isDuplicating;
+    const currentActiveQuoteId = quoteIdToEdit || internalQuoteId;
 
     // --- Load Existing Quote Logic ---
     useEffect(() => {
@@ -155,8 +159,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
     const finalTotal = taxType === TaxType.ADDED ? totalAfterDiscount * (1 + taxRate / 100) : totalAfterDiscount;
     
-    // Fix logic: Use existing number if editing, otherwise generate next number
-    const currentQuotationNumber = isEditing && existingQuoteNumber 
+    // Logic: Use existing number if editing, otherwise generate next number
+    const currentQuotationNumber = (isEditing && existingQuoteNumber) 
         ? existingQuoteNumber 
         : `${settings.quotationPrefix}${String(settings.quotationNextNumber).padStart(settings.quotationPadding || 6, '0')}`;
 
@@ -164,11 +168,9 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     useEffect(() => {
         try {
             // PRIORITY 1: Load from Cloud Settings (User Profile)
-            // This ensures cross-device synchronization
             if (user.settings && Object.keys(user.settings).length > 0) {
                 const cloudSettings = user.settings;
                 
-                // Ensure legacy arrays are initialized
                 if (!cloudSettings.paymentTerms) cloudSettings.paymentTerms = [];
                 if (!cloudSettings.paymentMethods) cloudSettings.paymentMethods = [];
 
@@ -178,49 +180,28 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 setTaxType(cloudSettings.taxType);
                 setTaxRate(cloudSettings.taxRate);
 
+                // Also update LocalStorage to keep it in sync for next time
+                localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(cloudSettings));
+
                 if (cloudSettings.paymentTerms.length > 0) {
                     setSelectedTermId(cloudSettings.paymentTerms[0].id);
                 }
                 if (cloudSettings.paymentMethods.length > 0) {
                     setSelectedMethodId(cloudSettings.paymentMethods[0].id);
                 }
-                return; // Stop here if cloud settings loaded successfully
+                return; 
             }
 
-            // PRIORITY 2: Fallback to LocalStorage (Legacy/Offline support)
+            // PRIORITY 2: Fallback to LocalStorage
             const savedSettings = localStorage.getItem(`oliviaSettings_${user.id}`);
             if (savedSettings) {
                 let parsedSettings = JSON.parse(savedSettings);
-
-                if (typeof parsedSettings.paymentTerms === 'string') {
-                    parsedSettings.paymentTerms = parsedSettings.paymentTerms ? [{ id: 'migrated-term', name: 'Predeterminado', details: parsedSettings.paymentTerms }] : [];
-                } else if (!parsedSettings.paymentTerms) {
-                    parsedSettings.paymentTerms = [];
-                }
-                if (typeof parsedSettings.paymentMethods === 'string') {
-                    parsedSettings.paymentMethods = parsedSettings.paymentMethods ? [{ id: 'migrated-method', name: 'Predeterminado', details: parsedSettings.paymentMethods }] : [];
-                } else if (!parsedSettings.paymentMethods) {
-                    parsedSettings.paymentMethods = [];
-                }
-
-                const completeSettings = {
-                    ...settings, // keep defaults
-                    ...parsedSettings,
-                };
-                setSettings(completeSettings);
-                setMarginType(completeSettings.defaultMarginType);
-                setMarginValue(completeSettings.defaultMarginValue);
-                setTaxType(completeSettings.taxType);
-                setTaxRate(completeSettings.taxRate);
-
-                if (completeSettings.paymentTerms.length > 0) {
-                    setSelectedTermId(completeSettings.paymentTerms[0].id);
-                }
-                if (completeSettings.paymentMethods.length > 0) {
-                    setSelectedMethodId(completeSettings.paymentMethods[0].id);
-                }
+                setSettings(prev => ({ ...prev, ...parsedSettings }));
+                setMarginType(parsedSettings.defaultMarginType);
+                setMarginValue(parsedSettings.defaultMarginValue);
+                setTaxType(parsedSettings.taxType);
+                setTaxRate(parsedSettings.taxRate);
             } else {
-                // Initial default state
                 setSettings(prev => ({...prev, companyName: user.companyName}));
             }
         } catch (e) {
@@ -246,7 +227,8 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     }, [clientName, finalTotal, settings.companyName, settings.currencySymbol]);
 
     const saveToDatabase = async (status: 'draft' | 'sent' = 'sent') => {
-        if(hasBeenFinalized && !isEditing) return; // Allow save if editing
+        // We allow multiple saves if editing to update the same record
+        // if(hasBeenFinalized && !isEditing) return; 
         
         try {
             const clientData = { 
@@ -257,10 +239,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 document: clientDocument 
             };
             
-            if (isEditing && quoteIdToEdit) {
+            if (isEditing && currentActiveQuoteId) {
                 // UPDATE EXISTING
                 await updateQuotation(
-                    quoteIdToEdit,
+                    currentActiveQuoteId,
                     clientData,
                     { 
                         total: finalTotal, 
@@ -274,7 +256,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                 console.log("Actualización exitosa.");
             } else {
                 // INSERT NEW (or Duplicate)
-                await saveQuotation(
+                const newQuoteId = await saveQuotation(
                     user.id, 
                     clientData,
                     { 
@@ -287,7 +269,10 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                     },
                     status
                 );
-                console.log("Guardado exitoso.");
+                // Immediately switch to Edit mode for this new ID to prevent duplicates on re-save
+                setInternalQuoteId(newQuoteId);
+                setExistingQuoteNumber(currentQuotationNumber);
+                console.log("Guardado exitoso. ID:", newQuoteId);
             }
         } catch (err) {
             console.error("Error guardando en base de datos:", err);
@@ -296,33 +281,32 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     };
 
     const finalizeAndIncrementQuoteNumber = async () => {
-        if (hasBeenFinalized && !isEditing) return;
-
         await saveToDatabase('sent');
 
-        // Only increment number if we are creating a NEW one
-        if (!isEditing) {
+        // Only increment number if this was a FRESH creation (not an edit of an old one)
+        // AND if we haven't already finalized/incremented it in this session.
+        if (!quoteIdToEdit && !hasBeenFinalized) {
             const newSettings = {
                 ...settings,
                 quotationNextNumber: settings.quotationNextNumber + 1,
             };
             try {
-                // Update settings in DB as well to keep cloud in sync
-                // Note: We might want a specific function for this to avoid overwriting other settings
-                // For now, local storage + next load will sync eventually, or we rely on the user saving settings manually later.
-                // ideally call updateUserSettings(user.id, newSettings) here too.
+                // 1. Save to Cloud (Supabase) - CRITICAL for cross-device sync
+                await updateUserSettings(user.id, newSettings);
                 
+                // 2. Update Local Cache
                 localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
                 setSettings(newSettings);
+                
+                // 3. Mark as finalized so we don't increment again for THIS specific quote
                 setHasBeenFinalized(true);
-                // Refresh count after finalizing
+                
+                // Refresh count
                 const count = await getMonthlyQuoteCount(user.id);
                 setQuoteCount(count);
             } catch (e) {
                 console.error("Failed to save incremented quote number", e);
             }
-        } else {
-             setHasBeenFinalized(true);
         }
     };
 
@@ -335,20 +319,23 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         try {
             await saveToDatabase('draft');
             
-            if (!isEditing) {
+            // If it's new, we should also increment the number to reserve it for this draft
+            if (!quoteIdToEdit && !hasBeenFinalized) {
                 const newSettings = {
                     ...settings,
                     quotationNextNumber: settings.quotationNextNumber + 1,
                 };
+                await updateUserSettings(user.id, newSettings);
                 localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
                 setSettings(newSettings);
+                setHasBeenFinalized(true);
             }
             
             const count = await getMonthlyQuoteCount(user.id);
             setQuoteCount(count);
 
             alert("Borrador guardado correctamente.");
-            resetState();
+            // Don't reset state, let them continue editing
         } catch (error) {
             console.error(error);
             alert("Hubo un error al guardar el borrador.");
@@ -412,6 +399,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
         setClientDocument('');
         setClientAddress('');
         setExistingQuoteNumber(null);
+        setInternalQuoteId(null);
         
         if (settings.paymentTerms.length > 0) {
             setSelectedTermId(settings.paymentTerms[0].id);
@@ -434,7 +422,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     };
 
     const handleDownloadPDF = () => {
-        if (limitReached && !hasBeenFinalized && !isEditing) {
+        if (limitReached && !isEditing) {
             alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
             return;
         }
@@ -470,7 +458,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     };
 
     const handleSendEmail = () => {
-        if (limitReached && !hasBeenFinalized && !isEditing) {
+        if (limitReached && !isEditing) {
              alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
              return;
         }
@@ -487,7 +475,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const handleSendToWebhook = async () => {
         if (!clientPhone || isSending || sentSuccess) return;
         
-        if (limitReached && !hasBeenFinalized && !isEditing) {
+        if (limitReached && !isEditing) {
              alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
              return;
         }
