@@ -47,7 +47,8 @@ const OnboardingPage: React.FC<OnboardingPageProps> = ({ user, onComplete }) => 
         companyEmail: '',
         companyWebsite: '',
         headerImage: null,
-        quotationPadding: 6
+        quotationPadding: 6,
+        calComLink: '' // New
       };
 
       try {

@@ -67,6 +67,7 @@ export interface Settings {
   headerImage: string | null;
   taxType: TaxType;
   taxRate: number;
+  calComLink?: string; // Link de agenda Cal.com
 }
 
 // Admin & Permissions Types

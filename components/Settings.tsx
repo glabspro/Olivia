@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, MarginType, Template, PaymentOption, TaxType } from '../types';
-import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, Save } from 'lucide-react';
+import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, Save, Calendar, ExternalLink } from 'lucide-react';
 
 interface SettingsProps {
   currentSettings: Settings;
@@ -274,6 +274,60 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
             <div>
                 <label htmlFor="companyWebsite" className={labelClasses}>Página Web</label>
                 <input type="text" id="companyWebsite" name="companyWebsite" value={settings.companyWebsite || ''} onChange={handleInputChange} className={inputClasses}/>
+            </div>
+        </div>
+
+        {/* Cal.com Integration */}
+        <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 border-b border-border dark:border-dark-border pb-2">
+                <Calendar size={18} className="text-purple-500" />
+                Agenda y Reuniones (Cal.com)
+            </h3>
+            <div className="bg-gray-50 dark:bg-white/5 p-4 rounded-lg border border-border dark:border-dark-border space-y-4">
+                <div className="flex items-start gap-3">
+                    <div className="p-2 bg-white dark:bg-dark-surface rounded-md border border-border dark:border-dark-border">
+                        <img src="https://cal.com/favicon.ico" alt="Cal.com" className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-textPrimary dark:text-dark-textPrimary">Conecta tu Agenda</h4>
+                        <p className="text-xs text-textSecondary mt-1">
+                            Permite que tus clientes agenden reuniones contigo automáticamente.
+                            Olivia incluirá tu enlace en las cotizaciones.
+                        </p>
+                    </div>
+                </div>
+                
+                {!settings.calComLink && (
+                    <div className="text-xs text-textSecondary bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-100 dark:border-blue-900/30">
+                        <p className="font-semibold text-blue-700 dark:text-blue-300 mb-1">¿No tienes cuenta?</p>
+                        <ol className="list-decimal list-inside space-y-1 ml-1">
+                            <li>Crea tu cuenta gratis en Cal.com.</li>
+                            <li>Conecta tu Google Calendar.</li>
+                            <li>Copia tu enlace de reserva (ej. <code>cal.com/tu-nombre</code>).</li>
+                        </ol>
+                        <a href="https://cal.com/signup" target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-blue-600 hover:underline">
+                            Ir a crear cuenta <ExternalLink size={10}/>
+                        </a>
+                    </div>
+                )}
+
+                <div>
+                    <label htmlFor="calComLink" className={labelClasses}>Tu Enlace de Cal.com</label>
+                    <div className="flex">
+                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-white/5 text-gray-500 text-sm">
+                            https://
+                        </span>
+                        <input 
+                            type="text" 
+                            id="calComLink" 
+                            name="calComLink" 
+                            value={settings.calComLink || ''} 
+                            onChange={handleInputChange} 
+                            className={`${inputClasses} rounded-l-none`}
+                            placeholder="cal.com/tu-usuario"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
 
