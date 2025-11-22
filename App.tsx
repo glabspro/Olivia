@@ -76,6 +76,18 @@ const App: React.FC = () => {
             const savedProfile = localStorage.getItem('olivia_simulated_profile');
             if(savedProfile) {
                 const parsedUser = JSON.parse(savedProfile);
+                
+                // ROBUSTNESS: Check if there are newer local settings that failed to sync to cloud
+                try {
+                    const localSettings = localStorage.getItem(`oliviaSettings_${parsedUser.id}`);
+                    if (localSettings) {
+                        // Merge local settings into user profile
+                        parsedUser.settings = JSON.parse(localSettings);
+                    }
+                } catch (e) {
+                    console.warn("Could not load local settings override", e);
+                }
+
                 // 1. Load local cache immediately for speed
                 setProfile(parsedUser);
                 setSession({ access_token: 'simulated' } as any);
@@ -85,6 +97,10 @@ const App: React.FC = () => {
                     getUserByPhone(parsedUser.phone).then(freshUser => {
                         if (freshUser) {
                             console.log("Perfil sincronizado con la nube");
+                            // Don't overwrite local settings if cloud is stale/empty but we have local work
+                            if (!freshUser.settings && parsedUser.settings) {
+                                freshUser.settings = parsedUser.settings;
+                            }
                             setProfile(freshUser);
                             localStorage.setItem('olivia_simulated_profile', JSON.stringify(freshUser));
                         }

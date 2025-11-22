@@ -6,7 +6,7 @@ import QuotationPreview from '../components/QuotationPreview';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Download } from 'lucide-react';
-import { updateUserSettings } from '../services/supabaseClient';
+import { updateUserSettings, triggerTaskAutomation } from '../services/supabaseClient';
 
 interface SettingsPageProps {
     user: User;
@@ -80,18 +80,69 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
     const handleSaveSettings = async (newSettings: SettingsType) => {
         setSettings(newSettings);
         setSaveMessage('Guardando...');
+        
+        // 1. Optimistic Local Save (Always works immediately)
+        // This ensures the user isn't blocked by DB errors
         try {
-            // Save to Cloud
-            await updateUserSettings(user.id, newSettings);
-            // Update LocalStorage as cache/backup
             localStorage.setItem(`oliviaSettings_${user.id}`, JSON.stringify(newSettings));
             
-            setSaveMessage('¡Configuración guardada en la nube!');
-            setTimeout(() => setSaveMessage(''), 3000);
+            // Also update the main profile cache to keep the app consistent on reload
+            const savedProfile = localStorage.getItem('olivia_simulated_profile');
+            if (savedProfile) {
+                const parsed = JSON.parse(savedProfile);
+                if (parsed.id === user.id) {
+                    parsed.settings = newSettings;
+                    localStorage.setItem('olivia_simulated_profile', JSON.stringify(parsed));
+                }
+            }
         } catch (e) {
-            console.error("Failed to save settings", e);
-            setSaveMessage('Error al guardar la configuración.');
+            console.error("Local storage error", e);
         }
+
+        try {
+            // 2. Try Save to Cloud (DB)
+            await updateUserSettings(user.id, newSettings);
+            setSaveMessage('¡Configuración guardada!');
+        } catch (e: any) {
+            console.error("Failed to save settings to cloud", e);
+            
+            // Helpful error messages for common issues
+            if (e.message?.includes('row-level security') || e.message?.includes('Permiso denegado')) {
+                 setSaveMessage('⚠️ Guardado localmente. (Error Permisos DB)');
+            } else {
+                 setSaveMessage('⚠️ Guardado localmente.');
+            }
+        }
+        
+        setTimeout(() => setSaveMessage(''), 3000);
+    };
+    
+    const handleTestIntegration = async (currentSettings: SettingsType) => {
+        if (!currentSettings.calComLink) {
+            setSaveMessage('⚠️ Ingresa un link antes de probar');
+            setTimeout(() => setSaveMessage(''), 3000);
+            return;
+        }
+        
+        setSaveMessage('Enviando mensaje de prueba...');
+        
+        // Create a temporary user object with the settings being tested
+        // This ensures we test the exact link present in the input, even if DB save failed
+        const tempUser = { ...user, settings: currentSettings };
+        
+        try {
+            await triggerTaskAutomation(tempUser, {
+                type: 'meeting',
+                description: 'MEET: Prueba de integración Cal.com',
+                date: new Date().toISOString()
+            });
+            setSaveMessage('✅ ¡Enviado! Revisa tu WhatsApp.');
+        } catch (e) {
+            console.error(e);
+            setSaveMessage('❌ Error al enviar prueba.');
+        }
+        
+        setTimeout(() => setSaveMessage(''), 4000);
     };
     
     const handleDownloadSample = () => {
@@ -135,7 +186,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                     <div className="lg:col-span-2">
                          <div className="bg-surface dark:bg-dark-surface rounded-lg border border-border dark:border-dark-border p-6 shadow-sm">
-                            <AppSettings currentSettings={settings} onSave={handleSaveSettings} />
+                            <AppSettings 
+                                currentSettings={settings} 
+                                onSave={handleSaveSettings} 
+                                onTestIntegration={handleTestIntegration}
+                            />
                         </div>
                     </div>
 
@@ -186,7 +241,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 </div>
                 
                 {saveMessage && (
-                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-textPrimary text-background dark:bg-dark-textPrimary dark:text-dark-background px-6 py-3 rounded-lg shadow-lg animate-bounce">
+                    <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg animate-bounce z-50 border transition-colors ${
+                        saveMessage.includes('Error') || saveMessage.includes('⚠️')
+                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-200'
+                        : 'bg-textPrimary text-background dark:bg-dark-textPrimary dark:text-dark-background border-border'
+                    }`}>
                         {saveMessage}
                     </div>
                 )}

@@ -1,11 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Settings, MarginType, Template, PaymentOption, TaxType } from '../types';
-import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, Save, Calendar, ExternalLink } from 'lucide-react';
+import { Upload, Building, Hash, Palette, Image as ImageIcon, PlusCircle, Trash2, Percent, Save, Calendar, ExternalLink, Send } from 'lucide-react';
 
 interface SettingsProps {
   currentSettings: Settings;
   onSave: (newSettings: Settings) => void;
+  onTestIntegration?: (settings: Settings) => void;
 }
 
 const templatePreviews = (themeColor: string) => ({
@@ -80,7 +81,7 @@ const templatePreviews = (themeColor: string) => ({
     },
 });
 
-const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
+const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestIntegration }) => {
   const [settings, setSettings] = useState<Settings>(currentSettings);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
@@ -313,19 +314,31 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave }) => {
 
                 <div>
                     <label htmlFor="calComLink" className={labelClasses}>Tu Enlace de Cal.com</label>
-                    <div className="flex">
-                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-white/5 text-gray-500 text-sm">
-                            https://
-                        </span>
-                        <input 
-                            type="text" 
-                            id="calComLink" 
-                            name="calComLink" 
-                            value={settings.calComLink || ''} 
-                            onChange={handleInputChange} 
-                            className={`${inputClasses} rounded-l-none`}
-                            placeholder="cal.com/tu-usuario"
-                        />
+                    <div className="flex gap-2">
+                        <div className="flex flex-grow">
+                            <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-white/5 text-gray-500 text-sm">
+                                https://
+                            </span>
+                            <input 
+                                type="text" 
+                                id="calComLink" 
+                                name="calComLink" 
+                                value={settings.calComLink || ''} 
+                                onChange={handleInputChange} 
+                                className={`${inputClasses} rounded-l-none`}
+                                placeholder="cal.com/tu-usuario"
+                            />
+                        </div>
+                        {onTestIntegration && (
+                            <button
+                                type="button"
+                                onClick={() => onTestIntegration(settings)}
+                                className="px-4 py-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded-lg text-xs font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors flex items-center gap-2 whitespace-nowrap"
+                                title="Enviar mensaje de prueba a mi WhatsApp"
+                            >
+                                <Send size={14} /> <span className="hidden sm:inline">Probar</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
