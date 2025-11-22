@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText, Star } from 'lucide-react';
 import { User } from '../types';
-import { createTask } from '../services/supabaseClient';
+import { createTask, triggerTaskAutomation } from '../services/supabaseClient';
 
 interface QuickTaskFabProps {
   user: User;
@@ -45,6 +45,14 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         // Now saving to dedicated 'tasks' table with importance flag
         await createTask(user.id, finalDescription, isoDate, isImportant);
+
+        // --- TRIGGER N8N AUTOMATION ---
+        // Envía la tarea a n8n para que pueda ser procesada por el nodo que mostraste (Link Cal.com)
+        triggerTaskAutomation(user, {
+            type: taskType,
+            description: finalDescription,
+            date: isoDate
+        });
 
         setSuccess(true);
         setTimeout(() => {

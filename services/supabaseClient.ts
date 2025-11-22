@@ -11,6 +11,8 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 // URL del Webhook de n8n para registro de nuevos usuarios y envio de OTP
 const N8N_REGISTRATION_WEBHOOK = 'https://webhook.red51.site/webhook/new-user-olivia';
+// URL del Webhook de n8n para TAREAS (Meeting, Call, etc)
+const N8N_TASK_WEBHOOK = 'https://webhook.red51.site/webhook/task-created';
 
 const areCredentialsValid = (url?: string, key?: string): boolean => {
     if (!url || url === 'YOUR_SUPABASE_URL' || !key || key === 'YOUR_supabase_ANON_KEY') {
@@ -750,6 +752,31 @@ export const getPendingTaskCount = async (userId: string): Promise<number> => {
     
     if (error) return 0;
     return count || 0;
+}
+
+export const triggerTaskAutomation = async (user: User, taskData: { type: string, description: string, date?: string }) => {
+    try {
+        const payload = {
+            user_phone: user.phone.replace(/\D/g, ''),
+            user_name: user.fullName,
+            description: taskData.description,
+            cal_link: user.settings?.calComLink || '',
+            date: taskData.date || new Date().toISOString(),
+            type: taskData.type
+        };
+
+        console.log("Sending task to n8n:", payload);
+
+        // Fire and forget - we don't await the result to block UI
+        fetch(N8N_TASK_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error("Error triggering n8n task webhook:", err));
+
+    } catch (e) {
+        console.error("Error building task payload:", e);
+    }
 }
 
 export const createTask = async (userId: string, description: string, dueDate?: string, isImportant: boolean = false) => {
