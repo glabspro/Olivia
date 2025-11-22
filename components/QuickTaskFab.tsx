@@ -28,14 +28,19 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         // Fix Timezone: Convert local input to ISO UTC string
         const isoDate = date ? new Date(date).toISOString() : undefined;
 
-        // Prefix description based on type
+        // Logic: If user kept the prefix in the input, save as is. 
+        // If they deleted it or typed plain text, append prefix based on selected type.
         let finalDescription = note;
-        switch (taskType) {
-            case 'call': finalDescription = `📞 ${note}`; break;
-            case 'meeting': finalDescription = `📅 ${note}`; break;
-            case 'urgent': finalDescription = `⚠️ ${note}`; break;
-            case 'email': finalDescription = `✉️ ${note}`; break;
-            case 'note': finalDescription = `📝 ${note}`; break;
+        const hasPrefix = /^(SEND:|MEET:|CALL:|⚠️|📝)/.test(note);
+
+        if (!hasPrefix) {
+             switch (taskType) {
+                case 'call': finalDescription = `CALL: ${note}`; break;
+                case 'meeting': finalDescription = `MEET: ${note}`; break;
+                case 'email': finalDescription = `SEND: ${note}`; break;
+                case 'urgent': finalDescription = `⚠️ ${note}`; break;
+                case 'note': finalDescription = `📝 ${note}`; break;
+            }
         }
 
         // Now saving to dedicated 'tasks' table with importance flag
@@ -62,7 +67,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   };
 
   const openModal = () => {
-      // Double ensure clean state on open
       setNote('');
       setDate('');
       setTaskType('note');
@@ -71,10 +75,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       setIsOpen(true);
   };
 
-  // Robust close handler to prevent "sticky" data
   const handleClose = () => {
       setIsOpen(false);
-      // Small delay to clear state after animation starts/ends to avoid flicker
       setTimeout(() => {
           setNote('');
           setDate('');
@@ -83,6 +85,29 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
           setSuccess(false);
           setLoading(false);
       }, 300);
+  };
+
+  // Handle Type Selection and Magic Prefixes
+  const handleTypeSelect = (type: TaskType) => {
+      setTaskType(type);
+      
+      // Remove existing prefixes to avoid duplication
+      let cleanNote = note.replace(/^(SEND:|MEET:|CALL:|⚠️|📝)\s*/, '');
+      
+      // Add Magic Prefix based on type
+      let prefix = '';
+      switch (type) {
+          case 'email': prefix = 'SEND: '; break;
+          case 'meeting': prefix = 'MEET: '; break;
+          case 'call': prefix = 'CALL: '; break;
+          // For visual types, we don't enforce text prefix in input to keep it clean, 
+          // handleSave will add emoji if needed.
+          default: prefix = ''; 
+      }
+      
+      setNote(prefix + cleanNote);
+      
+      // Auto-focus input after click (optional, done via ref usually, but input has autoFocus)
   };
 
   const taskTypes: { id: TaskType; label: string; icon: React.ElementType; color: string }[] = [
@@ -152,7 +177,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     <button
                                         key={type.id}
                                         type="button"
-                                        onClick={() => setTaskType(type.id)}
+                                        onClick={() => handleTypeSelect(type.id)}
                                         className={`flex flex-col items-center justify-center p-2 rounded-lg min-w-[60px] transition-all border ${
                                             taskType === type.id 
                                             ? 'border-primary ring-1 ring-primary bg-primary/5' 
@@ -180,7 +205,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     autoFocus
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
-                                    placeholder={taskType === 'call' ? 'Ej. Llamar a Juan Pérez...' : taskType === 'email' ? 'Ej. Enviar correo a...' : 'Escribe aquí...'}
+                                    placeholder={taskType === 'call' ? 'Ej. Juan Pérez...' : taskType === 'email' ? 'Ej. correo@cliente.com...' : 'Escribe aquí...'}
                                     className="w-full px-4 py-3 pr-10 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
                                 />
                                 <button
@@ -221,7 +246,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             className="w-full py-3.5 bg-primary hover:bg-pink-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg"
                         >
                             {loading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-                            Crear Recordatorio
+                            {taskType === 'email' ? 'Programar Correo' : taskType === 'meeting' ? 'Agendar Reunión' : 'Crear Recordatorio'}
                         </button>
                     </form>
                 )}

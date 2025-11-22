@@ -146,21 +146,22 @@ const TaskCard: React.FC<{
 }> = ({ task, onComplete, onDelete, onToggleImportant, isOverdue }) => {
     const date = task.due_date ? new Date(task.due_date) : null;
 
-    // Determine type from prefix
+    // Determine type from prefix (Supports Emojis AND Text Prefixes)
     const getTaskType = (desc: string) => {
-        if (desc.startsWith('📞')) return { icon: Phone, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' };
-        if (desc.startsWith('📅')) return { icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' };
-        if (desc.startsWith('⚠️')) return { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' };
-        if (desc.startsWith('✉️')) return { icon: Mail, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' };
-        if (desc.startsWith('📝')) return { icon: FileText, color: 'text-gray-600', bg: 'bg-gray-100 dark:bg-gray-800' };
+        if (desc.startsWith('📞') || desc.startsWith('CALL:')) return { icon: Phone, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' };
+        if (desc.startsWith('📅') || desc.startsWith('MEET:')) return { icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' };
+        if (desc.startsWith('⚠️') || desc.startsWith('URGENT:')) return { icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' };
+        if (desc.startsWith('✉️') || desc.startsWith('SEND:')) return { icon: Mail, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' };
+        if (desc.startsWith('📝') || desc.startsWith('NOTE:')) return { icon: FileText, color: 'text-gray-600', bg: 'bg-gray-100 dark:bg-gray-800' };
         return { icon: ClipboardList, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' };
     };
 
-    const cleanDescription = task.description.replace(/^(📞|📅|⚠️|✉️|📝)\s*/, '');
+    // Remove any known prefix for clean display
+    const cleanDescription = task.description.replace(/^(📞|📅|⚠️|✉️|📝|CALL:|MEET:|SEND:|URGENT:|NOTE:)\s*/, '');
     const typeStyle = getTaskType(task.description);
     const TypeIcon = typeStyle.icon;
 
-    // Manual Date Formatting to ensure visibility of YEAR and TIME
+    // Manual Date Formatting
     const formatDate = (d: Date) => {
         const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
         const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
