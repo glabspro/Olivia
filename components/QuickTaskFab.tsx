@@ -1,18 +1,19 @@
 
 import React, { useState } from 'react';
-import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, Send, Zap } from 'lucide-react';
-import { User } from '../types';
+import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, Send, Zap, User } from 'lucide-react';
+import { User as UserType } from '../types';
 import { createTask, triggerTaskAutomation } from '../services/supabaseClient';
 
 interface QuickTaskFabProps {
-  user: User;
+  user: UserType;
 }
 
 type TaskType = 'note' | 'call' | 'meeting' | 'urgent' | 'email';
 
 const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(''); // Used as Message Body for emails
+  const [recipient, setRecipient] = useState(''); // New field for Email/Phone specific inputs
   const [date, setDate] = useState('');
   const [taskType, setTaskType] = useState<TaskType>('note');
   const [isImportant, setIsImportant] = useState(false);
@@ -27,7 +28,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const hasCalLink = !!user.settings?.calComLink;
 
   const isFormValid = () => {
-      if (taskType === 'email') return note.length > 0 && hasValidEmail(note);
+      if (taskType === 'email') return recipient.length > 0 && hasValidEmail(recipient) && note.length > 0;
       if (taskType === 'meeting') return note.length > 0 && hasCalLink;
       return note.length > 0;
   };
@@ -38,14 +39,14 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
     setLoading(true);
     try {
-        // Logic: Clean any existing prefix to avoid double prefixes
-        const cleanNote = note.replace(/^(SEND:|MEET:|CALL:|URGENT:|NOTE:|⚠️|📝|📞|📅|✉️)\s*/i, '').trim();
-        
-        let finalDescription = cleanNote;
+        let finalDescription = '';
         let finalDate = date ? new Date(date).toISOString() : undefined;
         let isImmediateAction = false;
 
-        // Construct Description based on Type
+        // Clean standard note input just in case
+        const cleanNote = note.replace(/^(SEND:|MEET:|CALL:|URGENT:|NOTE:|⚠️|📝|📞|📅|✉️)\s*/i, '').trim();
+
+        // Construct Description based on Type and inputs
         switch (taskType) {
             case 'call': 
                 finalDescription = `CALL: ${cleanNote}`; 
@@ -55,7 +56,9 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 isImmediateAction = true;
                 break;
             case 'email': 
-                finalDescription = `SEND: ${cleanNote}`; 
+                // CRITICAL FIX: Add the pipe separator "|" so n8n regex works correctly
+                // n8n Regex: /^SEND:\s*[^|]*\|?\s*/
+                finalDescription = `SEND: ${recipient.trim()} | ${cleanNote}`; 
                 isImmediateAction = true;
                 // If no date set for email, default to "Now + 2 min" so n8n picks it up
                 if (!date) {
@@ -101,15 +104,9 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
     }
   };
 
-  const getReminderText = () => {
-      if (!date) return null;
-      const eventTime = new Date(date);
-      const reminderTime = new Date(eventTime.getTime() - 30 * 60000); // 30 min antes
-      return `Te avisaré a las ${reminderTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-  };
-
   const openModal = () => {
       setNote('');
+      setRecipient('');
       setDate('');
       setTaskType('note');
       setIsImportant(false);
@@ -122,6 +119,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       setIsOpen(false);
       setTimeout(() => {
           setNote('');
+          setRecipient('');
           setDate('');
           setTaskType('note');
           setIsImportant(false);
@@ -133,9 +131,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
   const handleTypeSelect = (type: TaskType) => {
       setTaskType(type);
-      // Limpiar prefijos si el usuario cambia de tipo, manteniendo el texto
-      let cleanNote = note.replace(/^(SEND:|MEET:|CALL:|URGENT:|NOTE:|⚠️|📝|📞|📅|✉️)\s*/i, '').trim();
-      setNote(cleanNote);
+      // Keep existing note text if switching types, but maybe clear recipient
+      if (type !== 'email') setRecipient('');
   };
   
   // Dynamic UI Labels
@@ -143,7 +140,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       switch(taskType) {
           case 'call': return 'Ej. Juan Pérez...';
           case 'meeting': return 'Ej. Carlos (Cliente Nuevo)...';
-          case 'email': return 'Ej. Enviar presupuesto a cliente@empresa.com...';
+          case 'email': return 'Escribe el cuerpo del correo aquí...';
           case 'urgent': return 'Ej. Pagar servicios hoy...';
           default: return 'Escribe una nota rápida...';
       }
@@ -153,7 +150,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       switch(taskType) {
           case 'call': return '¿A quién hay que llamar?';
           case 'meeting': return '¿Con quién es la reunión? (Nombre del Cliente)';
-          case 'email': return 'Instrucción (Obligatorio incluir email)';
+          case 'email': return 'Mensaje';
           case 'urgent': return '¿Cuál es la urgencia?';
           default: return '¿Qué necesitas recordar?';
       }
@@ -257,44 +254,78 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-border dark:border-dark-border">
-                            <label className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary mb-1.5 ml-1">
-                                {getInputLabel()}
-                            </label>
-                            <div className="relative">
-                                <input 
-                                    type="text" 
-                                    autoFocus
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    placeholder={getPlaceholder()}
-                                    className={`w-full px-4 py-3 pr-10 bg-white dark:bg-dark-background border rounded-lg focus:ring-2 outline-none text-textPrimary dark:text-dark-textPrimary transition-all shadow-sm ${
-                                        taskType === 'email' && note.length > 0 && !hasValidEmail(note)
-                                        ? 'border-red-300 focus:ring-red-200'
-                                        : 'border-border dark:border-dark-border focus:ring-primary/50'
-                                    }`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setIsImportant(!isImportant)}
-                                    className={`absolute right-3 top-3.5 transition-colors ${isImportant ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
-                                    title="Marcar como importante"
-                                >
-                                    <Star size={20} fill={isImportant ? "currentColor" : "none"} />
-                                </button>
+                        <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-border dark:border-dark-border space-y-3">
+                            
+                            {/* Special Input for Email Recipient */}
+                            {taskType === 'email' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary mb-1.5 ml-1">
+                                        Destinatario
+                                    </label>
+                                    <div className="relative">
+                                        <input 
+                                            type="email"
+                                            autoFocus
+                                            value={recipient}
+                                            onChange={(e) => setRecipient(e.target.value)}
+                                            placeholder="cliente@ejemplo.com"
+                                            className={`w-full px-4 py-2.5 bg-white dark:bg-dark-background border rounded-lg focus:ring-2 outline-none text-textPrimary dark:text-dark-textPrimary text-sm ${
+                                                recipient.length > 0 && !hasValidEmail(recipient)
+                                                ? 'border-red-300 focus:ring-red-200'
+                                                : 'border-border dark:border-dark-border focus:ring-primary/50'
+                                            }`}
+                                        />
+                                        <User className="absolute right-3 top-2.5 text-gray-400" size={16}/>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary mb-1.5 ml-1">
+                                    {getInputLabel()}
+                                </label>
+                                <div className="relative">
+                                    {taskType === 'email' ? (
+                                        <textarea 
+                                            rows={3}
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            placeholder={getPlaceholder()}
+                                            className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary/50 outline-none text-textPrimary dark:text-dark-textPrimary transition-all shadow-sm text-sm resize-none"
+                                        />
+                                    ) : (
+                                        <input 
+                                            type="text" 
+                                            autoFocus={taskType !== 'email'}
+                                            value={note}
+                                            onChange={(e) => setNote(e.target.value)}
+                                            placeholder={getPlaceholder()}
+                                            className="w-full px-4 py-3 pr-10 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary/50 outline-none text-textPrimary dark:text-dark-textPrimary transition-all shadow-sm"
+                                        />
+                                    )}
+                                    
+                                    {taskType !== 'email' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsImportant(!isImportant)}
+                                            className={`absolute right-3 top-3.5 transition-colors ${isImportant ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                                            title="Marcar como importante"
+                                        >
+                                            <Star size={20} fill={isImportant ? "currentColor" : "none"} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             
-                            {/* Smart Feedback Messages */}
-                            {taskType === 'email' && (
-                                <p className={`text-[10px] mt-2 flex items-center gap-1.5 ${(!note || hasValidEmail(note)) ? 'text-textSecondary' : 'text-red-500 font-bold bg-red-50 dark:bg-red-900/20 p-1.5 rounded'}`}>
-                                    <Mail size={12}/>
-                                    {(!note || hasValidEmail(note)) 
-                                        ? "Escribe la instrucción y el correo del destinatario." 
-                                        : "⚠️ Falta un email válido (ej. @gmail.com)"}
+                            {/* Feedback Messages */}
+                            {taskType === 'email' && recipient.length > 0 && !hasValidEmail(recipient) && (
+                                <p className="text-[10px] text-red-500 font-bold bg-red-50 dark:bg-red-900/20 p-1.5 rounded flex items-center gap-1">
+                                    <AlertTriangle size={12}/> El correo no es válido.
                                 </p>
                             )}
+
                             {taskType === 'meeting' && (
-                                <div className="mt-2">
+                                <div className="mt-1">
                                     {!hasCalLink ? (
                                         <p className="text-[10px] text-red-500 font-bold bg-red-50 dark:bg-red-900/20 p-2 rounded flex items-center gap-1">
                                             <AlertTriangle size={12}/> Configura tu link de Cal.com en Ajustes para usar esto.
