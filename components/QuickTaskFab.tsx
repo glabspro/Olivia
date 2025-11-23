@@ -23,11 +23,17 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
     e.preventDefault();
     if (!note) return;
 
+    // Validación Específica para Correo
+    if (taskType === 'email') {
+        const emailRegex = /[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/;
+        if (!emailRegex.test(note)) {
+            alert('⚠️ Para enviar un correo, debes incluir la dirección de email dentro de la nota.\n\nEjemplo: "Enviar presupuesto a cliente@empresa.com"');
+            return;
+        }
+    }
+
     setLoading(true);
     try {
-        // Fix Timezone: Convert local input to ISO UTC string
-        const isoDate = date ? new Date(date).toISOString() : undefined;
-
         // Logic: If user kept the prefix in the input, save as is. 
         // If they deleted it or typed plain text, append prefix based on selected type.
         let finalDescription = note;
@@ -42,16 +48,29 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 case 'note': finalDescription = `📝 ${note}`; break;
             }
         }
+        
+        // AUTO-DATE LOGIC FOR N8N POLLING:
+        // Tu flujo de n8n busca tareas donde due_date > NOW().
+        // Si el usuario no pone fecha en un correo, asignamos (Ahora + 10 min) para que el cron job lo detecte.
+        let finalDate = date ? new Date(date).toISOString() : undefined;
+        
+        if (!date && taskType === 'email') {
+             const futureDate = new Date(Date.now() + 10 * 60000); // +10 minutos
+             finalDate = futureDate.toISOString();
+             console.log("Auto-setting date for email task to ensure n8n pickup:", finalDate);
+        } else if (date) {
+             finalDate = new Date(date).toISOString();
+        }
 
         // Now saving to dedicated 'tasks' table with importance flag
-        await createTask(user.id, finalDescription, isoDate, isImportant);
+        await createTask(user.id, finalDescription, finalDate, isImportant);
 
-        // --- TRIGGER N8N AUTOMATION ---
-        // Envía la tarea a n8n para que pueda ser procesada por el nodo que mostraste (Link Cal.com)
+        // --- TRIGGER N8N AUTOMATION (WEBHOOK) ---
+        // Esto dispara el webhook inmediato (si tienes otro flujo configurado para ello)
         triggerTaskAutomation(user, {
             type: taskType,
             description: finalDescription,
-            date: isoDate
+            date: finalDate || new Date().toISOString()
         });
 
         setSuccess(true);
@@ -61,7 +80,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
     } catch (error) {
         console.error("Error saving quick task:", error);
-        alert("No se pudo guardar el recordatorio.");
+        alert("No se pudo guardar la tarea.");
         setLoading(false);
     }
   };
@@ -108,8 +127,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const getPlaceholder = () => {
       switch(taskType) {
           case 'call': return 'Ej. Juan Pérez (Ventas)...';
-          case 'meeting': return 'Ej. Reunión con Carlos...'; // No "MEET:" shown
-          case 'email': return 'Ej. cotizacion@empresa.com...';
+          case 'meeting': return 'Ej. Reunión con Carlos...';
+          case 'email': return 'Ej. cotizacion a cliente@gmail.com...'; // Explicit hint
           case 'urgent': return 'Ej. Pagar servicios...';
           default: return 'Escribe una nota...';
       }
@@ -222,11 +241,17 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     <Star size={20} fill={isImportant ? "currentColor" : "none"} />
                                 </button>
                             </div>
+                            {taskType === 'email' && (
+                                <p className="text-[10px] text-orange-500 mt-1 flex items-center gap-1">
+                                    <Mail size={10}/>
+                                    Recuerda escribir la dirección (ej. hola@gmail.com)
+                                </p>
+                            )}
                         </div>
                         
                         <div>
                             <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
-                                ¿Cuándo es el evento? (Opcional)
+                                ¿Cuándo es el evento? {taskType === 'email' ? '(Automático)' : '(Opcional)'}
                             </label>
                             <div className="relative">
                                 <input 
