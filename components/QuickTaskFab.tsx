@@ -19,18 +19,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Email Validation Helper
+  const hasValidEmail = (text: string) => /[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/.test(text);
+  const isFormValid = taskType === 'email' ? (note.length > 0 && hasValidEmail(note)) : note.length > 0;
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!note) return;
-
-    // Validación Específica para Correo
-    if (taskType === 'email') {
-        const emailRegex = /[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/;
-        if (!emailRegex.test(note)) {
-            alert('⚠️ Para enviar un correo, debes incluir la dirección de email dentro de la nota.\n\nEjemplo: "Enviar presupuesto a cliente@empresa.com"');
-            return;
-        }
-    }
+    if (!isFormValid) return;
 
     setLoading(true);
     try {
@@ -50,23 +45,20 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         }
         
         // AUTO-DATE LOGIC FOR N8N POLLING:
-        // Tu flujo de n8n busca tareas donde due_date > NOW().
-        // Si el usuario no pone fecha en un correo, asignamos (Ahora + 10 min) para que el cron job lo detecte.
         let finalDate = date ? new Date(date).toISOString() : undefined;
         
         if (!date && taskType === 'email') {
-             const futureDate = new Date(Date.now() + 10 * 60000); // +10 minutos
+             // Emails usually need to be processed "soon" by n8n pollers that look for future dates
+             const futureDate = new Date(Date.now() + 5 * 60000); // +5 minutos
              finalDate = futureDate.toISOString();
-             console.log("Auto-setting date for email task to ensure n8n pickup:", finalDate);
         } else if (date) {
              finalDate = new Date(date).toISOString();
         }
 
-        // Now saving to dedicated 'tasks' table with importance flag
+        // Save to Supabase
         await createTask(user.id, finalDescription, finalDate, isImportant);
 
-        // --- TRIGGER N8N AUTOMATION (WEBHOOK) ---
-        // Esto dispara el webhook inmediato (si tienes otro flujo configurado para ello)
+        // Trigger n8n immediate webhook
         triggerTaskAutomation(user, {
             type: taskType,
             description: finalDescription,
@@ -75,7 +67,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         setSuccess(true);
         setTimeout(() => {
-            handleClose(); // Use handleClose to clean up
+            handleClose(); 
         }, 1500);
 
     } catch (error) {
@@ -85,7 +77,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
     }
   };
 
-  // Cálculo visual para el usuario
   const getReminderText = () => {
       if (!date) return null;
       const eventTime = new Date(date);
@@ -114,23 +105,41 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       }, 300);
   };
 
-  // Handle Type Selection
   const handleTypeSelect = (type: TaskType) => {
       setTaskType(type);
-      // Remove prefixes if they exist so the input stays clean for the user
-      // We only add them back when saving
+      // Clean previous prefixes if switching types to keep UI clean
       let cleanNote = note.replace(/^(SEND:|MEET:|CALL:|⚠️|📝)\s*/, '');
       setNote(cleanNote);
   };
   
-  // Get Placeholder based on type
+  // Dynamic UI Labels
   const getPlaceholder = () => {
       switch(taskType) {
           case 'call': return 'Ej. Juan Pérez (Ventas)...';
-          case 'meeting': return 'Ej. Reunión con Carlos...';
-          case 'email': return 'Ej. cotizacion a cliente@gmail.com...'; // Explicit hint
-          case 'urgent': return 'Ej. Pagar servicios...';
+          case 'meeting': return 'Ej. Carlos (Nuevo Cliente)...';
+          case 'email': return 'Ej. Presupuesto para cliente@gmail.com...';
+          case 'urgent': return 'Ej. Pagar servicios hoy...';
           default: return 'Escribe una nota...';
+      }
+  }
+
+  const getInputLabel = () => {
+      switch(taskType) {
+          case 'call': return '¿A quién hay que llamar?';
+          case 'meeting': return '¿Con quién es la reunión? (Nombre)';
+          case 'email': return 'Instrucción (debe incluir el email)';
+          case 'urgent': return '¿Cuál es la urgencia?';
+          default: return '¿Qué necesitas recordar?';
+      }
+  }
+
+  const getButtonLabel = () => {
+      if (loading) return null;
+      switch(taskType) {
+          case 'email': return 'Programar Correo';
+          case 'meeting': return 'Agendar Reunión';
+          case 'call': return 'Agendar Llamada';
+          default: return 'Crear Recordatorio';
       }
   }
 
@@ -144,7 +153,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
   return (
     <>
-      {/* Floating Button */}
       <button
         onClick={openModal}
         className={`fixed bottom-20 md:bottom-8 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-primary text-white hover:bg-pink-600 hover:scale-105`}
@@ -159,7 +167,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         </span>
       </button>
 
-      {/* Modal Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end sm:p-6">
           <div 
@@ -169,7 +176,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
           
           <div className="relative w-full sm:w-96 bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up">
             
-            {/* Header */}
             <div className="bg-primary p-4 flex justify-between items-center text-white">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-white/20 rounded-full">
@@ -182,7 +188,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 </button>
             </div>
 
-            {/* Body */}
             <div className="p-6">
                 {success ? (
                     <div className="flex flex-col items-center justify-center py-8 text-green-500 animate-fade-in">
@@ -221,7 +226,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                         <div>
                             <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
-                                {taskType === 'meeting' ? '¿Con quién es la reunión?' : '¿Qué necesitas recordar?'}
+                                {getInputLabel()}
                             </label>
                             <div className="relative">
                                 <input 
@@ -230,7 +235,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
                                     placeholder={getPlaceholder()}
-                                    className="w-full px-4 py-3 pr-10 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
+                                    className={`w-full px-4 py-3 pr-10 bg-background dark:bg-dark-background border rounded-xl focus:ring-2 outline-none text-textPrimary dark:text-dark-textPrimary transition-all ${
+                                        taskType === 'email' && note.length > 0 && !hasValidEmail(note)
+                                        ? 'border-red-300 focus:ring-red-200'
+                                        : 'border-border dark:border-dark-border focus:ring-primary'
+                                    }`}
                                 />
                                 <button
                                     type="button"
@@ -241,10 +250,20 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     <Star size={20} fill={isImportant ? "currentColor" : "none"} />
                                 </button>
                             </div>
+                            
+                            {/* Feedback Messages */}
                             {taskType === 'email' && (
-                                <p className="text-[10px] text-orange-500 mt-1 flex items-center gap-1">
+                                <p className={`text-[10px] mt-1.5 flex items-center gap-1 ${!note || hasValidEmail(note) ? 'text-textSecondary' : 'text-red-500 font-medium'}`}>
                                     <Mail size={10}/>
-                                    Recuerda escribir la dirección (ej. hola@gmail.com)
+                                    {(!note || hasValidEmail(note)) 
+                                        ? "El sistema buscará la dirección de email en el texto." 
+                                        : "⚠️ Falta la dirección de correo (ej. hola@gmail.com)"}
+                                </p>
+                            )}
+                            {taskType === 'meeting' && (
+                                <p className="text-[10px] mt-1.5 text-textSecondary flex items-center gap-1">
+                                    <Briefcase size={10}/>
+                                    Escribe solo el nombre del cliente para crear el enlace.
                                 </p>
                             )}
                         </div>
@@ -272,11 +291,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                         <button 
                             type="submit" 
-                            disabled={!note || loading}
+                            disabled={!isFormValid || loading}
                             className="w-full py-3.5 bg-primary hover:bg-pink-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg"
                         >
                             {loading ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-                            {taskType === 'email' ? 'Programar Correo' : taskType === 'meeting' ? 'Agendar Reunión' : 'Crear Recordatorio'}
+                            {getButtonLabel()}
                         </button>
                     </form>
                 )}

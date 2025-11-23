@@ -124,10 +124,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
             return;
         }
         
-        setSaveMessage('Enviando mensaje de prueba...');
+        setSaveMessage('Enviando WhatsApp de prueba...');
         
         // Create a temporary user object with the settings being tested
-        // This ensures we test the exact link present in the input, even if DB save failed
         const tempUser = { ...user, settings: currentSettings };
         
         try {
@@ -136,7 +135,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 description: 'MEET: Prueba de integración Cal.com',
                 date: new Date().toISOString()
             });
-            setSaveMessage('✅ ¡Enviado! Revisa tu WhatsApp.');
+            setSaveMessage('✅ ¡Solicitud de Reunión Enviada!');
         } catch (e) {
             console.error(e);
             setSaveMessage('❌ Error al enviar prueba.');
@@ -242,7 +241,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                 
                 {saveMessage && (
                     <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg animate-bounce z-50 border transition-colors ${
-                        saveMessage.includes('Error') || saveMessage.includes('⚠️')
+                        saveMessage.includes('Error') || saveMessage.includes('⚠️') || saveMessage.includes('❌')
                         ? 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-200'
                         : 'bg-textPrimary text-background dark:bg-dark-textPrimary dark:text-dark-background border-border'
                     }`}>
