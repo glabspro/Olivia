@@ -365,7 +365,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                                 onClick={() => {
                                                     if(!recipient) return;
                                                     // Open Cal.com with pre-filled name and email
-                                                    let url = `${calLink}?name=${encodeURIComponent(recipient)}`;
+                                                    // Ensure protocol
+                                                    let link = calLink;
+                                                    if (!link.startsWith('http')) link = `https://${link}`;
+                                                    
+                                                    let url = `${link}?name=${encodeURIComponent(recipient)}`;
                                                     if (recipientEmail) url += `&email=${encodeURIComponent(recipientEmail)}`;
                                                     
                                                     window.open(url, '_blank');
