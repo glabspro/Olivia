@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, Send, Zap, User } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, X, Bell, Calendar, CheckCircle, Loader2, Bot, Sparkles, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, Send, Zap, User, Paperclip, UploadCloud } from 'lucide-react';
 import { User as UserType } from '../types';
-import { createTask, triggerTaskAutomation } from '../services/supabaseClient';
+import { createTask, triggerTaskAutomation, uploadGenericFile } from '../services/supabaseClient';
 
 interface QuickTaskFabProps {
   user: UserType;
@@ -14,12 +14,15 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [note, setNote] = useState(''); // Used as Message Body for emails
   const [recipient, setRecipient] = useState(''); // New field for Email/Phone specific inputs
+  const [subject, setSubject] = useState(''); // Asunto del correo
+  const [attachment, setAttachment] = useState<File | null>(null); // Archivo adjunto
   const [date, setDate] = useState('');
   const [taskType, setTaskType] = useState<TaskType>('note');
   const [isImportant, setIsImportant] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Email Validation Helper
   const hasValidEmail = (text: string) => /[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/.test(text);
@@ -28,7 +31,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const hasCalLink = !!user.settings?.calComLink;
 
   const isFormValid = () => {
-      if (taskType === 'email') return recipient.length > 0 && hasValidEmail(recipient) && note.length > 0;
+      if (taskType === 'email') return recipient.length > 0 && hasValidEmail(recipient) && note.length > 0 && subject.length > 0;
       if (taskType === 'meeting') return note.length > 0 && hasCalLink;
       return note.length > 0;
   };
@@ -56,9 +59,25 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 isImmediateAction = true;
                 break;
             case 'email': 
-                // CRITICAL FIX: Add the pipe separator "|" so n8n regex works correctly
-                // n8n Regex: /^SEND:\s*[^|]*\|?\s*/
-                finalDescription = `SEND: ${recipient.trim()} | ${cleanNote}`; 
+                // Normalize recipient: trim whitespace and convert to lowercase for consistency
+                const cleanRecipient = recipient.trim().toLowerCase();
+                
+                let attachmentUrl = '';
+                // Upload attachment if exists
+                if (attachment) {
+                    try {
+                        attachmentUrl = await uploadGenericFile(attachment);
+                    } catch (error) {
+                        console.error("Upload failed", error);
+                        alert("Error subiendo el archivo adjunto. Se intentará enviar sin él.");
+                    }
+                }
+                
+                // Construct rich body for email
+                const fullBody = `Asunto: ${subject}\n\n${cleanNote}${attachmentUrl ? `\n\n📎 Archivo Adjunto: ${attachmentUrl}` : ''}`;
+
+                // CRITICAL: The n8n regex expects everything after the pipe to be the HTML content.
+                finalDescription = `SEND: ${cleanRecipient} | ${fullBody}`; 
                 isImmediateAction = true;
                 // If no date set for email, default to "Now + 2 min" so n8n picks it up
                 if (!date) {
@@ -87,7 +106,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         // 3. UI Feedback
         if (isImmediateAction) {
-            setActionMessage(taskType === 'meeting' ? '¡Invitación Enviada!' : '¡Correo en cola de envío!');
+            setActionMessage(taskType === 'meeting' ? '¡Invitación Enviada!' : '¡Correo Enviado!');
         } else {
             setActionMessage('¡Anotado!');
         }
@@ -107,6 +126,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const openModal = () => {
       setNote('');
       setRecipient('');
+      setSubject('');
+      setAttachment(null);
       setDate('');
       setTaskType('note');
       setIsImportant(false);
@@ -120,6 +141,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       setTimeout(() => {
           setNote('');
           setRecipient('');
+          setSubject('');
+          setAttachment(null);
           setDate('');
           setTaskType('note');
           setIsImportant(false);
@@ -135,12 +158,18 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       if (type !== 'email') setRecipient('');
   };
   
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+          setAttachment(e.target.files[0]);
+      }
+  };
+  
   // Dynamic UI Labels
   const getPlaceholder = () => {
       switch(taskType) {
           case 'call': return 'Ej. Juan Pérez...';
           case 'meeting': return 'Ej. Carlos (Cliente Nuevo)...';
-          case 'email': return 'Escribe el cuerpo del correo aquí...';
+          case 'email': return 'Escribe tu mensaje aquí...';
           case 'urgent': return 'Ej. Pagar servicios hoy...';
           default: return 'Escribe una nota rápida...';
       }
@@ -199,7 +228,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             onClick={handleClose}
           ></div>
           
-          <div className="relative w-full sm:w-96 bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up">
+          <div className={`relative w-full ${taskType === 'email' ? 'sm:w-[500px]' : 'sm:w-96'} bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up transition-all duration-300`}>
             
             <div className={`${isActionType ? 'bg-gradient-to-r from-purple-600 to-blue-600' : 'bg-primary'} p-4 flex justify-between items-center text-white transition-colors duration-300`}>
                 <div className="flex items-center gap-2">
@@ -216,7 +245,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 max-h-[80vh] overflow-y-auto">
                 {success ? (
                     <div className="flex flex-col items-center justify-center py-8 text-green-500 animate-fade-in">
                         <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-3 animate-bounce">
@@ -256,28 +285,46 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                         <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-border dark:border-dark-border space-y-3">
                             
-                            {/* Special Input for Email Recipient */}
+                            {/* Email Specific Fields */}
                             {taskType === 'email' && (
-                                <div>
-                                    <label className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary mb-1.5 ml-1">
-                                        Destinatario
-                                    </label>
-                                    <div className="relative">
-                                        <input 
-                                            type="email"
-                                            autoFocus
-                                            value={recipient}
-                                            onChange={(e) => setRecipient(e.target.value)}
-                                            placeholder="cliente@ejemplo.com"
-                                            className={`w-full px-4 py-2.5 bg-white dark:bg-dark-background border rounded-lg focus:ring-2 outline-none text-textPrimary dark:text-dark-textPrimary text-sm ${
-                                                recipient.length > 0 && !hasValidEmail(recipient)
-                                                ? 'border-red-300 focus:ring-red-200'
-                                                : 'border-border dark:border-dark-border focus:ring-primary/50'
-                                            }`}
-                                        />
-                                        <User className="absolute right-3 top-2.5 text-gray-400" size={16}/>
+                                <>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary mb-1.5 ml-1">
+                                                Para (Destinatario)
+                                            </label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="email"
+                                                    autoFocus
+                                                    value={recipient}
+                                                    onChange={(e) => setRecipient(e.target.value)}
+                                                    placeholder="cliente@ejemplo.com"
+                                                    className={`w-full px-4 py-2.5 bg-white dark:bg-dark-background border rounded-lg focus:ring-2 outline-none text-textPrimary dark:text-dark-textPrimary text-sm ${
+                                                        recipient.length > 0 && !hasValidEmail(recipient)
+                                                        ? 'border-red-300 focus:ring-red-200'
+                                                        : 'border-border dark:border-dark-border focus:ring-primary/50'
+                                                    }`}
+                                                />
+                                                <User className="absolute right-3 top-2.5 text-gray-400" size={16}/>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-textPrimary dark:text-dark-textPrimary mb-1.5 ml-1">
+                                                Asunto
+                                            </label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="text"
+                                                    value={subject}
+                                                    onChange={(e) => setSubject(e.target.value)}
+                                                    placeholder="Ej. Cotización Pendiente"
+                                                    className="w-full px-4 py-2.5 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary/50 outline-none text-textPrimary dark:text-dark-textPrimary text-sm"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                </>
                             )}
 
                             <div>
@@ -287,7 +334,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 <div className="relative">
                                     {taskType === 'email' ? (
                                         <textarea 
-                                            rows={3}
+                                            rows={4}
                                             value={note}
                                             onChange={(e) => setNote(e.target.value)}
                                             placeholder={getPlaceholder()}
@@ -316,6 +363,34 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     )}
                                 </div>
                             </div>
+                            
+                            {/* File Attachment for Email */}
+                            {taskType === 'email' && (
+                                <div>
+                                     <input 
+                                        type="file" 
+                                        ref={fileInputRef}
+                                        className="hidden" 
+                                        onChange={handleFileChange}
+                                     />
+                                     <div className="flex items-center gap-2">
+                                         <button 
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="text-xs font-bold text-gray-500 hover:text-primary flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                         >
+                                             <Paperclip size={14} /> Adjuntar Archivo
+                                         </button>
+                                         
+                                         {attachment && (
+                                             <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-100 dark:border-blue-800">
+                                                 <span className="text-xs text-blue-600 dark:text-blue-300 truncate max-w-[150px]">{attachment.name}</span>
+                                                 <button onClick={() => setAttachment(null)} className="text-blue-400 hover:text-blue-600"><X size={12}/></button>
+                                             </div>
+                                         )}
+                                     </div>
+                                </div>
+                            )}
                             
                             {/* Feedback Messages */}
                             {taskType === 'email' && recipient.length > 0 && !hasValidEmail(recipient) && (
@@ -366,8 +441,17 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 : 'bg-primary hover:bg-pink-600 text-white'
                             }`}
                         >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : (isActionType ? <Send size={18}/> : <CheckCircle size={18} />)}
-                            {getButtonLabel()}
+                            {loading ? (
+                                <>
+                                    <Loader2 size={20} className="animate-spin" /> 
+                                    {attachment && taskType === 'email' ? 'Subiendo archivo...' : 'Enviando...'}
+                                </>
+                            ) : (
+                                <>
+                                    {isActionType ? <Send size={18}/> : <CheckCircle size={18} />}
+                                    {getButtonLabel()}
+                                </>
+                            )}
                         </button>
                     </form>
                 )}

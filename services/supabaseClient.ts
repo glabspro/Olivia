@@ -286,20 +286,28 @@ export const incrementAIUsage = async (userId: string) => {
 // --- Storage Functions ---
 
 export const uploadQuotationPDF = async (file: File): Promise<string> => {
+    // Wrapper for legacy calls, defaulting to PDF logic if needed, 
+    // but really just re-using the generic uploader now.
+    return uploadGenericFile(file);
+};
+
+export const uploadGenericFile = async (file: File): Promise<string> => {
     if (!supabase) throw new Error("Supabase client not initialized");
 
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.pdf`;
+    // Extract extension
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
+    // Using 'quotations' bucket as the general public storage for now
     const { error } = await supabase.storage
         .from('quotations')
         .upload(fileName, file, {
-            contentType: 'application/pdf',
+            contentType: file.type,
             upsert: false
         });
 
     if (error) {
-        console.error("Error uploading PDF to Supabase:", error);
-        // Throw specific error to be caught by UI
+        console.error("Error uploading file to Supabase:", error);
         throw new Error(`Error Storage: ${error.message}`);
     }
 
