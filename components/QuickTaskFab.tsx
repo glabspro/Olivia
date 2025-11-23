@@ -133,6 +133,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
   const handleTypeSelect = (type: TaskType) => {
       setTaskType(type);
+      // Limpiar prefijos si el usuario cambia de tipo, manteniendo el texto
       let cleanNote = note.replace(/^(SEND:|MEET:|CALL:|URGENT:|NOTE:|⚠️|📝|📞|📅|✉️)\s*/i, '').trim();
       setNote(cleanNote);
   };
