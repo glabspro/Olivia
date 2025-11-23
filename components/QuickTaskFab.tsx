@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { 
     Plus, X, Calendar, CheckCircle, Loader2, Bot, Sparkles, 
     Phone, Briefcase, AlertTriangle, Mail, FileText, 
-    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink 
+    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { createTask, triggerTaskAutomation, uploadGenericFile } from '../services/supabaseClient';
@@ -22,7 +22,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   
   // Form States
   const [note, setNote] = useState(''); // Body / Description
-  const [recipient, setRecipient] = useState(''); // Email or Client Name
+  const [recipient, setRecipient] = useState(''); // Client Name
+  const [recipientEmail, setRecipientEmail] = useState(''); // Client Email (New)
   const [subject, setSubject] = useState(''); // Email Subject
   const [attachment, setAttachment] = useState<File | null>(null);
   const [date, setDate] = useState('');
@@ -56,6 +57,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const resetForm = () => {
       setNote('');
       setRecipient('');
+      setRecipientEmail('');
       setSubject('');
       setAttachment(null);
       setDate('');
@@ -79,7 +81,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   // --- Logic ---
 
   const isFormValid = () => {
-      if (taskType === 'email') return recipient.length > 0 && hasValidEmail(recipient) && note.length > 0 && subject.length > 0;
+      if (taskType === 'email') return recipientEmail.length > 0 && hasValidEmail(recipientEmail) && note.length > 0 && subject.length > 0;
       if (taskType === 'meeting') return recipient.length > 0 && hasCalLink; // Recipient is Client Name here
       return note.length > 0;
   };
@@ -97,6 +99,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         const cleanNote = note.trim();
         const cleanRecipient = recipient.trim();
+        const cleanEmail = recipientEmail.trim().toLowerCase();
 
         switch (taskType) {
             case 'call': 
@@ -105,16 +108,16 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 break;
                 
             case 'meeting': 
-                // En este flujo, 'recipient' es el nombre del cliente
-                finalDescription = `MEET: ${cleanRecipient}`; 
+                // En este flujo, 'recipient' es el nombre, 'recipientEmail' es el correo
+                // Formato para n8n: MEET: Nombre | Email
+                finalDescription = `MEET: ${cleanRecipient}${cleanEmail ? ` | ${cleanEmail}` : ''}`; 
                 isImmediateAction = true;
                 successMsg = 'Invitación Enviada';
-                // Meeting always implies immediate intent or future schedule
+                // Meeting implies immediate intent
                 if (!finalDate) finalDate = new Date().toISOString();
                 break;
                 
             case 'email': 
-                const emailAddr = cleanRecipient.toLowerCase();
                 let attachmentUrl = '';
                 if (attachment) {
                     try {
@@ -124,7 +127,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                     }
                 }
                 const fullBody = `Asunto: ${subject}\n\n${cleanNote}${attachmentUrl ? `\n\n📎 Archivo Adjunto: ${attachmentUrl}` : ''}`;
-                finalDescription = `SEND: ${emailAddr} | ${fullBody}`; 
+                // Formato para n8n: SEND: email | cuerpo
+                finalDescription = `SEND: ${cleanEmail} | ${fullBody}`; 
                 isImmediateAction = true;
                 successMsg = 'Correo Enviado';
                 // n8n trigger needs a date to pick it up immediately
@@ -256,15 +260,15 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 <MenuCard 
                                     id="meeting" 
                                     icon={Calendar} 
-                                    title="Agendar Cita" 
-                                    desc="Envía tu link de agenda por WhatsApp." 
+                                    title="Reunión" 
+                                    desc="Envía invitaciones o agenda tú mismo." 
                                     colorClass="text-purple-600" 
                                     bgClass="bg-purple-100 dark:bg-purple-900/30" 
                                 />
                                 <MenuCard 
                                     id="email" 
                                     icon={Mail} 
-                                    title="Enviar Correo" 
+                                    title="Correo" 
                                     desc="Redacta correos con adjuntos PDF." 
                                     colorClass="text-orange-600" 
                                     bgClass="bg-orange-100 dark:bg-orange-900/30" 
@@ -325,7 +329,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 ) : (
                                     <>
                                         <div>
-                                            <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Cliente / Invitado</label>
+                                            <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Nombre del Cliente</label>
                                             <div className="relative">
                                                 <input 
                                                     autoFocus
@@ -339,18 +343,51 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                             </div>
                                         </div>
 
-                                        <div className="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-900/30">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Bot size={16} className="text-purple-600"/>
-                                                <span className="text-xs font-bold text-purple-700 dark:text-purple-300">Vista Previa del Mensaje:</span>
+                                        <div>
+                                            <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Email del Cliente (Opcional)</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="email" 
+                                                    value={recipientEmail}
+                                                    onChange={e => setRecipientEmail(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                                                    placeholder="Ej. juan@correo.com"
+                                                />
+                                                <AtSign className="absolute left-3 top-3 text-gray-400" size={18}/>
                                             </div>
-                                            <p className="text-sm text-gray-700 dark:text-gray-300 italic bg-white dark:bg-black/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">
-                                                "Hola <strong>{recipient || '...'}</strong> 👋<br/><br/>
-                                                📅 <strong>Agendar Reunión</strong><br/>
-                                                Para confirmar la reunión, haz clic aquí:<br/><br/>
-                                                👇 <strong>Link Rápido:</strong><br/>
-                                                <span className="text-blue-500 underline break-all">{calLink}?name={encodeURIComponent(recipient)}</span>"
-                                            </p>
+                                            <p className="text-[10px] text-gray-400 mt-1 ml-1">Para enviar copia por correo o pre-llenar agenda.</p>
+                                        </div>
+
+                                        {/* Dual Action Buttons */}
+                                        <div className="grid grid-cols-2 gap-3 pt-2">
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    if(!recipient) return;
+                                                    // Open Cal.com with pre-filled name and email
+                                                    let url = `${calLink}?name=${encodeURIComponent(recipient)}`;
+                                                    if (recipientEmail) url += `&email=${encodeURIComponent(recipientEmail)}`;
+                                                    
+                                                    window.open(url, '_blank');
+                                                    handleClose();
+                                                }}
+                                                disabled={!recipient}
+                                                className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-purple-500 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all disabled:opacity-50"
+                                            >
+                                                <ExternalLink size={20} className="mb-1"/>
+                                                <span className="text-xs font-bold">Agendar Yo</span>
+                                                <span className="text-[9px] opacity-70">Abrir Calendario</span>
+                                            </button>
+
+                                            <button 
+                                                type="submit"
+                                                disabled={!recipient || loading}
+                                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50"
+                                            >
+                                                {loading ? <Loader2 size={20} className="animate-spin" /> : <Bot size={20} className="mb-1"/>}
+                                                <span className="text-xs font-bold">Enviar Invitación</span>
+                                                <span className="text-[9px] opacity-90">WhatsApp (+ Correo)</span>
+                                            </button>
                                         </div>
                                     </>
                                 )}
@@ -362,15 +399,18 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Para (Email)</label>
-                                    <input 
-                                        autoFocus
-                                        type="email" 
-                                        value={recipient}
-                                        onChange={e => setRecipient(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                                        placeholder="cliente@empresa.com"
-                                    />
-                                    {recipient && !hasValidEmail(recipient) && <p className="text-[10px] text-red-500 mt-1">* Email inválido</p>}
+                                    <div className="relative">
+                                        <input 
+                                            autoFocus
+                                            type="email" 
+                                            value={recipientEmail}
+                                            onChange={e => setRecipientEmail(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+                                            placeholder="cliente@empresa.com"
+                                        />
+                                        <AtSign className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                    </div>
+                                    {recipientEmail && !hasValidEmail(recipientEmail) && <p className="text-[10px] text-red-500 mt-1">* Email inválido</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Asunto</label>
@@ -450,29 +490,29 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             </div>
                         )}
 
-                        {/* Submit Button */}
-                        <div className="pt-2">
-                             <button 
-                                type="submit" 
-                                disabled={!isFormValid() || loading}
-                                className={`w-full py-3.5 font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-xl hover:-translate-y-0.5 text-white ${
-                                    taskType === 'meeting' ? 'bg-purple-600 hover:bg-purple-700' :
-                                    taskType === 'email' ? 'bg-orange-600 hover:bg-orange-700' :
-                                    taskType === 'call' ? 'bg-blue-600 hover:bg-blue-700' :
-                                    taskType === 'urgent' ? 'bg-red-600 hover:bg-red-700' :
-                                    'bg-gray-800 hover:bg-black'
-                                }`}
-                            >
-                                {loading ? <Loader2 size={20} className="animate-spin" /> : (
-                                    <>
-                                        {taskType === 'meeting' ? 'Enviar Invitación' :
-                                         taskType === 'email' ? 'Enviar Correo' :
-                                         taskType === 'call' ? 'Registrar' :
-                                         'Guardar'}
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        {/* Submit Button (Only for non-meeting types or Email) */}
+                        {taskType !== 'meeting' && (
+                            <div className="pt-2">
+                                <button 
+                                    type="submit" 
+                                    disabled={!isFormValid() || loading}
+                                    className={`w-full py-3.5 font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-xl hover:-translate-y-0.5 text-white ${
+                                        taskType === 'email' ? 'bg-orange-600 hover:bg-orange-700' :
+                                        taskType === 'call' ? 'bg-blue-600 hover:bg-blue-700' :
+                                        taskType === 'urgent' ? 'bg-red-600 hover:bg-red-700' :
+                                        'bg-gray-800 hover:bg-black'
+                                    }`}
+                                >
+                                    {loading ? <Loader2 size={20} className="animate-spin" /> : (
+                                        <>
+                                            {taskType === 'email' ? 'Enviar Correo' :
+                                            taskType === 'call' ? 'Registrar' :
+                                            'Guardar'}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
 
                     </form>
                 )}
