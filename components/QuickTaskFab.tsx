@@ -212,10 +212,10 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             onClick={handleClose}
           ></div>
           
-          <div className="relative w-full sm:w-[450px] bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up transition-all duration-300 flex flex-col max-h-[85vh]">
+          <div className="relative w-full sm:w-[450px] bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up transition-all duration-300 flex flex-col max-h-[85vh] pb-safe">
             
             {/* Header */}
-            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-4 flex justify-between items-center text-white shrink-0">
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-4 pt-6 sm:pt-4 flex justify-between items-center text-white shrink-0">
                 <div className="flex items-center gap-3">
                     {view === 'form' ? (
                         <button onClick={goBack} className="p-1 hover:bg-white/20 rounded-full transition-colors">

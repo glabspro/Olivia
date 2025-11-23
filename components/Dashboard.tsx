@@ -72,9 +72,9 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
   }
 
   return (
-    <div className="flex h-screen bg-background text-textPrimary dark:bg-dark-background dark:text-dark-textPrimary">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-background text-textPrimary dark:bg-dark-background dark:text-dark-textPrimary">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-surface dark:bg-dark-surface flex-col border-r border-border dark:border-dark-border">
+      <aside className="hidden lg:flex w-64 bg-surface dark:bg-dark-surface flex-col border-r border-border dark:border-dark-border flex-shrink-0">
          <div className="px-6 py-5 border-b border-border dark:border-dark-border">
             <Logo />
          </div>
@@ -83,18 +83,18 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
          </nav>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border sticky top-0 z-10">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <header className="bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border z-30 flex-shrink-0">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-               <div className="lg:hidden">
+               <div className="lg:hidden flex-shrink-0">
                  <Logo />
                </div>
                
                {/* Spacer to push profile to right on mobile or if logo is hidden on desktop */}
                <div className="flex-1 lg:hidden"></div>
 
-              <div className="flex items-center gap-3 md:gap-4">
+              <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
                 <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
                   {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
@@ -109,7 +109,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                       {user.companyName.charAt(0)}
                     </div>
                     <div className="hidden md:flex flex-col items-start">
-                        <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary leading-tight">{user.companyName}</span>
+                        <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary leading-tight max-w-[100px] truncate">{user.companyName}</span>
                         <span className="text-xs text-textSecondary dark:text-dark-textSecondary">Propietario</span>
                     </div>
                     <ChevronDown size={16} className="text-textSecondary hidden md:block"/>
@@ -151,7 +151,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 bg-background dark:bg-dark-background relative">
+        <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative pb-[80px] lg:pb-0">
           {children}
           
           {/* Floating Assistant Widget - Accessible on all pages */}
@@ -159,8 +159,8 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
         </main>
       </div>
 
-       {/* Mobile Bottom Navigation - Updated to show all items */}
-       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-between px-2 items-center lg:hidden z-20">
+       {/* Mobile Bottom Navigation */}
+       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-between px-2 items-center lg:hidden z-20 pb-safe">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} isMobile={true} />)}
        </nav>
     </div>

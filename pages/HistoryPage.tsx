@@ -398,7 +398,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6 bg-surface dark:bg-dark-surface p-2 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm sticky top-16 md:top-0 z-10">
+        <div className="flex flex-col md:flex-row gap-4 mb-6 bg-surface dark:bg-dark-surface p-2 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm z-10">
             <div className="relative flex-grow">
                 <input 
                     type="text" 
@@ -464,28 +464,28 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                             <div key={quote.id} className="bg-surface dark:bg-dark-surface p-5 rounded-xl border border-border dark:border-dark-border shadow-sm relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-transparent via-primary to-transparent opacity-50"></div>
                                 
-                                <div className="flex justify-between items-start mb-3 pl-3">
-                                     <div>
-                                        <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary leading-tight">{quote.client.name}</h3>
+                                <div className="flex justify-between items-start mb-3 gap-2">
+                                     <div className="min-w-0 flex-1">
+                                        <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary leading-tight truncate pr-2">{quote.client.name}</h3>
                                         <p className="text-xs text-textSecondary mt-1">{new Date(quote.created_at).toLocaleDateString()}</p>
                                      </div>
-                                     <span className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full border ${getStatusColor(quote.status)}`}>
+                                     <span className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full border flex-shrink-0 ${getStatusColor(quote.status)}`}>
                                         {getStatusLabel(quote.status)}
                                     </span>
                                 </div>
                                 
-                                <div className="flex justify-between items-end pl-3 mb-4">
+                                <div className="flex justify-between items-end mb-4">
                                     <div>
                                         <p className="text-xs text-textSecondary font-mono bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded inline-block mb-1">{quote.quotation_number}</p>
                                     </div>
                                     <span className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">{quote.currency} {quote.total_amount.toFixed(2)}</span>
                                 </div>
                                 
-                                <div className="pl-3 mb-4 border-t border-border dark:border-dark-border pt-3">
+                                <div className="mb-4 border-t border-border dark:border-dark-border pt-3">
                                     <QuoteTags quote={quote} onUpdateTags={(tags, meta) => handleUpdateTags(quote.id, tags, meta)} />
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-3 pl-3">
+                                <div className="grid grid-cols-3 gap-3">
                                     <button 
                                         onClick={() => onEditQuote(quote.id)}
                                         className="py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
