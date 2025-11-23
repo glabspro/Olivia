@@ -138,37 +138,57 @@ const QuotationEditor: React.FC<QuotationEditorProps> = ({
       {/* Mobile Cards */}
       <div className="block md:hidden space-y-4">
         {items.map(item => (
-          <div key={item.id} className="bg-background dark:bg-dark-background rounded-lg p-4 border border-border dark:border-dark-border">
+          <div key={item.id} className="bg-background dark:bg-dark-background rounded-xl p-5 border border-border dark:border-dark-border shadow-sm">
+            <label className="text-[10px] font-bold text-textSecondary uppercase tracking-wider mb-1 block">Descripción del Producto</label>
             <input 
               type="text" 
               value={item.description} 
               onChange={(e) => handleItemChange(item.id, 'description', e.target.value)} 
-              className="w-full font-semibold text-textPrimary dark:text-dark-textPrimary bg-transparent p-1 -ml-1 mb-2 focus:ring-1 focus:ring-primary rounded"
-              placeholder="Descripción del producto"
+              className="w-full text-base font-medium text-textPrimary dark:text-dark-textPrimary bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg p-3 mb-4 focus:ring-2 focus:ring-primary outline-none"
+              placeholder="Ej. Zapatillas Nike Air..."
             />
+            
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-textSecondary dark:text-dark-textSecondary">Cant.</label>
-                <input type="number" value={item.quantity} onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-center py-3 mt-1 border border-border dark:border-dark-border`} />
+                <label className="text-[10px] font-bold text-textSecondary uppercase tracking-wider mb-1 block">Cantidad</label>
+                <input 
+                    type="number" 
+                    value={item.quantity} 
+                    onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)} 
+                    className="w-full text-center text-base font-medium bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg p-3 focus:ring-2 focus:ring-primary outline-none" 
+                />
               </div>
               <div>
-                <label className="text-xs text-textSecondary dark:text-dark-textSecondary">P. Unitario</label>
-                <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} className={`${inputClasses} text-right py-3 mt-1 border border-border dark:border-dark-border`} />
+                <label className="text-[10px] font-bold text-textSecondary uppercase tracking-wider mb-1 block">Precio Unit.</label>
+                <input 
+                    type="number" 
+                    value={item.unitPrice} 
+                    onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                    className="w-full text-right text-base font-medium bg-surface dark:bg-dark-surface border border-border dark:border-dark-border rounded-lg p-3 focus:ring-2 focus:ring-primary outline-none" 
+                />
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-border dark:border-dark-border flex justify-between items-center">
-                <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary">
-                  Total Item: {currencySymbol} {calculateFinalPrice(item).toFixed(2)}
-                </span>
-                <button onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-400 p-2 rounded-full hover:bg-red-500/10">
-                  <Trash2 size={18} />
+            
+            <div className="mt-4 pt-3 border-t border-border dark:border-dark-border flex justify-between items-center">
+                <div>
+                    <span className="text-xs text-textSecondary block">Total Item</span>
+                    <span className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">
+                      {currencySymbol} {calculateFinalPrice(item).toFixed(2)}
+                    </span>
+                </div>
+                <button 
+                    onClick={() => removeItem(item.id)} 
+                    className="text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg hover:bg-red-100 transition-colors"
+                    aria-label="Eliminar producto"
+                >
+                  <Trash2 size={20} />
                 </button>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 flex justify-start">
+      <div className="mt-6 flex justify-start">
         <button
           onClick={addNewItem}
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors"

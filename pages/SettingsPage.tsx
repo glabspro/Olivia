@@ -195,7 +195,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
 
                     <div className="lg:col-span-3">
                         <div className="lg:sticky lg:top-24">
-                            <div className="bg-gray-100 dark:bg-dark-background rounded-lg p-4 sm:p-8">
+                            <div className="bg-gray-100 dark:bg-dark-background rounded-lg p-4 sm:p-8 overflow-hidden">
                                 <div className="flex justify-between items-center mb-4">
                                      <p className="text-sm font-semibold text-textSecondary dark:text-dark-textSecondary uppercase tracking-wider">Previsualización en Vivo</p>
                                      <button 
@@ -206,33 +206,39 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user }) => {
                                         Descargar Muestra
                                      </button>
                                 </div>
-                                 <div className="shadow-lg" ref={previewRef}>
-                                    <QuotationPreview
-                                        items={sampleItems}
-                                        marginType={settings.defaultMarginType}
-                                        marginValue={settings.defaultMarginValue}
-                                        currencySymbol={settings.currencySymbol}
-                                        clientName={sampleClientName}
-                                        clientPhone={sampleClientPhone}
-                                        clientAddress={sampleClientAddress}
-                                        clientDocument={sampleClientDocument}
-                                        companyName={settings.companyName}
-                                        companyLogo={settings.companyLogo}
-                                        companyAddress={settings.companyAddress}
-                                        companyPhone={settings.companyPhone}
-                                        companyEmail={settings.companyEmail}
-                                        companyWebsite={settings.companyWebsite}
-                                        companyDocumentType={settings.companyDocumentType}
-                                        companyDocumentNumber={settings.companyDocumentNumber}
-                                        selectedTemplate={settings.defaultTemplate}
-                                        paymentTerms={settings.paymentTerms.map(p => p.details).join('\n\n')}
-                                        paymentMethods={settings.paymentMethods.map(p => p.details).join('\n\n')}
-                                        quotationNumber={sampleQuotationNumber}
-                                        themeColor={settings.themeColor}
-                                        headerImage={settings.headerImage}
-                                        taxType={settings.taxType}
-                                        taxRate={settings.taxRate}
-                                    />
+                                
+                                {/* Centered Scaled Preview Container */}
+                                <div className="flex justify-center overflow-hidden bg-gray-200/50 dark:bg-black/20 rounded-lg border border-gray-200 dark:border-gray-700 py-4 min-h-[400px] sm:min-h-[600px] md:min-h-0">
+                                     <div className="transform scale-[0.40] sm:scale-75 xl:scale-90 origin-top transition-transform duration-300">
+                                         <div className="shadow-2xl min-w-[210mm] bg-white" ref={previewRef}>
+                                            <QuotationPreview
+                                                items={sampleItems}
+                                                marginType={settings.defaultMarginType}
+                                                marginValue={settings.defaultMarginValue}
+                                                currencySymbol={settings.currencySymbol}
+                                                clientName={sampleClientName}
+                                                clientPhone={sampleClientPhone}
+                                                clientAddress={sampleClientAddress}
+                                                clientDocument={sampleClientDocument}
+                                                companyName={settings.companyName}
+                                                companyLogo={settings.companyLogo}
+                                                companyAddress={settings.companyAddress}
+                                                companyPhone={settings.companyPhone}
+                                                companyEmail={settings.companyEmail}
+                                                companyWebsite={settings.companyWebsite}
+                                                companyDocumentType={settings.companyDocumentType}
+                                                companyDocumentNumber={settings.companyDocumentNumber}
+                                                selectedTemplate={settings.defaultTemplate}
+                                                paymentTerms={settings.paymentTerms.map(p => p.details).join('\n\n')}
+                                                paymentMethods={settings.paymentMethods.map(p => p.details).join('\n\n')}
+                                                quotationNumber={sampleQuotationNumber}
+                                                themeColor={settings.themeColor}
+                                                headerImage={settings.headerImage}
+                                                taxType={settings.taxType}
+                                                taxRate={settings.taxRate}
+                                            />
+                                         </div>
+                                     </div>
                                  </div>
                             </div>
                         </div>

@@ -1019,37 +1019,39 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
 
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Live Preview Container */}
-                        <div className="flex-1 order-2 lg:order-1 bg-gray-100 dark:bg-zinc-900 rounded-xl p-4 md:p-8 overflow-x-auto shadow-inner border border-border dark:border-dark-border">
+                        <div className="flex-1 order-2 lg:order-1 bg-gray-100 dark:bg-zinc-900 rounded-xl p-4 md:p-8 shadow-inner border border-border dark:border-dark-border flex justify-center overflow-hidden min-h-[500px] sm:min-h-[700px] md:min-h-0">
                              {/* Scale Transform for Mobile to fit A4 width (~800px) into screen width (~360px) */}
-                             <div className="min-w-[700px] md:min-w-full bg-white shadow-lg mx-auto max-w-[210mm] origin-top-left transform scale-[0.45] sm:scale-75 md:scale-100">
-                                <QuotationPreview
-                                    items={items}
-                                    marginType={marginType}
-                                    marginValue={marginValue}
-                                    discountType={discountType}
-                                    discountValue={discountValue}
-                                    clientName={clientName}
-                                    clientPhone={clientPhone}
-                                    clientAddress={clientAddress}
-                                    clientDocument={clientDocument}
-                                    companyName={settings.companyName}
-                                    companyLogo={settings.companyLogo}
-                                    companyAddress={settings.companyAddress}
-                                    companyPhone={settings.companyPhone}
-                                    companyEmail={settings.companyEmail}
-                                    companyWebsite={settings.companyWebsite}
-                                    companyDocumentType={settings.companyDocumentType}
-                                    companyDocumentNumber={settings.companyDocumentNumber}
-                                    currencySymbol={settings.currencySymbol}
-                                    selectedTemplate={settings.defaultTemplate}
-                                    paymentTerms={finalPaymentTerms}
-                                    paymentMethods={finalPaymentMethods}
-                                    quotationNumber={currentQuotationNumber}
-                                    themeColor={settings.themeColor}
-                                    headerImage={settings.headerImage}
-                                    taxType={taxType}
-                                    taxRate={taxRate}
-                                />
+                             <div className="transform scale-[0.42] sm:scale-75 md:scale-100 origin-top transition-transform duration-300">
+                                <div className="min-w-[210mm] min-h-[297mm] bg-white shadow-lg mx-auto">
+                                    <QuotationPreview
+                                        items={items}
+                                        marginType={marginType}
+                                        marginValue={marginValue}
+                                        discountType={discountType}
+                                        discountValue={discountValue}
+                                        clientName={clientName}
+                                        clientPhone={clientPhone}
+                                        clientAddress={clientAddress}
+                                        clientDocument={clientDocument}
+                                        companyName={settings.companyName}
+                                        companyLogo={settings.companyLogo}
+                                        companyAddress={settings.companyAddress}
+                                        companyPhone={settings.companyPhone}
+                                        companyEmail={settings.companyEmail}
+                                        companyWebsite={settings.companyWebsite}
+                                        companyDocumentType={settings.companyDocumentType}
+                                        companyDocumentNumber={settings.companyDocumentNumber}
+                                        currencySymbol={settings.currencySymbol}
+                                        selectedTemplate={settings.defaultTemplate}
+                                        paymentTerms={finalPaymentTerms}
+                                        paymentMethods={finalPaymentMethods}
+                                        quotationNumber={currentQuotationNumber}
+                                        themeColor={settings.themeColor}
+                                        headerImage={settings.headerImage}
+                                        taxType={taxType}
+                                        taxRate={taxRate}
+                                    />
+                                </div>
                              </div>
                         </div>
 
