@@ -292,8 +292,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
                     <div>
                         <h4 className="text-sm font-bold text-textPrimary dark:text-dark-textPrimary">Conecta tu Agenda</h4>
                         <p className="text-xs text-textSecondary mt-1">
-                            Permite que tus clientes agenden reuniones contigo automáticamente.
-                            Olivia incluirá tu enlace en las cotizaciones.
+                            Este enlace se usará automáticamente cuando crees una reunión desde el botón "Oliv-IA".
                         </p>
                     </div>
                 </div>
@@ -313,7 +312,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
                 )}
 
                 <div>
-                    <label htmlFor="calComLink" className={labelClasses}>Tu Enlace de Cal.com</label>
+                    <label htmlFor="calComLink" className={labelClasses}>Tu Enlace Personal de Cal.com</label>
                     <div className="flex gap-2">
                         <div className="flex flex-grow">
                             <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-white/5 text-gray-500 text-sm">
@@ -326,7 +325,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
                                 value={settings.calComLink || ''} 
                                 onChange={handleInputChange} 
                                 className={`${inputClasses} rounded-l-none`}
-                                placeholder="cal.com/tu-usuario"
+                                placeholder="cal.com/olivia-app"
                             />
                         </div>
                         {onTestIntegration && (
@@ -340,6 +339,9 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
                             </button>
                         )}
                     </div>
+                    <p className="text-[10px] text-textSecondary mt-1">
+                        Ejemplo: <code>cal.com/olivia-app</code>. Coloca aquí el enlace que quieres enviar a tus clientes.
+                    </p>
                 </div>
             </div>
         </div>

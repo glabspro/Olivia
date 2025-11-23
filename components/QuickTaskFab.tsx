@@ -95,28 +95,25 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       }, 300);
   };
 
-  // Handle Type Selection and Magic Prefixes
+  // Handle Type Selection
   const handleTypeSelect = (type: TaskType) => {
       setTaskType(type);
-      
-      // Remove existing prefixes to avoid duplication
+      // Remove prefixes if they exist so the input stays clean for the user
+      // We only add them back when saving
       let cleanNote = note.replace(/^(SEND:|MEET:|CALL:|⚠️|📝)\s*/, '');
-      
-      // Add Magic Prefix based on type
-      let prefix = '';
-      switch (type) {
-          case 'email': prefix = 'SEND: '; break;
-          case 'meeting': prefix = 'MEET: '; break;
-          case 'call': prefix = 'CALL: '; break;
-          // For visual types, we don't enforce text prefix in input to keep it clean, 
-          // handleSave will add emoji if needed.
-          default: prefix = ''; 
-      }
-      
-      setNote(prefix + cleanNote);
-      
-      // Auto-focus input after click (optional, done via ref usually, but input has autoFocus)
+      setNote(cleanNote);
   };
+  
+  // Get Placeholder based on type
+  const getPlaceholder = () => {
+      switch(taskType) {
+          case 'call': return 'Ej. Juan Pérez (Ventas)...';
+          case 'meeting': return 'Ej. Reunión con Carlos...'; // No "MEET:" shown
+          case 'email': return 'Ej. cotizacion@empresa.com...';
+          case 'urgent': return 'Ej. Pagar servicios...';
+          default: return 'Escribe una nota...';
+      }
+  }
 
   const taskTypes: { id: TaskType; label: string; icon: React.ElementType; color: string }[] = [
       { id: 'note', label: 'Nota', icon: FileText, color: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
@@ -205,7 +202,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                         <div>
                             <label className="block text-sm font-medium text-textSecondary dark:text-dark-textSecondary mb-1.5">
-                                ¿Qué necesitas recordar?
+                                {taskType === 'meeting' ? '¿Con quién es la reunión?' : '¿Qué necesitas recordar?'}
                             </label>
                             <div className="relative">
                                 <input 
@@ -213,7 +210,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     autoFocus
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
-                                    placeholder={taskType === 'call' ? 'Ej. Juan Pérez...' : taskType === 'email' ? 'Ej. correo@cliente.com...' : 'Escribe aquí...'}
+                                    placeholder={getPlaceholder()}
                                     className="w-full px-4 py-3 pr-10 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-textPrimary dark:text-dark-textPrimary transition-all"
                                 />
                                 <button
