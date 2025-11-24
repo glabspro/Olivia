@@ -117,8 +117,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         let isImmediateAction = false;
         let successMsg = 'Guardado';
 
-        const cleanNote = note.trim();
-        const cleanRecipient = recipient.trim();
+        // Sanitize inputs to prevent breaking the pipe parser in n8n
+        const sanitize = (str: string) => str.replace(/\|/g, ' ').trim();
+
+        const cleanNote = sanitize(note);
+        const cleanRecipient = sanitize(recipient);
         const cleanEmail = recipientEmail.trim().toLowerCase();
         
         // Construct Full Phone Number with Country Code
@@ -139,6 +142,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 
             case 'meeting': 
                 // Formato actualizado para n8n: MEET: Nombre | Teléfono | Email
+                // Nota: cleanEmail también se enviará explícitamente en el objeto payload
                 finalDescription = `MEET: ${cleanRecipient} | ${fullPhone} | ${cleanEmail}`; 
                 isImmediateAction = true;
                 successMsg = 'Invitación Enviada!';
@@ -178,7 +182,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
              await triggerTaskAutomation(user, {
                 type: taskType,
                 description: finalDescription,
-                date: finalDate || new Date().toISOString()
+                date: finalDate || new Date().toISOString(),
+                email: cleanEmail // Explicitly pass email for robust handling
             });
         }
 
