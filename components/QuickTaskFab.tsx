@@ -15,6 +15,22 @@ interface QuickTaskFabProps {
 type TaskType = 'note' | 'call' | 'meeting' | 'urgent' | 'email';
 type ViewState = 'menu' | 'form';
 
+const countries = [
+  { code: 'PE', name: 'Perú', dial_code: '+51', flag: '🇵🇪' },
+  { code: 'MX', name: 'México', dial_code: '+52', flag: '🇲🇽' },
+  { code: 'CO', name: 'Colombia', dial_code: '+57', flag: '🇨🇴' },
+  { code: 'CL', name: 'Chile', dial_code: '+56', flag: '🇨🇱' },
+  { code: 'AR', name: 'Argentina', dial_code: '+54', flag: '🇦🇷' },
+  { code: 'BO', name: 'Bolivia', dial_code: '+591', flag: '🇧🇴' },
+  { code: 'BR', name: 'Brasil', dial_code: '+55', flag: '🇧🇷' },
+  { code: 'EC', name: 'Ecuador', dial_code: '+593', flag: '🇪🇨' },
+  { code: 'PY', name: 'Paraguay', dial_code: '+595', flag: '🇵🇾' },
+  { code: 'UY', name: 'Uruguay', dial_code: '+598', flag: '🇺🇾' },
+  { code: 'VE', name: 'Venezuela', dial_code: '+58', flag: '🇻🇪' },
+  { code: 'PA', name: 'Panamá', dial_code: '+507', flag: '🇵🇦' },
+  { code: 'DO', name: 'R. Dominicana', dial_code: '+1', flag: '🇩🇴' },
+];
+
 const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<ViewState>('menu');
@@ -24,6 +40,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [note, setNote] = useState(''); // Body / Description
   const [recipient, setRecipient] = useState(''); // Client Name
   const [recipientPhone, setRecipientPhone] = useState(''); // Client Phone (New for Meetings)
+  const [countryCode, setCountryCode] = useState('+51'); // Default Country Code
   const [recipientEmail, setRecipientEmail] = useState(''); // Client Email
   const [subject, setSubject] = useState(''); // Email Subject
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -59,6 +76,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       setNote('');
       setRecipient('');
       setRecipientPhone('');
+      setCountryCode('+51');
       setRecipientEmail('');
       setSubject('');
       setAttachment(null);
@@ -101,14 +119,17 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         const cleanNote = note.trim();
         const cleanRecipient = recipient.trim();
-        
-        // FIX: Auto-add country code 51 (Peru) if user enters 9 digits (e.g. 987654321 -> 51987654321)
-        let cleanPhone = recipientPhone.replace(/\D/g, '');
-        if (cleanPhone.length === 9) {
-            cleanPhone = `51${cleanPhone}`;
-        }
-        
         const cleanEmail = recipientEmail.trim().toLowerCase();
+        
+        // Construct Full Phone Number with Country Code
+        const rawPhone = recipientPhone.replace(/\D/g, '');
+        const cleanCode = countryCode.replace('+', '');
+        let fullPhone = rawPhone;
+        
+        // Only prepend code if the user hasn't typed it already (basic check)
+        if (!rawPhone.startsWith(cleanCode)) {
+            fullPhone = `${cleanCode}${rawPhone}`;
+        }
 
         switch (taskType) {
             case 'call': 
@@ -118,8 +139,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 
             case 'meeting': 
                 // Formato actualizado para n8n: MEET: Nombre | Teléfono | Email
-                // NOTA: Si no hay email, enviamos string vacío para que n8n no intente enviar correo
-                finalDescription = `MEET: ${cleanRecipient} | ${cleanPhone} | ${cleanEmail}`; 
+                finalDescription = `MEET: ${cleanRecipient} | ${fullPhone} | ${cleanEmail}`; 
                 isImmediateAction = true;
                 successMsg = 'Invitación Enviada!';
                 if (!finalDate) finalDate = new Date().toISOString();
@@ -164,7 +184,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         // 2. Save to Database
         // Para acciones inmediatas (Reunión/Email), guardamos como completada para evitar duplicados del cron job
-        await createTask(user.id, finalDescription, finalDate, isImportant);
+        await createTask(user.id, finalDescription, finalDate, isImportant || isImmediateAction);
         
         // 3. Success UI
         setActionMessage(successMsg);
@@ -352,15 +372,26 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                                         <div>
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">WhatsApp del Cliente</label>
-                                            <div className="relative">
-                                                <input 
-                                                    type="tel" 
-                                                    value={recipientPhone}
-                                                    onChange={e => setRecipientPhone(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                                                    placeholder="Ej. 987654321"
-                                                />
-                                                <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={countryCode}
+                                                    onChange={(e) => setCountryCode(e.target.value)}
+                                                    className="w-24 pl-2 pr-1 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm appearance-none cursor-pointer"
+                                                >
+                                                    {countries.map(c => (
+                                                        <option key={c.code} value={c.dial_code}>{c.flag} {c.dial_code}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="relative flex-1">
+                                                    <input 
+                                                        type="tel" 
+                                                        value={recipientPhone}
+                                                        onChange={e => setRecipientPhone(e.target.value)}
+                                                        className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                                                        placeholder="Ej. 987654321"
+                                                    />
+                                                    <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                                </div>
                                             </div>
                                         </div>
 

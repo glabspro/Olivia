@@ -52,6 +52,14 @@ const countries = [
   { code: 'CO', name: 'Colombia', dial_code: '+57', flag: '🇨🇴' },
   { code: 'CL', name: 'Chile', dial_code: '+56', flag: '🇨🇱' },
   { code: 'AR', name: 'Argentina', dial_code: '+54', flag: '🇦🇷' },
+  { code: 'BO', name: 'Bolivia', dial_code: '+591', flag: '🇧🇴' },
+  { code: 'BR', name: 'Brasil', dial_code: '+55', flag: '🇧🇷' },
+  { code: 'EC', name: 'Ecuador', dial_code: '+593', flag: '🇪🇨' },
+  { code: 'PY', name: 'Paraguay', dial_code: '+595', flag: '🇵🇾' },
+  { code: 'UY', name: 'Uruguay', dial_code: '+598', flag: '🇺🇾' },
+  { code: 'VE', name: 'Venezuela', dial_code: '+58', flag: '🇻🇪' },
+  { code: 'PA', name: 'Panamá', dial_code: '+507', flag: '🇵🇦' },
+  { code: 'DO', name: 'R. Dominicana', dial_code: '+1', flag: '🇩🇴' },
 ];
 
 interface AuthProps {
@@ -275,14 +283,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 
                 <form className="space-y-5" onSubmit={handleRegister}>
                     <div>
-                        <label className={labelClasses}>Nombre Completo</label>
+                        <label className="labelClasses">Nombre Completo</label>
                         <div className="relative">
                              <User className="absolute left-3 top-3.5 text-gray-400" size={18}/>
                              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={`${inputBaseClasses} pl-10`} placeholder="Ej. Juan Pérez" required/>
                         </div>
                     </div>
                     <div>
-                        <label className={labelClasses}>Nombre de tu Negocio</label>
+                        <label className="labelClasses">Nombre de tu Negocio</label>
                         <div className="relative">
                              <Briefcase className="absolute left-3 top-3.5 text-gray-400" size={18}/>
                              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className={`${inputBaseClasses} pl-10`} placeholder="Ej. Bodega Juan" required/>
