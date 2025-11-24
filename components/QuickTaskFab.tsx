@@ -112,8 +112,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 
             case 'meeting': 
                 // Formato actualizado para n8n: MEET: Nombre | Teléfono | Email
-                // Esto permite a n8n saber el número del cliente para enviar el WhatsApp
-                finalDescription = `MEET: ${cleanRecipient} | ${cleanPhone} | ${cleanEmail || 'no-email'}`; 
+                // NOTA: Si no hay email, enviamos string vacío para que n8n no intente enviar correo
+                finalDescription = `MEET: ${cleanRecipient} | ${cleanPhone} | ${cleanEmail}`; 
                 isImmediateAction = true;
                 successMsg = 'Link Enviado al Cliente';
                 if (!finalDate) finalDate = new Date().toISOString();
@@ -396,7 +396,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                             </button>
 
                                             <button 
-                                                type="submit"
+                                                type="submit" 
                                                 disabled={!recipient || !recipientPhone || loading}
                                                 className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50"
                                             >
