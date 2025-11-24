@@ -183,11 +183,10 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         switch (taskType) {
             case 'call': 
-                // Changed from Log Call to Schedule Call
-                // Simplified format for the n8n new parser
-                finalDescription = `CALL: ${cleanNote}`; 
+                // IMPORTANT: Saving full details in description so n8n Cron can parse it later
+                // Format: CALL: Motivo | Nombre Cliente | Telefono
+                finalDescription = `CALL: ${cleanNote} | ${cleanRecipient} | ${fullPhone}`; 
                 successMsg = 'Llamada Agendada';
-                // We are not setting isImmediateAction because we want it to be a database task AND a future reminder
                 break;
                 
             case 'meeting': 
@@ -240,6 +239,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         }
 
         // 2. Save to Database
+        // We save CALLs, NOTEs and URGENTs. Meetings and Emails are ephemeral (sent immediately).
         if (taskType !== 'meeting' && taskType !== 'email') {
             await createTask(user.id, finalDescription, finalDate, isImportant);
         }
@@ -417,6 +417,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Nombre del Cliente</label>
                                             <div className="relative">
                                                 <input 
+                                                    autoFocus
                                                     type="text" 
                                                     value={recipient}
                                                     onChange={e => setRecipient(e.target.value)}
@@ -498,6 +499,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Para (Email)</label>
                                     <div className="relative">
                                         <input 
+                                            autoFocus
                                             type="email" 
                                             value={recipientEmail}
                                             onChange={e => setRecipientEmail(e.target.value)}
@@ -544,6 +546,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">¿A quién llamar?</label>
                                     <div className="relative">
                                         <input 
+                                            autoFocus
                                             type="text" 
                                             value={recipient}
                                             onChange={e => setRecipient(e.target.value)}
@@ -599,6 +602,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                         {taskType === 'urgent' ? 'Detalle de Urgencia' : 'Nota'}
                                     </label>
                                     <textarea 
+                                        autoFocus
                                         rows={4}
                                         value={note}
                                         onChange={e => setNote(e.target.value)}
