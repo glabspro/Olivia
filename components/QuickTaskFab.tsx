@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { 
     Plus, X, Calendar, CheckCircle, Loader2, Bot, Sparkles, 
     Phone, Briefcase, AlertTriangle, Mail, FileText, 
-    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign, Smartphone, Clock
+    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign, Smartphone, Clock, ChevronDown
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { createTask, triggerTaskAutomation, uploadGenericFile } from '../services/supabaseClient';
@@ -30,6 +30,50 @@ const countries = [
   { code: 'PA', name: 'Panamá', dial_code: '+507', flag: '🇵🇦' },
   { code: 'DO', name: 'R. Dominicana', dial_code: '+1', flag: '🇩🇴' },
 ];
+
+// --- COMPONENTE EXTRAÍDO (SOLUCIÓN DEFINITIVA AL FOCO) ---
+// Al estar fuera de QuickTaskFab, React no lo destruye al renderizar.
+interface PhoneInputRowProps {
+    countryCode: string;
+    setCountryCode: (val: string) => void;
+    recipientPhone: string;
+    setRecipientPhone: (val: string) => void;
+    colorClass?: string;
+}
+
+const PhoneInputRow: React.FC<PhoneInputRowProps> = ({ 
+    countryCode, 
+    setCountryCode, 
+    recipientPhone, 
+    setRecipientPhone, 
+    colorClass = 'focus:ring-purple-500' 
+}) => (
+    <div className="flex gap-2 w-full">
+        <div className="relative shrink-0">
+            <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className={`w-[5.5rem] pl-2 pr-6 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 ${colorClass} outline-none text-sm appearance-none cursor-pointer text-ellipsis overflow-hidden whitespace-nowrap`}
+            >
+                {countries.map(c => (
+                    <option key={c.code} value={c.dial_code}>{c.flag} {c.dial_code}</option>
+                ))}
+            </select>
+            <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+        </div>
+        <div className="relative flex-1 min-w-0">
+            <input 
+                type="tel" 
+                value={recipientPhone}
+                onChange={e => setRecipientPhone(e.target.value)}
+                className={`w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 ${colorClass} outline-none text-sm`}
+                placeholder="Ej. 987654321"
+            />
+            <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
+        </div>
+    </div>
+);
+// ---------------------------------------------------
 
 const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -228,30 +272,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       </button>
   );
 
-  const CountryPhoneInput = () => (
-    <div className="flex gap-2">
-        <select
-            value={countryCode}
-            onChange={(e) => setCountryCode(e.target.value)}
-            className="w-24 pl-2 pr-1 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm appearance-none cursor-pointer"
-        >
-            {countries.map(c => (
-                <option key={c.code} value={c.dial_code}>{c.flag} {c.dial_code}</option>
-            ))}
-        </select>
-        <div className="relative flex-1">
-            <input 
-                type="tel" 
-                value={recipientPhone}
-                onChange={e => setRecipientPhone(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                placeholder="Ej. 987654321"
-            />
-            <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
-        </div>
-    </div>
-  );
-
   return (
     <>
       <button
@@ -408,7 +428,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                                         <div>
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">WhatsApp del Cliente</label>
-                                            <CountryPhoneInput />
+                                            <PhoneInputRow 
+                                                countryCode={countryCode} 
+                                                setCountryCode={setCountryCode}
+                                                recipientPhone={recipientPhone}
+                                                setRecipientPhone={setRecipientPhone}
+                                                colorClass="focus:ring-purple-500"
+                                            />
                                         </div>
 
                                         <div>
@@ -531,7 +557,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Teléfono del Cliente</label>
-                                    <CountryPhoneInput />
+                                    <PhoneInputRow 
+                                        countryCode={countryCode} 
+                                        setCountryCode={setCountryCode}
+                                        recipientPhone={recipientPhone}
+                                        setRecipientPhone={setRecipientPhone}
+                                        colorClass="focus:ring-blue-500"
+                                    />
                                 </div>
 
                                 <div>
