@@ -193,14 +193,14 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
     <>
       <button
         onClick={handleOpen}
-        className={`fixed bottom-20 md:bottom-8 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-gradient-to-r from-primary to-pink-600 text-white hover:scale-105 hover:shadow-pink-500/25`}
+        className={`fixed bottom-[5.5rem] md:bottom-8 right-4 md:right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 group ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'} bg-gradient-to-r from-primary to-pink-600 text-white hover:scale-105 hover:shadow-pink-500/25`}
         title="Asistente Oliv-IA"
       >
         <div className="relative">
             <Bot size={28} />
             <Sparkles size={12} className="absolute -top-1 -right-1 text-yellow-300 animate-pulse" />
         </div>
-        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-sm">
+        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-sm hidden md:block">
             Asistente Oliv-IA
         </span>
       </button>
@@ -212,7 +212,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             onClick={handleClose}
           ></div>
           
-          <div className="relative w-full sm:w-[450px] bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up transition-all duration-300 flex flex-col max-h-[85vh] pb-safe">
+          <div className="relative w-full sm:w-[450px] bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up transition-all duration-300 flex flex-col max-h-[80dvh] sm:max-h-[85vh]">
             
             {/* Header */}
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-4 pt-6 sm:pt-4 flex justify-between items-center text-white shrink-0">
@@ -242,7 +242,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             </div>
 
             {/* Content Body */}
-            <div className="p-5 overflow-y-auto custom-scrollbar flex-grow bg-gray-50 dark:bg-black/20">
+            <div className="p-5 overflow-y-auto custom-scrollbar flex-grow bg-gray-50 dark:bg-black/20 pb-safe-offset-4">
                 
                 {success ? (
                     <div className="h-64 flex flex-col items-center justify-center text-center animate-fade-in">
@@ -253,7 +253,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                         <p className="text-textSecondary mt-2">Tu asistente se encargará del resto.</p>
                     </div>
                 ) : view === 'menu' ? (
-                    <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                    <div className="grid grid-cols-2 gap-3 animate-fade-in pb-4">
                         <div className="col-span-2 mb-2">
                             <p className="text-xs font-bold text-textSecondary uppercase tracking-wider mb-3">Comunicaciones</p>
                             <div className="grid grid-cols-2 gap-3">
@@ -314,7 +314,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                          </div>
                     </div>
                 ) : (
-                    <form onSubmit={handleSave} className="space-y-4 animate-fade-in">
+                    <form onSubmit={handleSave} className="space-y-4 animate-fade-in pb-4">
                         
                         {/* --- MEETING FORM --- */}
                         {taskType === 'meeting' && (
@@ -523,7 +523,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             </div>
             
             {/* Footer */}
-            <div className="bg-surface dark:bg-dark-surface p-2 text-center border-t border-border dark:border-dark-border">
+            <div className="bg-surface dark:bg-dark-surface p-2 text-center border-t border-border dark:border-dark-border hidden sm:block">
                 <p className="text-[10px] text-textSecondary opacity-60">Power by Olivia AI</p>
             </div>
           </div>

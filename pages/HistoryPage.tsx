@@ -356,7 +356,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
   if (loading) return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>;
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 min-h-full flex flex-col pb-24">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 flex flex-col">
         {/* Header & Metrics */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>

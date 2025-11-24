@@ -151,7 +151,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative pb-[100px] lg:pb-0">
+        <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative pb-36 lg:pb-0">
           {children}
           
           {/* Floating Assistant Widget - Accessible on all pages */}
