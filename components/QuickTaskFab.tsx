@@ -31,7 +31,8 @@ const countries = [
   { code: 'DO', name: 'R. Dominicana', dial_code: '+1', flag: '🇩🇴' },
 ];
 
-// --- COMPONENTE EXTRAÍDO & MEMORIZADO (SOLUCIÓN CRÍTICA DE FOCO) ---
+// --- COMPONENTE EXTRAÍDO (SOLUCIÓN DEFINITIVA AL FOCO) ---
+// Al estar fuera de QuickTaskFab, React no lo destruye al renderizar.
 interface PhoneInputRowProps {
     countryCode: string;
     setCountryCode: (val: string) => void;
@@ -74,7 +75,6 @@ const PhoneInputRow = React.memo(({
 ));
 
 PhoneInputRow.displayName = 'PhoneInputRow';
-// ---------------------------------------------------
 
 const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
