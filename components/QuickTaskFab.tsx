@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { 
     Plus, X, Calendar, CheckCircle, Loader2, Bot, Sparkles, 
     Phone, Briefcase, AlertTriangle, Mail, FileText, 
-    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign
+    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign, Smartphone
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { createTask, triggerTaskAutomation, uploadGenericFile } from '../services/supabaseClient';
@@ -23,7 +23,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   // Form States
   const [note, setNote] = useState(''); // Body / Description
   const [recipient, setRecipient] = useState(''); // Client Name
-  const [recipientEmail, setRecipientEmail] = useState(''); // Client Email (New)
+  const [recipientPhone, setRecipientPhone] = useState(''); // Client Phone (New for Meetings)
+  const [recipientEmail, setRecipientEmail] = useState(''); // Client Email
   const [subject, setSubject] = useState(''); // Email Subject
   const [attachment, setAttachment] = useState<File | null>(null);
   const [date, setDate] = useState('');
@@ -57,6 +58,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const resetForm = () => {
       setNote('');
       setRecipient('');
+      setRecipientPhone('');
       setRecipientEmail('');
       setSubject('');
       setAttachment(null);
@@ -82,7 +84,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
   const isFormValid = () => {
       if (taskType === 'email') return recipientEmail.length > 0 && hasValidEmail(recipientEmail) && note.length > 0 && subject.length > 0;
-      if (taskType === 'meeting') return recipient.length > 0 && hasCalLink; // Recipient is Client Name here
+      if (taskType === 'meeting') return recipient.length > 0 && recipientPhone.length > 0 && hasCalLink; // Require Phone for meetings
       return note.length > 0;
   };
 
@@ -99,6 +101,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         const cleanNote = note.trim();
         const cleanRecipient = recipient.trim();
+        const cleanPhone = recipientPhone.replace(/\D/g, '');
         const cleanEmail = recipientEmail.trim().toLowerCase();
 
         switch (taskType) {
@@ -108,12 +111,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 break;
                 
             case 'meeting': 
-                // En este flujo, 'recipient' es el nombre, 'recipientEmail' es el correo
-                // Formato para n8n: MEET: Nombre | Email
-                finalDescription = `MEET: ${cleanRecipient}${cleanEmail ? ` | ${cleanEmail}` : ''}`; 
+                // Formato actualizado para n8n: MEET: Nombre | Teléfono | Email
+                // Esto permite a n8n saber el número del cliente para enviar el WhatsApp
+                finalDescription = `MEET: ${cleanRecipient} | ${cleanPhone} | ${cleanEmail || 'no-email'}`; 
                 isImmediateAction = true;
-                successMsg = 'Invitación Enviada';
-                // Meeting implies immediate intent
+                successMsg = 'Link Enviado al Cliente';
                 if (!finalDate) finalDate = new Date().toISOString();
                 break;
                 
@@ -127,11 +129,9 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                     }
                 }
                 const fullBody = `Asunto: ${subject}\n\n${cleanNote}${attachmentUrl ? `\n\n📎 Archivo Adjunto: ${attachmentUrl}` : ''}`;
-                // Formato para n8n: SEND: email | cuerpo
                 finalDescription = `SEND: ${cleanEmail} | ${fullBody}`; 
                 isImmediateAction = true;
                 successMsg = 'Correo Enviado';
-                // n8n trigger needs a date to pick it up immediately
                 if (!finalDate) finalDate = new Date(Date.now() + 2 * 60000).toISOString();
                 break;
                 
@@ -344,18 +344,31 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Email del Cliente (Opcional)</label>
+                                            <label className="block text-xs font-bold text-textSecondary uppercase mb-1">WhatsApp del Cliente</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="tel" 
+                                                    value={recipientPhone}
+                                                    onChange={e => setRecipientPhone(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                                                    placeholder="Ej. 987654321"
+                                                />
+                                                <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Email (Opcional)</label>
                                             <div className="relative">
                                                 <input 
                                                     type="email" 
                                                     value={recipientEmail}
                                                     onChange={e => setRecipientEmail(e.target.value)}
                                                     className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                                                    placeholder="Ej. juan@correo.com"
+                                                    placeholder="Para pre-llenar la agenda"
                                                 />
                                                 <AtSign className="absolute left-3 top-3 text-gray-400" size={18}/>
                                             </div>
-                                            <p className="text-[10px] text-gray-400 mt-1 ml-1">Para enviar copia por correo o pre-llenar agenda.</p>
                                         </div>
 
                                         {/* Dual Action Buttons */}
@@ -365,7 +378,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                                 onClick={() => {
                                                     if(!recipient) return;
                                                     // Open Cal.com with pre-filled name and email
-                                                    // Ensure protocol
                                                     let link = calLink;
                                                     if (!link.startsWith('http')) link = `https://${link}`;
                                                     
@@ -385,12 +397,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                                             <button 
                                                 type="submit"
-                                                disabled={!recipient || loading}
+                                                disabled={!recipient || !recipientPhone || loading}
                                                 className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50"
                                             >
                                                 {loading ? <Loader2 size={20} className="animate-spin" /> : <Bot size={20} className="mb-1"/>}
-                                                <span className="text-xs font-bold">Enviar Invitación</span>
-                                                <span className="text-[9px] opacity-90">WhatsApp (+ Correo)</span>
+                                                <span className="text-xs font-bold">Enviar Link</span>
+                                                <span className="text-[9px] opacity-90">Por WhatsApp</span>
                                             </button>
                                         </div>
                                     </>
