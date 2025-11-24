@@ -84,9 +84,9 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 relative">
-        <header className="bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border z-30 flex-shrink-0">
+        <header className="bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-border dark:border-dark-border z-30 flex-shrink-0 sticky top-0">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
+            <div className="flex justify-between items-center h-14 md:h-16">
                <div className="lg:hidden flex-shrink-0">
                  <Logo />
                </div>
@@ -103,9 +103,9 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                 <div className="relative">
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)} 
-                    className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-border transition-all"
+                    className="flex items-center gap-2 md:gap-3 pl-1 pr-2 md:pr-3 py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-border transition-all"
                   >
-                    <div className="w-9 h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
+                    <div className="w-8 h-8 md:w-9 md:h-9 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
                       {user.companyName.charAt(0)}
                     </div>
                     <div className="hidden md:flex flex-col items-start">
@@ -151,7 +151,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative pb-[80px] lg:pb-0">
+        <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative pb-[100px] lg:pb-0">
           {children}
           
           {/* Floating Assistant Widget - Accessible on all pages */}
@@ -160,7 +160,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
       </div>
 
        {/* Mobile Bottom Navigation */}
-       <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-between px-2 items-center lg:hidden z-20 pb-safe">
+       <nav className="fixed bottom-0 left-0 right-0 h-[70px] bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-between px-2 items-center lg:hidden z-20 pb-safe">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} isMobile={true} />)}
        </nav>
     </div>

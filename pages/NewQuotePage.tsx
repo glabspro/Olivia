@@ -1021,7 +1021,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                         {/* Live Preview Container */}
                         <div className="flex-1 order-2 lg:order-1 bg-gray-100 dark:bg-zinc-900 rounded-xl p-4 md:p-8 shadow-inner border border-border dark:border-dark-border flex justify-center overflow-hidden min-h-[500px] sm:min-h-[700px] md:min-h-0">
                              {/* Scale Transform for Mobile to fit A4 width (~800px) into screen width (~360px) */}
-                             <div className="transform scale-[0.42] sm:scale-75 md:scale-100 origin-top transition-transform duration-300">
+                             <div className="transform scale-[0.38] sm:scale-75 md:scale-100 origin-top transition-transform duration-300">
                                 <div className="min-w-[210mm] min-h-[297mm] bg-white shadow-lg mx-auto">
                                     <QuotationPreview
                                         items={items}

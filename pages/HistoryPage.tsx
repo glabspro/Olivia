@@ -356,58 +356,58 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
   if (loading) return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>;
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-full flex flex-col pb-24">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 min-h-full flex flex-col pb-24">
         {/* Header & Metrics */}
-        <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
-                <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary relative pb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-textPrimary dark:text-dark-textPrimary relative pb-2">
                     Dashboard de Ventas
                     <span className="absolute bottom-0 left-0 h-1 w-16 bg-accent-coral rounded-full"></span>
                 </h2>
-                <p className="text-textSecondary dark:text-dark-textSecondary mt-2">
+                <p className="text-xs md:text-sm text-textSecondary dark:text-dark-textSecondary mt-1">
                     Tu centro de control comercial.
                 </p>
             </div>
              
-             <div className="grid grid-cols-3 gap-3 w-full md:w-auto">
+             <div className="grid grid-cols-3 gap-2 w-full md:w-auto">
                 <button 
                     onClick={() => {
                         setViewMode('list');
                         document.getElementById('quote-list-container')?.scrollIntoView({ behavior: 'smooth' });
                     }} 
-                    className="bg-surface dark:bg-dark-surface px-4 py-3 rounded-xl border border-border dark:border-dark-border shadow-sm text-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                    className="bg-surface dark:bg-dark-surface px-2 py-3 rounded-xl border border-border dark:border-dark-border shadow-sm text-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                    <span className="text-[10px] text-textSecondary uppercase font-bold tracking-wider">Ventas Reales</span>
-                    <span className="block text-xl font-bold text-green-500 mt-1">S/ {totalSales.toFixed(0)}</span>
+                    <span className="text-[9px] md:text-[10px] text-textSecondary uppercase font-bold tracking-wider block">Ventas Reales</span>
+                    <span className="block text-lg md:text-xl font-bold text-green-500 mt-1">S/ {totalSales.toFixed(0)}</span>
                 </button>
                 <button 
                     onClick={() => {
                         setViewMode('list');
                         document.getElementById('quote-list-container')?.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="bg-blue-50 dark:bg-blue-900/20 px-4 py-3 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm text-center hover:scale-105 transition-transform cursor-pointer"
+                    className="bg-blue-50 dark:bg-blue-900/20 px-2 py-3 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm text-center hover:scale-105 transition-transform cursor-pointer"
                 >
-                    <span className="text-[10px] text-blue-600 dark:text-blue-300 uppercase font-bold tracking-wider">Cotizaciones</span>
-                    <span className="block text-xl font-bold text-blue-700 dark:text-blue-400 mt-1">{quotes.length}</span>
+                    <span className="text-[9px] md:text-[10px] text-blue-600 dark:text-blue-300 uppercase font-bold tracking-wider block">Cotizaciones</span>
+                    <span className="block text-lg md:text-xl font-bold text-blue-700 dark:text-blue-400 mt-1">{quotes.length}</span>
                 </button>
-                 <div className="bg-surface dark:bg-dark-surface px-4 py-3 rounded-xl border border-border dark:border-dark-border shadow-sm text-center">
-                    <span className="text-[10px] text-textSecondary uppercase font-bold tracking-wider">Este Mes</span>
-                    <span className="block text-xl font-bold text-purple-500 mt-1">{quotesThisMonth}</span>
+                 <div className="bg-surface dark:bg-dark-surface px-2 py-3 rounded-xl border border-border dark:border-dark-border shadow-sm text-center">
+                    <span className="text-[9px] md:text-[10px] text-textSecondary uppercase font-bold tracking-wider block">Este Mes</span>
+                    <span className="block text-lg md:text-xl font-bold text-purple-500 mt-1">{quotesThisMonth}</span>
                 </div>
              </div>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6 bg-surface dark:bg-dark-surface p-2 md:p-4 rounded-xl border border-border dark:border-dark-border shadow-sm z-10">
+        <div className="flex flex-col md:flex-row gap-3 mb-6 bg-surface dark:bg-dark-surface p-2 rounded-xl border border-border dark:border-dark-border shadow-sm z-10">
             <div className="relative flex-grow">
                 <input 
                     type="text" 
-                    placeholder="Buscar por cliente o número..." 
+                    placeholder="Buscar..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2.5 w-full bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-sm"
+                    className="pl-9 pr-4 py-2.5 w-full bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none text-sm"
                 />
-                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                <Search className="absolute left-3 top-3 text-gray-400" size={16} />
             </div>
             
             <div className="flex items-center gap-2">
@@ -429,12 +429,12 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
                 </div>
                 
                 {viewMode === 'list' && (
-                    <div className="hidden md:flex items-center gap-2 overflow-x-auto">
-                        {['all', 'sent', 'accepted', 'draft'].map(status => (
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                        {['all', 'sent', 'accepted'].map(status => (
                             <button
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase whitespace-nowrap transition-colors ${
+                                className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase whitespace-nowrap transition-colors ${
                                     statusFilter === status 
                                     ? 'bg-primary text-white shadow-sm' 
                                     : 'bg-gray-100 dark:bg-white/5 text-textSecondary hover:bg-gray-200 dark:hover:bg-white/10'
@@ -459,50 +459,50 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ user, onEditQuote, onDuplicat
             ) : viewMode === 'list' ? (
                 <div className="space-y-4">
                     {/* Optimized Mobile Cards View */}
-                     <div className="md:hidden space-y-4">
+                     <div className="md:hidden space-y-3">
                         {filteredQuotes.map(quote => (
-                            <div key={quote.id} className="bg-surface dark:bg-dark-surface p-5 rounded-xl border border-border dark:border-dark-border shadow-sm relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-transparent via-primary to-transparent opacity-50"></div>
+                            <div key={quote.id} className="bg-surface dark:bg-dark-surface p-4 rounded-xl border border-border dark:border-dark-border shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-primary to-transparent opacity-50"></div>
                                 
-                                <div className="flex justify-between items-start mb-3 gap-2">
+                                <div className="flex justify-between items-start mb-2 gap-2">
                                      <div className="min-w-0 flex-1">
-                                        <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary leading-tight truncate pr-2">{quote.client.name}</h3>
-                                        <p className="text-xs text-textSecondary mt-1">{new Date(quote.created_at).toLocaleDateString()}</p>
+                                        <h3 className="font-bold text-base text-textPrimary dark:text-dark-textPrimary leading-tight truncate pr-2">{quote.client.name}</h3>
+                                        <p className="text-[10px] text-textSecondary mt-0.5">{new Date(quote.created_at).toLocaleDateString()}</p>
                                      </div>
-                                     <span className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full border flex-shrink-0 ${getStatusColor(quote.status)}`}>
+                                     <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border flex-shrink-0 ${getStatusColor(quote.status)}`}>
                                         {getStatusLabel(quote.status)}
                                     </span>
                                 </div>
                                 
-                                <div className="flex justify-between items-end mb-4">
+                                <div className="flex justify-between items-end mb-3">
                                     <div>
-                                        <p className="text-xs text-textSecondary font-mono bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded inline-block mb-1">{quote.quotation_number}</p>
+                                        <p className="text-[10px] text-textSecondary font-mono bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded inline-block mb-1">{quote.quotation_number}</p>
                                     </div>
-                                    <span className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">{quote.currency} {quote.total_amount.toFixed(2)}</span>
+                                    <span className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">{quote.currency} {quote.total_amount.toFixed(2)}</span>
                                 </div>
                                 
-                                <div className="mb-4 border-t border-border dark:border-dark-border pt-3">
+                                <div className="mb-3 border-t border-border dark:border-dark-border pt-2">
                                     <QuoteTags quote={quote} onUpdateTags={(tags, meta) => handleUpdateTags(quote.id, tags, meta)} />
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-3 gap-2">
                                     <button 
                                         onClick={() => onEditQuote(quote.id)}
-                                        className="py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+                                        className="py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
                                     >
-                                        <Edit size={18}/> Editar
+                                        <Edit size={16}/> Editar
                                     </button>
                                     <button 
                                         onClick={() => onDuplicateQuote(quote.id)} 
-                                        className="py-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+                                        className="py-2.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
                                     >
-                                        <Copy size={18}/> Copiar
+                                        <Copy size={16}/> Copiar
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(quote.id)} 
-                                        className="py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+                                        className="py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
                                     >
-                                        <Trash2 size={18}/> Eliminar
+                                        <Trash2 size={16}/> Eliminar
                                     </button>
                                 </div>
                             </div>
