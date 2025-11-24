@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { 
     Plus, X, Calendar, CheckCircle, Loader2, Bot, Sparkles, 
@@ -82,12 +81,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   const [taskType, setTaskType] = useState<TaskType>('note');
   
   // Form States
-  const [note, setNote] = useState(''); // Body / Description
-  const [recipient, setRecipient] = useState(''); // Client Name
-  const [recipientPhone, setRecipientPhone] = useState(''); // Client Phone
-  const [countryCode, setCountryCode] = useState('+51'); // Default Country Code
-  const [recipientEmail, setRecipientEmail] = useState(''); // Client Email
-  const [subject, setSubject] = useState(''); // Email Subject
+  const [note, setNote] = useState(''); 
+  const [recipient, setRecipient] = useState(''); 
+  const [recipientPhone, setRecipientPhone] = useState(''); 
+  const [countryCode, setCountryCode] = useState('+51'); 
+  const [recipientEmail, setRecipientEmail] = useState(''); 
+  const [subject, setSubject] = useState(''); 
   const [attachment, setAttachment] = useState<File | null>(null);
   const [date, setDate] = useState('');
   const [isImportant, setIsImportant] = useState(false);
@@ -99,11 +98,10 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Configuration Checks ---
+  // --- Checks ---
   const hasCalLink = !!user.settings?.calComLink;
   const calLink = user.settings?.calComLink || '';
   
-  // --- Helpers ---
   const hasValidEmail = (text: string) => /[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/.test(text);
 
   const handleOpen = () => {
@@ -143,13 +141,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
       setSuccess(false);
   };
 
-  // --- Logic ---
-
   const isFormValid = () => {
       if (taskType === 'email') return recipientEmail.length > 0 && hasValidEmail(recipientEmail) && note.length > 0 && subject.length > 0;
       if (taskType === 'meeting') return recipient.length > 0 && recipientPhone.length > 0 && hasCalLink; 
-      if (taskType === 'call') return recipient.length > 0 && recipientPhone.length > 0 && date.length > 0; // Requires Date now
-      if (taskType === 'note') return note.length > 0 && date.length > 0; // Requires Date for reminders
+      if (taskType === 'call') return recipient.length > 0 && recipientPhone.length > 0 && date.length > 0; 
+      if (taskType === 'note') return note.length > 0 && date.length > 0; 
       return note.length > 0;
   };
 
@@ -164,27 +160,23 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         let isImmediateAction = false;
         let successMsg = 'Guardado';
 
-        // Sanitize inputs to prevent breaking the pipe parser in n8n
         const sanitize = (str: string) => str.replace(/\|/g, ' ').trim();
 
         const cleanNote = sanitize(note);
         const cleanRecipient = sanitize(recipient);
         const cleanEmail = recipientEmail.trim().toLowerCase();
         
-        // Construct Full Phone Number with Country Code
         const rawPhone = recipientPhone.replace(/\D/g, '');
         const cleanCode = countryCode.replace('+', '');
         let fullPhone = rawPhone;
         
-        // Only prepend code if the user hasn't typed it already (basic check)
         if (!rawPhone.startsWith(cleanCode)) {
             fullPhone = `${cleanCode}${rawPhone}`;
         }
 
         switch (taskType) {
             case 'call': 
-                // IMPORTANT: Saving full details in description so n8n Cron can parse it later
-                // Format: CALL: Motivo | Nombre Cliente | Telefono
+                // FORMATO CORRECTO PARA N8N: CALL: Nota | Nombre | Telefono
                 finalDescription = `CALL: ${cleanNote} | ${cleanRecipient} | ${fullPhone}`; 
                 successMsg = 'Llamada Agendada';
                 break;
@@ -225,26 +217,22 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         }
 
         // 1. Trigger Automation (n8n)
-        // Always trigger if it has a date (for reminders) or is immediate
         if (isImmediateAction || finalDate || taskType === 'call') {
              await triggerTaskAutomation(user, {
                 type: taskType,
                 description: finalDescription,
                 date: finalDate || new Date().toISOString(),
                 email: cleanEmail,
-                // Pass phone and name explicitly for Call/Meeting reminders
                 phone: fullPhone, 
                 name: cleanRecipient
             });
         }
 
-        // 2. Save to Database
-        // We save CALLs, NOTEs and URGENTs. Meetings and Emails are ephemeral (sent immediately).
+        // 2. Save to Database (Skip immediate actions)
         if (taskType !== 'meeting' && taskType !== 'email') {
             await createTask(user.id, finalDescription, finalDate, isImportant);
         }
         
-        // 3. Success UI
         setActionMessage(successMsg);
         setSuccess(true);
         setTimeout(() => handleClose(), 2000);
@@ -255,8 +243,6 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         setLoading(false);
     }
   };
-
-  // --- UI Components ---
 
   const MenuCard = ({ id, icon: Icon, title, desc, colorClass, bgClass }: any) => (
       <button 
@@ -292,24 +278,15 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end sm:p-6">
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
-            onClick={handleClose}
-          ></div>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={handleClose}></div>
           
           <div className="relative w-full sm:w-[450px] bg-surface dark:bg-dark-surface rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border dark:border-dark-border overflow-hidden animate-slide-up transition-all duration-300 flex flex-col max-h-[80dvh] sm:max-h-[85vh]">
-            
-            {/* Header */}
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-4 pt-6 sm:pt-4 flex justify-between items-center text-white shrink-0">
                 <div className="flex items-center gap-3">
                     {view === 'form' ? (
-                        <button onClick={goBack} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                            <ArrowLeft size={20} />
-                        </button>
+                        <button onClick={goBack} className="p-1 hover:bg-white/20 rounded-full transition-colors"><ArrowLeft size={20} /></button>
                     ) : (
-                        <div className="p-1.5 bg-white/10 rounded-full border border-white/20">
-                            <Bot size={20} className="text-pink-400"/>
-                        </div>
+                        <div className="p-1.5 bg-white/10 rounded-full border border-white/20"><Bot size={20} className="text-pink-400"/></div>
                     )}
                     <div>
                         <h3 className="font-bold text-base leading-none">
@@ -321,19 +298,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                         </h3>
                     </div>
                 </div>
-                <button onClick={handleClose} className="hover:bg-white/20 p-1.5 rounded-full transition-colors text-gray-400 hover:text-white">
-                    <X size={20} />
-                </button>
+                <button onClick={handleClose} className="hover:bg-white/20 p-1.5 rounded-full transition-colors text-gray-400 hover:text-white"><X size={20} /></button>
             </div>
 
-            {/* Content Body */}
             <div className="p-5 overflow-y-auto custom-scrollbar flex-grow bg-gray-50 dark:bg-black/20 pb-safe-offset-4">
-                
                 {success ? (
                     <div className="h-64 flex flex-col items-center justify-center text-center animate-fade-in">
-                        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 animate-bounce">
-                            <CheckCircle size={40} className="text-green-500" />
-                        </div>
+                        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 animate-bounce"><CheckCircle size={40} className="text-green-500" /></div>
                         <h3 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{actionMessage}</h3>
                         <p className="text-textSecondary mt-2">Tu asistente te recordará a tiempo.</p>
                     </div>
@@ -342,73 +313,33 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                         <div className="col-span-2 mb-2">
                             <p className="text-xs font-bold text-textSecondary uppercase tracking-wider mb-3">Comunicaciones</p>
                             <div className="grid grid-cols-2 gap-3">
-                                <MenuCard 
-                                    id="meeting" 
-                                    icon={Calendar} 
-                                    title="Reunión" 
-                                    desc="Envía invitaciones o agenda tú mismo." 
-                                    colorClass="text-purple-600" 
-                                    bgClass="bg-purple-100 dark:bg-purple-900/30" 
-                                />
-                                <MenuCard 
-                                    id="email" 
-                                    icon={Mail} 
-                                    title="Correo" 
-                                    desc="Redacta correos con adjuntos PDF." 
-                                    colorClass="text-orange-600" 
-                                    bgClass="bg-orange-100 dark:bg-orange-900/30" 
-                                />
+                                <MenuCard id="meeting" icon={Calendar} title="Reunión" desc="Envía invitaciones o agenda tú mismo." colorClass="text-purple-600" bgClass="bg-purple-100 dark:bg-purple-900/30" />
+                                <MenuCard id="email" icon={Mail} title="Correo" desc="Redacta correos con adjuntos PDF." colorClass="text-orange-600" bgClass="bg-orange-100 dark:bg-orange-900/30" />
                             </div>
                         </div>
-                        
                         <div className="col-span-2">
                             <p className="text-xs font-bold text-textSecondary uppercase tracking-wider mb-3">Gestión Interna</p>
                             <div className="grid grid-cols-2 gap-3">
-                                <MenuCard 
-                                    id="call" 
-                                    icon={Phone} 
-                                    title="Agendar Llamada" 
-                                    desc="Recuérdame llamar a un cliente." 
-                                    colorClass="text-blue-600" 
-                                    bgClass="bg-blue-100 dark:bg-blue-900/30" 
-                                />
-                                <MenuCard 
-                                    id="note" 
-                                    icon={FileText} 
-                                    title="Tarea" 
-                                    desc="Guarda pendientes con fecha." 
-                                    colorClass="text-gray-600" 
-                                    bgClass="bg-gray-100 dark:bg-gray-800" 
-                                />
+                                <MenuCard id="call" icon={Phone} title="Agendar Llamada" desc="Recuérdame llamar a un cliente." colorClass="text-blue-600" bgClass="bg-blue-100 dark:bg-blue-900/30" />
+                                <MenuCard id="note" icon={FileText} title="Tarea" desc="Guarda pendientes con fecha." colorClass="text-gray-600" bgClass="bg-gray-100 dark:bg-gray-800" />
                             </div>
                         </div>
-
                          <div className="col-span-2 mt-2">
-                             <button 
-                                onClick={() => selectOption('urgent')}
-                                className="w-full flex items-center gap-4 p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                            >
-                                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-500">
-                                    <AlertTriangle size={20}/>
-                                </div>
-                                <div className="text-left">
-                                    <h4 className="font-bold text-red-700 dark:text-red-400 text-sm">Tarea Prioritaria</h4>
-                                    <p className="text-xs text-red-600/80 dark:text-red-400/70">Marcar como urgente.</p>
-                                </div>
+                             <button onClick={() => selectOption('urgent')} className="w-full flex items-center gap-4 p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors">
+                                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-500"><AlertTriangle size={20}/></div>
+                                <div className="text-left"><h4 className="font-bold text-red-700 dark:text-red-400 text-sm">Tarea Prioritaria</h4><p className="text-xs text-red-600/80 dark:text-red-400/70">Marcar como urgente.</p></div>
                              </button>
                          </div>
                     </div>
                 ) : (
                     <form onSubmit={handleSave} className="space-y-4 animate-fade-in pb-4">
-                        
-                        {/* --- MEETING FORM --- */}
                         {taskType === 'meeting' && (
                             <div className="space-y-4">
                                 {!hasCalLink ? (
                                     <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800 text-center">
                                         <AlertTriangle size={32} className="mx-auto text-red-500 mb-2"/>
                                         <h4 className="font-bold text-red-700 dark:text-red-400">Falta Configuración</h4>
-                                        <p className="text-xs text-red-600 dark:text-red-300 mb-3">Necesitas agregar tu enlace de Cal.com en ajustes para usar esta función.</p>
+                                        <p className="text-xs text-red-600 dark:text-red-300 mb-3">Necesitas agregar tu enlace de Cal.com en ajustes.</p>
                                         <button type="button" onClick={handleClose} className="text-xs font-bold underline text-red-700">Ir a Ajustes</button>
                                     </div>
                                 ) : (
@@ -416,75 +347,27 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                         <div>
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Nombre del Cliente</label>
                                             <div className="relative">
-                                                <input 
-                                                    autoFocus
-                                                    type="text" 
-                                                    value={recipient}
-                                                    onChange={e => setRecipient(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                                                    placeholder="Ej. Juan Pérez"
-                                                />
+                                                <input autoFocus type="text" value={recipient} onChange={e => setRecipient(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm" placeholder="Ej. Juan Pérez"/>
                                                 <User className="absolute left-3 top-3 text-gray-400" size={18}/>
                                             </div>
                                         </div>
-
                                         <div>
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">WhatsApp del Cliente</label>
-                                            <PhoneInputRow 
-                                                countryCode={countryCode} 
-                                                setCountryCode={setCountryCode}
-                                                recipientPhone={recipientPhone}
-                                                setRecipientPhone={setRecipientPhone}
-                                                colorClass="focus:ring-purple-500"
-                                            />
+                                            <PhoneInputRow countryCode={countryCode} setCountryCode={setCountryCode} recipientPhone={recipientPhone} setRecipientPhone={setRecipientPhone} colorClass="focus:ring-purple-500"/>
                                         </div>
-
                                         <div>
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Email (Opcional)</label>
                                             <div className="relative">
-                                                <input 
-                                                    type="email" 
-                                                    value={recipientEmail}
-                                                    onChange={e => setRecipientEmail(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                                                    placeholder="Para pre-llenar la agenda"
-                                                />
+                                                <input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm" placeholder="Para pre-llenar la agenda"/>
                                                 <AtSign className="absolute left-3 top-3 text-gray-400" size={18}/>
                                             </div>
                                         </div>
-
-                                        {/* Dual Action Buttons */}
                                         <div className="grid grid-cols-2 gap-3 pt-2">
-                                            <button 
-                                                type="button"
-                                                onClick={() => {
-                                                    if(!recipient) return;
-                                                    // Open Cal.com with pre-filled name and email
-                                                    let link = calLink;
-                                                    if (!link.startsWith('http')) link = `https://${link}`;
-                                                    
-                                                    let url = `${link}?name=${encodeURIComponent(recipient)}`;
-                                                    if (recipientEmail) url += `&email=${encodeURIComponent(recipientEmail)}`;
-                                                    
-                                                    window.open(url, '_blank');
-                                                    handleClose();
-                                                }}
-                                                disabled={!recipient}
-                                                className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-purple-500 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all disabled:opacity-50"
-                                            >
-                                                <ExternalLink size={20} className="mb-1"/>
-                                                <span className="text-xs font-bold">Agendar Yo</span>
-                                                <span className="text-[9px] opacity-70">Abrir Calendario</span>
+                                            <button type="button" onClick={() => { if(!recipient) return; let link = calLink.startsWith('http') ? calLink : `https://${calLink}`; let url = `${link}?name=${encodeURIComponent(recipient)}`; if (recipientEmail) url += `&email=${encodeURIComponent(recipientEmail)}`; window.open(url, '_blank'); handleClose(); }} disabled={!recipient} className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-purple-500 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all disabled:opacity-50">
+                                                <ExternalLink size={20} className="mb-1"/><span className="text-xs font-bold">Agendar Yo</span><span className="text-[9px] opacity-70">Abrir Calendario</span>
                                             </button>
-
-                                            <button 
-                                                type="submit" 
-                                                disabled={!recipient || !recipientPhone || loading}
-                                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50"
-                                            >
-                                                {loading ? <Loader2 size={20} className="animate-spin" /> : <Bot size={20} className="mb-1"/>}
-                                                <span className="text-xs font-bold">Enviar Invitación</span>
-                                                <span className="text-[9px] opacity-90">Por WhatsApp</span>
+                                            <button type="submit" disabled={!recipient || !recipientPhone || loading} className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50">
+                                                {loading ? <Loader2 size={20} className="animate-spin" /> : <Bot size={20} className="mb-1"/>}<span className="text-xs font-bold">Enviar Invitación</span><span className="text-[9px] opacity-90">Por WhatsApp</span>
                                             </button>
                                         </div>
                                     </>
@@ -492,170 +375,83 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             </div>
                         )}
 
-                        {/* --- EMAIL FORM --- */}
                         {taskType === 'email' && (
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Para (Email)</label>
                                     <div className="relative">
-                                        <input 
-                                            autoFocus
-                                            type="email" 
-                                            value={recipientEmail}
-                                            onChange={e => setRecipientEmail(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                                            placeholder="cliente@empresa.com"
-                                        />
+                                        <input autoFocus type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm" placeholder="cliente@empresa.com"/>
                                         <AtSign className="absolute left-3 top-3 text-gray-400" size={18}/>
                                     </div>
-                                    {recipientEmail && !hasValidEmail(recipientEmail) && <p className="text-[10px] text-red-500 mt-1">* Email inválido</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Asunto</label>
-                                    <input 
-                                        type="text" 
-                                        value={subject}
-                                        onChange={e => setSubject(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                                        placeholder="Ej. Propuesta Económica"
-                                    />
+                                    <input type="text" value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm" placeholder="Ej. Propuesta Económica"/>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Mensaje</label>
-                                    <textarea 
-                                        rows={4} 
-                                        value={note}
-                                        onChange={e => setNote(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm resize-none"
-                                        placeholder="Escribe tu mensaje aquí..."
-                                    />
+                                    <textarea rows={4} value={note} onChange={e => setNote(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm resize-none" placeholder="Escribe tu mensaje aquí..."/>
                                 </div>
                                 <div>
                                     <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => e.target.files && setAttachment(e.target.files[0])}/>
-                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-orange-600 transition-colors">
-                                        <Paperclip size={14}/> {attachment ? attachment.name : 'Adjuntar Archivo (Opcional)'}
-                                    </button>
+                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-orange-600 transition-colors"><Paperclip size={14}/> {attachment ? attachment.name : 'Adjuntar Archivo (Opcional)'}</button>
                                 </div>
                             </div>
                         )}
 
-                        {/* --- CALL FORM --- */}
                         {taskType === 'call' && (
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">¿A quién llamar?</label>
                                     <div className="relative">
-                                        <input 
-                                            autoFocus
-                                            type="text" 
-                                            value={recipient}
-                                            onChange={e => setRecipient(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                                            placeholder="Nombre del Cliente"
-                                        />
+                                        <input autoFocus type="text" value={recipient} onChange={e => setRecipient(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Nombre del Cliente"/>
                                         <User className="absolute left-3 top-3 text-gray-400" size={18}/>
                                     </div>
                                 </div>
-                                
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Teléfono del Cliente</label>
-                                    <PhoneInputRow 
-                                        countryCode={countryCode} 
-                                        setCountryCode={setCountryCode}
-                                        recipientPhone={recipientPhone}
-                                        setRecipientPhone={setRecipientPhone}
-                                        colorClass="focus:ring-blue-500"
-                                    />
+                                    <PhoneInputRow countryCode={countryCode} setCountryCode={setCountryCode} recipientPhone={recipientPhone} setRecipientPhone={setRecipientPhone} colorClass="focus:ring-blue-500"/>
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">¿Cuándo llamar?</label>
                                     <div className="relative">
-                                        <input 
-                                            type="datetime-local"
-                                            value={date}
-                                            onChange={e => setDate(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-textPrimary dark:text-dark-textPrimary"
-                                        />
+                                        <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-textPrimary dark:text-dark-textPrimary"/>
                                         <Clock className="absolute left-3 top-3 text-gray-400" size={18}/>
                                     </div>
                                 </div>
-
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Motivo de llamada</label>
-                                    <textarea 
-                                        rows={3}
-                                        value={note}
-                                        onChange={e => setNote(e.target.value)}
-                                        className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none"
-                                        placeholder="Ej. Seguimiento de cotización..."
-                                    />
+                                    <textarea rows={3} value={note} onChange={e => setNote(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none" placeholder="Ej. Seguimiento de cotización..."/>
                                 </div>
                             </div>
                         )}
 
-                        {/* --- STANDARD NOTE / URGENT --- */}
                         {(taskType === 'note' || taskType === 'urgent') && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">
-                                        {taskType === 'urgent' ? 'Detalle de Urgencia' : 'Nota'}
-                                    </label>
-                                    <textarea 
-                                        autoFocus
-                                        rows={4}
-                                        value={note}
-                                        onChange={e => setNote(e.target.value)}
-                                        className={`w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 outline-none text-sm resize-none ${taskType === 'urgent' ? 'focus:ring-red-500' : 'focus:ring-gray-500'}`}
-                                        placeholder={taskType === 'urgent' ? 'Ej. Pagar servicios hoy...' : 'Ej. Comprar insumos...'}
-                                    />
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">{taskType === 'urgent' ? 'Detalle de Urgencia' : 'Nota'}</label>
+                                    <textarea autoFocus rows={4} value={note} onChange={e => setNote(e.target.value)} className={`w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 outline-none text-sm resize-none ${taskType === 'urgent' ? 'focus:ring-red-500' : 'focus:ring-gray-500'}`} placeholder={taskType === 'urgent' ? 'Ej. Pagar servicios hoy...' : 'Ej. Comprar insumos...'}/>
                                 </div>
-                                
-                                {/* Date Picker for Reminders */}
                                 <div>
                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Fecha de Ejecución (Recordatorio)</label>
                                     <div className="relative">
-                                        <input 
-                                            type="datetime-local"
-                                            value={date}
-                                            onChange={e => setDate(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm text-textPrimary dark:text-dark-textPrimary"
-                                        />
+                                        <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm text-textPrimary dark:text-dark-textPrimary"/>
                                         <Clock className="absolute left-3 top-3 text-gray-400" size={18}/>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Submit Button (Only for non-meeting types or Email) */}
                         {taskType !== 'meeting' && (
                             <div className="pt-2">
-                                <button 
-                                    type="submit" 
-                                    disabled={!isFormValid() || loading}
-                                    className={`w-full py-3.5 font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-xl hover:-translate-y-0.5 text-white ${
-                                        taskType === 'email' ? 'bg-orange-600 hover:bg-orange-700' :
-                                        taskType === 'call' ? 'bg-blue-600 hover:bg-blue-700' :
-                                        taskType === 'urgent' ? 'bg-red-600 hover:bg-red-700' :
-                                        'bg-gray-800 hover:bg-black'
-                                    }`}
-                                >
-                                    {loading ? <Loader2 size={20} className="animate-spin" /> : (
-                                        <>
-                                            {taskType === 'email' ? 'Enviar Correo' :
-                                            taskType === 'call' ? 'Programar Llamada' :
-                                            'Guardar Tarea'}
-                                        </>
-                                    )}
+                                <button type="submit" disabled={!isFormValid() || loading} className={`w-full py-3.5 font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-xl hover:-translate-y-0.5 text-white ${taskType === 'email' ? 'bg-orange-600 hover:bg-orange-700' : taskType === 'call' ? 'bg-blue-600 hover:bg-blue-700' : taskType === 'urgent' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-800 hover:bg-black'}`}>
+                                    {loading ? <Loader2 size={20} className="animate-spin" /> : (<>{taskType === 'email' ? 'Enviar Correo' : taskType === 'call' ? 'Programar Llamada' : 'Guardar Tarea'}</>)}
                                 </button>
                             </div>
                         )}
-
                     </form>
                 )}
             </div>
-            
-            {/* Footer */}
             <div className="bg-surface dark:bg-dark-surface p-2 text-center border-t border-border dark:border-dark-border hidden sm:block">
                 <p className="text-[10px] text-textSecondary opacity-60">Power by Olivia AI</p>
             </div>
