@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { 
     Plus, X, Calendar, CheckCircle, Loader2, Bot, Sparkles, 
     Phone, Briefcase, AlertTriangle, Mail, FileText, 
-    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign, Smartphone
+    Paperclip, ArrowLeft, ChevronRight, User, ExternalLink, AtSign, Smartphone, Clock
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { createTask, triggerTaskAutomation, uploadGenericFile } from '../services/supabaseClient';
@@ -39,7 +39,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
   // Form States
   const [note, setNote] = useState(''); // Body / Description
   const [recipient, setRecipient] = useState(''); // Client Name
-  const [recipientPhone, setRecipientPhone] = useState(''); // Client Phone (New for Meetings)
+  const [recipientPhone, setRecipientPhone] = useState(''); // Client Phone
   const [countryCode, setCountryCode] = useState('+51'); // Default Country Code
   const [recipientEmail, setRecipientEmail] = useState(''); // Client Email
   const [subject, setSubject] = useState(''); // Email Subject
@@ -102,7 +102,9 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
   const isFormValid = () => {
       if (taskType === 'email') return recipientEmail.length > 0 && hasValidEmail(recipientEmail) && note.length > 0 && subject.length > 0;
-      if (taskType === 'meeting') return recipient.length > 0 && recipientPhone.length > 0 && hasCalLink; // Require Phone for meetings
+      if (taskType === 'meeting') return recipient.length > 0 && recipientPhone.length > 0 && hasCalLink; 
+      if (taskType === 'call') return recipient.length > 0 && recipientPhone.length > 0 && date.length > 0; // Requires Date now
+      if (taskType === 'note') return note.length > 0 && date.length > 0; // Requires Date for reminders
       return note.length > 0;
   };
 
@@ -136,13 +138,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         switch (taskType) {
             case 'call': 
-                finalDescription = `CALL: ${cleanNote} (${cleanRecipient || 'Cliente'})`; 
-                successMsg = 'Llamada Registrada';
+                // Changed from Log Call to Schedule Call
+                finalDescription = `CALL: ${cleanNote} (Cliente: ${cleanRecipient})`; 
+                successMsg = 'Llamada Agendada';
+                // We are not setting isImmediateAction because we want it to be a database task AND a future reminder
                 break;
                 
             case 'meeting': 
-                // Formato actualizado para n8n: MEET: Nombre | Teléfono | Email
-                // Nota: cleanEmail también se enviará explícitamente en el objeto payload
                 finalDescription = `MEET: ${cleanRecipient} | ${fullPhone} | ${cleanEmail}`; 
                 isImmediateAction = true;
                 successMsg = 'Invitación Enviada!';
@@ -177,19 +179,21 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 break;
         }
 
-        // 1. Trigger Automation (n8n) - ALWAYS for immediate actions or urgent
-        if (isImmediateAction || taskType === 'urgent') {
+        // 1. Trigger Automation (n8n)
+        // Always trigger if it has a date (for reminders) or is immediate
+        if (isImmediateAction || finalDate || taskType === 'call') {
              await triggerTaskAutomation(user, {
                 type: taskType,
                 description: finalDescription,
                 date: finalDate || new Date().toISOString(),
-                email: cleanEmail // Explicitly pass email for robust handling
+                email: cleanEmail,
+                // Pass phone and name explicitly for Call/Meeting reminders
+                phone: fullPhone, 
+                name: cleanRecipient
             });
         }
 
-        // 2. Save to Database - CONDICIONADO
-        // Solo guardamos en la base de datos si NO es una acción inmediata (Reunión/Email)
-        // Las reuniones y correos son "efímeros" (solo disparo), las llamadas y tareas son "historial".
+        // 2. Save to Database
         if (taskType !== 'meeting' && taskType !== 'email') {
             await createTask(user.id, finalDescription, finalDate, isImportant);
         }
@@ -222,6 +226,30 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
               <ChevronRight size={16} />
           </div>
       </button>
+  );
+
+  const CountryPhoneInput = () => (
+    <div className="flex gap-2">
+        <select
+            value={countryCode}
+            onChange={(e) => setCountryCode(e.target.value)}
+            className="w-24 pl-2 pr-1 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm appearance-none cursor-pointer"
+        >
+            {countries.map(c => (
+                <option key={c.code} value={c.dial_code}>{c.flag} {c.dial_code}</option>
+            ))}
+        </select>
+        <div className="relative flex-1">
+            <input 
+                type="tel" 
+                value={recipientPhone}
+                onChange={e => setRecipientPhone(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                placeholder="Ej. 987654321"
+            />
+            <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
+        </div>
+    </div>
   );
 
   return (
@@ -266,7 +294,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             {view === 'menu' ? '¿En qué te ayudo hoy?' : 
                              taskType === 'email' ? 'Redactar Correo' :
                              taskType === 'meeting' ? 'Agendar Reunión' :
-                             taskType === 'call' ? 'Registrar Llamada' :
+                             taskType === 'call' ? 'Agendar Llamada' :
                              taskType === 'urgent' ? 'Tarea Prioritaria' : 'Nueva Tarea'}
                         </h3>
                     </div>
@@ -285,7 +313,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                             <CheckCircle size={40} className="text-green-500" />
                         </div>
                         <h3 className="text-2xl font-bold text-textPrimary dark:text-dark-textPrimary">{actionMessage}</h3>
-                        <p className="text-textSecondary mt-2">Tu asistente se encargará del resto.</p>
+                        <p className="text-textSecondary mt-2">Tu asistente te recordará a tiempo.</p>
                     </div>
                 ) : view === 'menu' ? (
                     <div className="grid grid-cols-2 gap-3 animate-fade-in pb-4">
@@ -317,8 +345,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 <MenuCard 
                                     id="call" 
                                     icon={Phone} 
-                                    title="Reg. Llamada" 
-                                    desc="Bitácora de llamadas a clientes." 
+                                    title="Agendar Llamada" 
+                                    desc="Recuérdame llamar a un cliente." 
                                     colorClass="text-blue-600" 
                                     bgClass="bg-blue-100 dark:bg-blue-900/30" 
                                 />
@@ -326,7 +354,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     id="note" 
                                     icon={FileText} 
                                     title="Tarea" 
-                                    desc="Guarda ideas o pendientes." 
+                                    desc="Guarda pendientes con fecha." 
                                     colorClass="text-gray-600" 
                                     bgClass="bg-gray-100 dark:bg-gray-800" 
                                 />
@@ -380,27 +408,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
                                         <div>
                                             <label className="block text-xs font-bold text-textSecondary uppercase mb-1">WhatsApp del Cliente</label>
-                                            <div className="flex gap-2">
-                                                <select
-                                                    value={countryCode}
-                                                    onChange={(e) => setCountryCode(e.target.value)}
-                                                    className="w-24 pl-2 pr-1 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm appearance-none cursor-pointer"
-                                                >
-                                                    {countries.map(c => (
-                                                        <option key={c.code} value={c.dial_code}>{c.flag} {c.dial_code}</option>
-                                                    ))}
-                                                </select>
-                                                <div className="relative flex-1">
-                                                    <input 
-                                                        type="tel" 
-                                                        value={recipientPhone}
-                                                        onChange={e => setRecipientPhone(e.target.value)}
-                                                        className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                                                        placeholder="Ej. 987654321"
-                                                    />
-                                                    <Smartphone className="absolute left-3 top-3 text-gray-400" size={18}/>
-                                                </div>
-                                            </div>
+                                            <CountryPhoneInput />
                                         </div>
 
                                         <div>
@@ -507,7 +515,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                         {taskType === 'call' && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">¿Con quién hablaste?</label>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">¿A quién llamar?</label>
                                     <div className="relative">
                                         <input 
                                             autoFocus
@@ -520,14 +528,33 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                         <User className="absolute left-3 top-3 text-gray-400" size={18}/>
                                     </div>
                                 </div>
+                                
                                 <div>
-                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Resumen de la llamada</label>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Teléfono del Cliente</label>
+                                    <CountryPhoneInput />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">¿Cuándo llamar?</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="datetime-local"
+                                            value={date}
+                                            onChange={e => setDate(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-textPrimary dark:text-dark-textPrimary"
+                                        />
+                                        <Clock className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Motivo de llamada</label>
                                     <textarea 
                                         rows={3}
                                         value={note}
                                         onChange={e => setNote(e.target.value)}
                                         className="w-full px-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none"
-                                        placeholder="Ej. Quedamos en enviar cotización mañana..."
+                                        placeholder="Ej. Seguimiento de cotización..."
                                     />
                                 </div>
                             </div>
@@ -549,6 +576,20 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                         placeholder={taskType === 'urgent' ? 'Ej. Pagar servicios hoy...' : 'Ej. Comprar insumos...'}
                                     />
                                 </div>
+                                
+                                {/* Date Picker for Reminders */}
+                                <div>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Fecha de Ejecución (Recordatorio)</label>
+                                    <div className="relative">
+                                        <input 
+                                            type="datetime-local"
+                                            value={date}
+                                            onChange={e => setDate(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm text-textPrimary dark:text-dark-textPrimary"
+                                        />
+                                        <Clock className="absolute left-3 top-3 text-gray-400" size={18}/>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -568,8 +609,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                     {loading ? <Loader2 size={20} className="animate-spin" /> : (
                                         <>
                                             {taskType === 'email' ? 'Enviar Correo' :
-                                            taskType === 'call' ? 'Registrar' :
-                                            'Guardar'}
+                                            taskType === 'call' ? 'Programar Llamada' :
+                                            'Guardar Tarea'}
                                         </>
                                     )}
                                 </button>

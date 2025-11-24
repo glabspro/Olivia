@@ -762,7 +762,17 @@ export const getPendingTaskCount = async (userId: string): Promise<number> => {
     return count || 0;
 }
 
-export const triggerTaskAutomation = async (user: User, taskData: { type: string, description: string, date?: string, email?: string }) => {
+export const triggerTaskAutomation = async (
+    user: User, 
+    taskData: { 
+        type: string, 
+        description: string, 
+        date?: string, 
+        email?: string, 
+        phone?: string, // Client phone
+        name?: string   // Client name
+    }
+) => {
     try {
         const payload = {
             user_phone: user.phone.replace(/\D/g, ''),
@@ -771,7 +781,9 @@ export const triggerTaskAutomation = async (user: User, taskData: { type: string
             cal_link: user.settings?.calComLink || '',
             date: taskData.date || new Date().toISOString(),
             type: taskData.type,
-            client_email: taskData.email || ''
+            client_email: taskData.email || '',
+            client_phone: taskData.phone || '',
+            client_name: taskData.name || ''
         };
 
         console.log("Sending task to n8n:", payload);
