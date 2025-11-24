@@ -32,7 +32,6 @@ const countries = [
 ];
 
 // --- COMPONENTE EXTRAÍDO (SOLUCIÓN DEFINITIVA AL FOCO) ---
-// Al estar fuera de QuickTaskFab, React no lo destruye al renderizar.
 interface PhoneInputRowProps {
     countryCode: string;
     setCountryCode: (val: string) => void;
@@ -183,7 +182,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         switch (taskType) {
             case 'call': 
                 // Changed from Log Call to Schedule Call
-                finalDescription = `CALL: ${cleanNote} (Cliente: ${cleanRecipient})`; 
+                finalDescription = `CALL: ${cleanNote}`; 
                 successMsg = 'Llamada Agendada';
                 // We are not setting isImmediateAction because we want it to be a database task AND a future reminder
                 break;
