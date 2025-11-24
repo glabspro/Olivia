@@ -169,11 +169,11 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 
             case 'note': 
                 finalDescription = `📝 ${cleanNote}`; 
-                successMsg = 'Nota Guardada';
+                successMsg = 'Tarea Guardada';
                 break;
         }
 
-        // 1. Trigger Automation (n8n)
+        // 1. Trigger Automation (n8n) - ALWAYS for immediate actions or urgent
         if (isImmediateAction || taskType === 'urgent') {
              await triggerTaskAutomation(user, {
                 type: taskType,
@@ -182,9 +182,12 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             });
         }
 
-        // 2. Save to Database
-        // Para acciones inmediatas (Reunión/Email), guardamos como completada para evitar duplicados del cron job
-        await createTask(user.id, finalDescription, finalDate, isImportant || isImmediateAction);
+        // 2. Save to Database - CONDICIONADO
+        // Solo guardamos en la base de datos si NO es una acción inmediata (Reunión/Email)
+        // Las reuniones y correos son "efímeros" (solo disparo), las llamadas y tareas son "historial".
+        if (taskType !== 'meeting' && taskType !== 'email') {
+            await createTask(user.id, finalDescription, finalDate, isImportant);
+        }
         
         // 3. Success UI
         setActionMessage(successMsg);
@@ -259,7 +262,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                              taskType === 'email' ? 'Redactar Correo' :
                              taskType === 'meeting' ? 'Agendar Reunión' :
                              taskType === 'call' ? 'Registrar Llamada' :
-                             taskType === 'urgent' ? 'Tarea Prioritaria' : 'Nueva Nota'}
+                             taskType === 'urgent' ? 'Tarea Prioritaria' : 'Nueva Tarea'}
                         </h3>
                     </div>
                 </div>
@@ -317,8 +320,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                 <MenuCard 
                                     id="note" 
                                     icon={FileText} 
-                                    title="Nota Rápida" 
-                                    desc="Guarda ideas o recordatorios." 
+                                    title="Tarea" 
+                                    desc="Guarda ideas o pendientes." 
                                     colorClass="text-gray-600" 
                                     bgClass="bg-gray-100 dark:bg-gray-800" 
                                 />
