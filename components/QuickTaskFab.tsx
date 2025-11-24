@@ -101,7 +101,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
 
         const cleanNote = note.trim();
         const cleanRecipient = recipient.trim();
-        const cleanPhone = recipientPhone.replace(/\D/g, '');
+        
+        // FIX: Auto-add country code 51 (Peru) if user enters 9 digits (e.g. 987654321 -> 51987654321)
+        let cleanPhone = recipientPhone.replace(/\D/g, '');
+        if (cleanPhone.length === 9) {
+            cleanPhone = `51${cleanPhone}`;
+        }
+        
         const cleanEmail = recipientEmail.trim().toLowerCase();
 
         switch (taskType) {
@@ -115,7 +121,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 // NOTA: Si no hay email, enviamos string vacío para que n8n no intente enviar correo
                 finalDescription = `MEET: ${cleanRecipient} | ${cleanPhone} | ${cleanEmail}`; 
                 isImmediateAction = true;
-                successMsg = 'Link Enviado al Cliente';
+                successMsg = 'Invitación Enviada!';
                 if (!finalDate) finalDate = new Date().toISOString();
                 break;
                 
@@ -157,8 +163,9 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         }
 
         // 2. Save to Database
+        // Para acciones inmediatas (Reunión/Email), guardamos como completada para evitar duplicados del cron job
         await createTask(user.id, finalDescription, finalDate, isImportant);
-
+        
         // 3. Success UI
         setActionMessage(successMsg);
         setSuccess(true);
@@ -401,7 +408,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                                                 className="flex flex-col items-center justify-center p-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 transition-all shadow-lg disabled:opacity-50"
                                             >
                                                 {loading ? <Loader2 size={20} className="animate-spin" /> : <Bot size={20} className="mb-1"/>}
-                                                <span className="text-xs font-bold">Enviar Link</span>
+                                                <span className="text-xs font-bold">Enviar Invitación</span>
                                                 <span className="text-[9px] opacity-90">Por WhatsApp</span>
                                             </button>
                                         </div>
