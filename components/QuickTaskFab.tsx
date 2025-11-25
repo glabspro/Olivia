@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { 
     Plus, X, Calendar, CheckCircle, Loader2, Bot, Sparkles, 
@@ -179,11 +180,13 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 // FORMATO CORRECTO PARA N8N: CALL: Nota | Nombre | Telefono
                 finalDescription = `CALL: ${cleanNote} | ${cleanRecipient} | ${fullPhone}`; 
                 successMsg = 'Llamada Agendada';
+                // FIX: No marcar como acción inmediata. Debe ser procesado por el Cron Job en el futuro.
+                isImmediateAction = false; 
                 break;
                 
             case 'meeting': 
                 finalDescription = `MEET: ${cleanRecipient} | ${fullPhone} | ${cleanEmail}`; 
-                isImmediateAction = true;
+                isImmediateAction = true; // ESTE SÍ SE ENVÍA AL INSTANTE
                 successMsg = 'Invitación Enviada!';
                 if (!finalDate) finalDate = new Date().toISOString();
                 break;
@@ -199,7 +202,7 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 }
                 const fullBody = `Asunto: ${subject}\n\n${cleanNote}${attachmentUrl ? `\n\n📎 Archivo Adjunto: ${attachmentUrl}` : ''}`;
                 finalDescription = `SEND: ${cleanEmail} | ${fullBody}`; 
-                isImmediateAction = true;
+                isImmediateAction = true; // ESTE SÍ SE ENVÍA AL INSTANTE
                 successMsg = 'Correo Enviado';
                 if (!finalDate) finalDate = new Date(Date.now() + 2 * 60000).toISOString();
                 break;
@@ -208,16 +211,19 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
                 finalDescription = `⚠️ ${cleanNote}`; 
                 successMsg = 'Urgencia Anotada';
                 setIsImportant(true);
+                isImmediateAction = false;
                 break;
                 
             case 'note': 
                 finalDescription = `📝 ${cleanNote}`; 
                 successMsg = 'Tarea Guardada';
+                isImmediateAction = false;
                 break;
         }
 
-        // 1. Trigger Automation (n8n)
-        if (isImmediateAction || finalDate || taskType === 'call') {
+        // 1. Trigger Automation (n8n) - SOLO PARA ACCIONES INMEDIATAS (Reunión/Email)
+        // Las llamadas y notas futuras las recogerá el Cron Job de n8n desde la BD.
+        if (isImmediateAction) {
              await triggerTaskAutomation(user, {
                 type: taskType,
                 description: finalDescription,
@@ -228,7 +234,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
             });
         }
 
-        // 2. Save to Database (Skip immediate actions)
+        // 2. Save to Database (Para todo lo que NO es una acción efímera inmediata)
+        // Nota: 'call' y 'note' se guardan aquí para que el Cron Job las lea después.
         if (taskType !== 'meeting' && taskType !== 'email') {
             await createTask(user.id, finalDescription, finalDate, isImportant);
         }
@@ -243,6 +250,8 @@ const QuickTaskFab: React.FC<QuickTaskFabProps> = ({ user }) => {
         setLoading(false);
     }
   };
+
+  // --- UI Components ---
 
   const MenuCard = ({ id, icon: Icon, title, desc, colorClass, bgClass }: any) => (
       <button 
