@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, DbTask } from '../types';
-import { getTasks, deleteTask, updateTaskCompletion, updateTaskImportance } from '../services/supabaseClient';
-import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star } from 'lucide-react';
+import { getTasks, deleteTask, updateTaskCompletion, updateTaskImportance, updateTask } from '../services/supabaseClient';
+import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, X, Edit2, Save, ArrowRight } from 'lucide-react';
 
 interface TasksPageProps {
     user: User;
@@ -11,6 +11,13 @@ interface TasksPageProps {
 const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     const [tasks, setTasks] = useState<DbTask[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTask, setSelectedTask] = useState<DbTask | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Edit Form State
+    const [editDescription, setEditDescription] = useState('');
+    const [editDate, setEditDate] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         fetchTasks();
@@ -32,12 +39,14 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         try {
             await updateTaskCompletion(id, true);
             setTasks(tasks.filter(t => t.id !== id));
+            if (selectedTask?.id === id) setIsEditModalOpen(false);
         } catch (error) {
             console.error("Error completing task:", error);
         }
     };
 
-    const handleToggleImportant = async (id: string, currentStatus: boolean) => {
+    const handleToggleImportant = async (id: string, currentStatus: boolean, e?: React.MouseEvent) => {
+        e?.stopPropagation();
         try {
             // Optimistic update
             setTasks(tasks.map(t => t.id === id ? { ...t, is_important: !currentStatus } : t));
@@ -53,9 +62,39 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             try {
                 await deleteTask(id);
                 setTasks(tasks.filter(t => t.id !== id));
+                if (selectedTask?.id === id) setIsEditModalOpen(false);
             } catch (error) {
                 console.error("Error deleting task:", error);
             }
+        }
+    };
+
+    const openEditModal = (task: DbTask) => {
+        setSelectedTask(task);
+        setEditDescription(task.description);
+        // Format ISO date to datetime-local input format (YYYY-MM-DDTHH:mm)
+        setEditDate(task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '');
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveChanges = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedTask) return;
+        
+        setIsSaving(true);
+        try {
+            const finalDate = editDate ? new Date(editDate).toISOString() : undefined;
+            await updateTask(selectedTask.id, editDescription, finalDate);
+            
+            // Update local state
+            setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, description: editDescription, due_date: finalDate } : t));
+            
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error("Error updating task", error);
+            alert("Error al guardar cambios.");
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -66,7 +105,6 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     const overdue = activeTasks.filter(t => t.due_date && new Date(t.due_date) < now);
     const upcoming = activeTasks.filter(t => !t.due_date || new Date(t.due_date) >= now);
 
-    // Sort: Important first, then by date
     const sortTasks = (taskList: DbTask[]) => {
         return [...taskList].sort((a, b) => {
             if (a.is_important !== b.is_important) return a.is_important ? -1 : 1;
@@ -112,7 +150,14 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                                 </h3>
                                 <div className="space-y-3">
                                     {sortTasks(overdue).map(task => (
-                                        <TaskCard key={task.id} task={task} onComplete={handleComplete} onDelete={handleDelete} onToggleImportant={handleToggleImportant} isOverdue />
+                                        <TaskCard 
+                                            key={task.id} 
+                                            task={task} 
+                                            onClick={() => openEditModal(task)}
+                                            onComplete={handleComplete} 
+                                            onToggleImportant={handleToggleImportant} 
+                                            isOverdue 
+                                        />
                                     ))}
                                 </div>
                             </section>
@@ -125,7 +170,13 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                                 </h3>
                                 <div className="space-y-3">
                                     {sortTasks(upcoming).map(task => (
-                                        <TaskCard key={task.id} task={task} onComplete={handleComplete} onDelete={handleDelete} onToggleImportant={handleToggleImportant} />
+                                        <TaskCard 
+                                            key={task.id} 
+                                            task={task} 
+                                            onClick={() => openEditModal(task)}
+                                            onComplete={handleComplete} 
+                                            onToggleImportant={handleToggleImportant} 
+                                        />
                                     ))}
                                 </div>
                             </section>
@@ -133,20 +184,87 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                     </div>
                 )}
             </div>
+
+            {/* EDIT / DETAILS MODAL */}
+            {isEditModalOpen && selectedTask && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setIsEditModalOpen(false)}>
+                    <div className="bg-surface dark:bg-dark-surface rounded-2xl w-full max-w-lg shadow-2xl border border-border dark:border-dark-border animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="px-6 py-4 border-b border-border dark:border-dark-border flex justify-between items-center bg-gray-50 dark:bg-white/5">
+                            <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary flex items-center gap-2">
+                                <Edit2 size={18} className="text-primary"/>
+                                Editar Tarea
+                            </h3>
+                            <button onClick={() => setIsEditModalOpen(false)}><X size={20} className="text-textSecondary hover:text-textPrimary"/></button>
+                        </div>
+                        
+                        <form onSubmit={handleSaveChanges} className="p-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Detalle / Anotación</label>
+                                    <textarea 
+                                        rows={4} 
+                                        value={editDescription}
+                                        onChange={e => setEditDescription(e.target.value)}
+                                        className="w-full p-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm resize-none"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Fecha y Hora de Vencimiento</label>
+                                    <input 
+                                        type="datetime-local" 
+                                        value={editDate}
+                                        onChange={e => setEditDate(e.target.value)}
+                                        className="w-full p-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-textPrimary dark:text-dark-textPrimary"
+                                    />
+                                    <p className="text-[10px] text-textSecondary mt-1">Te avisaremos 30 minutos antes de esta hora.</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 flex flex-col gap-3">
+                                <button 
+                                    type="submit" 
+                                    disabled={isSaving}
+                                    className="w-full py-3 bg-primary text-white font-bold rounded-xl shadow-md hover:opacity-90 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isSaving ? 'Guardando...' : <><Save size={18}/> Guardar Cambios</>}
+                                </button>
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleComplete(selectedTask.id)}
+                                        className="py-3 bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 font-bold rounded-xl hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle2 size={18}/> Realizado
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleDelete(selectedTask.id)}
+                                        className="py-3 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={18}/> Eliminar/Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 const TaskCard: React.FC<{ 
     task: DbTask, 
+    onClick: () => void,
     onComplete: (id: string) => void, 
-    onDelete: (id: string) => void, 
-    onToggleImportant: (id: string, current: boolean) => void,
+    onToggleImportant: (id: string, current: boolean, e: React.MouseEvent) => void,
     isOverdue?: boolean 
-}> = ({ task, onComplete, onDelete, onToggleImportant, isOverdue }) => {
+}> = ({ task, onClick, onComplete, onToggleImportant, isOverdue }) => {
     const date = task.due_date ? new Date(task.due_date) : null;
 
-    // Determine type from prefix (Supports Emojis AND Text Prefixes)
+    // Determine type from prefix
     const getTaskType = (desc: string) => {
         if (desc.startsWith('📞') || desc.startsWith('CALL:')) return { icon: Phone, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' };
         if (desc.startsWith('📅') || desc.startsWith('MEET:')) return { icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-100 dark:bg-purple-900/30' };
@@ -156,32 +274,25 @@ const TaskCard: React.FC<{
         return { icon: ClipboardList, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' };
     };
 
-    // Remove any known prefix for clean display
     const cleanDescription = task.description.replace(/^(📞|📅|⚠️|✉️|📝|CALL:|MEET:|SEND:|URGENT:|NOTE:)\s*/, '');
     const typeStyle = getTaskType(task.description);
     const TypeIcon = typeStyle.icon;
 
-    // Manual Date Formatting
     const formatDate = (d: Date) => {
         const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
         const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-        
-        const dayName = days[d.getDay()];
-        const dayNum = d.getDate();
-        const monthName = months[d.getMonth()];
-        const year = d.getFullYear();
-        const time = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        return `${dayName}, ${dayNum} ${monthName} ${year}, ${time}`;
+        return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
     };
 
     return (
-        <div className={`p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md ${
+        <div 
+            onClick={onClick}
+            className={`p-4 rounded-xl border shadow-sm flex items-center justify-between gap-4 transition-all hover:shadow-md cursor-pointer group ${
             task.is_important 
             ? 'bg-yellow-50 dark:bg-yellow-900/10 border-l-4 border-l-yellow-400 border-y-yellow-200 border-r-yellow-200 dark:border-y-yellow-900/30 dark:border-r-yellow-900/30' 
             : isOverdue 
                 ? 'bg-red-50/30 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' 
-                : 'bg-surface dark:bg-dark-surface border-border dark:border-dark-border'
+                : 'bg-surface dark:bg-dark-surface border-border dark:border-dark-border hover:border-primary/30'
         }`}>
             <div className="flex-grow min-w-0 flex items-start gap-3">
                  <div className={`p-2 rounded-lg flex-shrink-0 ${typeStyle.bg} ${typeStyle.color}`}>
@@ -189,11 +300,11 @@ const TaskCard: React.FC<{
                  </div>
                  <div className="min-w-0">
                     <div className="flex items-start gap-2">
-                        <p className={`font-medium text-base truncate ${isOverdue ? 'text-red-700 dark:text-red-400' : 'text-textPrimary dark:text-dark-textPrimary'}`}>
+                        <p className={`font-medium text-sm md:text-base truncate ${isOverdue ? 'text-red-700 dark:text-red-400' : 'text-textPrimary dark:text-dark-textPrimary'}`}>
                             {cleanDescription}
                         </p>
                         {task.reminder_sent && (
-                            <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 mt-0.5" title="Recordatorio enviado por WhatsApp">
+                            <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 mt-0.5" title="Recordatorio enviado">
                                 <BellRing size={10} />
                             </span>
                         )}
@@ -206,27 +317,18 @@ const TaskCard: React.FC<{
                     )}
                  </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
                 <button
-                    onClick={() => onToggleImportant(task.id, !!task.is_important)}
+                    onClick={(e) => onToggleImportant(task.id, !!task.is_important, e)}
                     className={`p-2 rounded-lg transition-colors ${task.is_important ? 'text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30' : 'text-gray-300 hover:text-yellow-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}
-                    title={task.is_important ? "Desmarcar importancia" : "Marcar como importante"}
                 >
                     <Star size={20} fill={task.is_important ? "currentColor" : "none"} />
                 </button>
                 <button 
-                    onClick={() => onComplete(task.id)}
-                    className="p-2 text-green-600 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 rounded-lg transition-colors"
-                    title="Completar"
+                    onClick={(e) => { e.stopPropagation(); onComplete(task.id); }}
+                    className="p-2 text-green-600 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 rounded-lg transition-colors"
                 >
                     <CheckCircle2 size={20} />
-                </button>
-                <button 
-                    onClick={() => onDelete(task.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                    title="Eliminar"
-                >
-                    <Trash2 size={20} />
                 </button>
             </div>
         </div>

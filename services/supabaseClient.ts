@@ -811,6 +811,16 @@ export const createTask = async (userId: string, description: string, dueDate?: 
     if (error) throw error;
 }
 
+export const updateTask = async (taskId: string, description: string, dueDate?: string) => {
+    if (!supabase) throw new Error("Supabase not ready");
+    const { error } = await supabase.from('tasks').update({
+        description,
+        due_date: dueDate,
+        reminder_sent: false // Reset reminder if details change
+    }).eq('id', taskId);
+    if (error) throw error;
+}
+
 export const updateTaskCompletion = async (taskId: string, isCompleted: boolean) => {
     if (!supabase) throw new Error("Supabase not ready");
     const { error } = await supabase.from('tasks').update({ is_completed: isCompleted }).eq('id', taskId);
