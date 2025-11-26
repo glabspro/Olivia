@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, DbTask } from '../types';
 import { getTasks, deleteTask, updateTaskCompletion, updateTaskImportance, updateTask } from '../services/supabaseClient';
-import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, X, Edit2, Save, ArrowRight } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, X, Edit2, Save, ArrowRight, Sun, Timer } from 'lucide-react';
 
 interface TasksPageProps {
     user: User;
@@ -72,10 +72,51 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     const openEditModal = (task: DbTask) => {
         setSelectedTask(task);
         setEditDescription(task.description);
-        // Format ISO date to datetime-local input format (YYYY-MM-DDTHH:mm)
-        setEditDate(task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '');
+        
+        if (task.due_date) {
+            // Convert UTC to local time string for input[type="datetime-local"]
+            const d = new Date(task.due_date);
+            const offsetMs = d.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(d.getTime() - offsetMs)).toISOString().slice(0, 16);
+            setEditDate(localISOTime);
+        } else {
+            setEditDate('');
+        }
         setIsEditModalOpen(true);
     };
+
+    // --- QUICK ACTIONS HELPERS ---
+    const updateDate = (addDays: number, addHours: number, setNineAm: boolean = false) => {
+        const d = new Date();
+        d.setDate(d.getDate() + addDays);
+        d.setHours(d.getHours() + addHours);
+        
+        if (setNineAm) {
+            d.setHours(9, 0, 0, 0);
+        }
+
+        // Adjust for timezone for the input value
+        const offsetMs = d.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(d.getTime() - offsetMs)).toISOString().slice(0, 16);
+        setEditDate(localISOTime);
+    };
+
+    const setDatePlusOneHour = () => updateDate(0, 1);
+    const setDateTomorrow = () => updateDate(1, 0, true);
+    
+    const setDateNextWeek = () => {
+        const d = new Date();
+        // Calculate days until next Monday
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1) + 7; // Next Monday
+        d.setDate(diff);
+        d.setHours(9, 0, 0, 0);
+        
+        const offsetMs = d.getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(d.getTime() - offsetMs)).toISOString().slice(0, 16);
+        setEditDate(localISOTime);
+    };
+    // ---------------------------
 
     const handleSaveChanges = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,7 +128,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             await updateTask(selectedTask.id, editDescription, finalDate);
             
             // Update local state
-            setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, description: editDescription, due_date: finalDate } : t));
+            setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, description: editDescription, due_date: finalDate, reminder_sent: false } : t));
             
             setIsEditModalOpen(false);
         } catch (error) {
@@ -217,7 +258,24 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                                         onChange={e => setEditDate(e.target.value)}
                                         className="w-full p-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm text-textPrimary dark:text-dark-textPrimary"
                                     />
-                                    <p className="text-[10px] text-textSecondary mt-1">Te avisaremos 30 minutos antes de esta hora.</p>
+                                    
+                                    {/* Quick Action Buttons */}
+                                    <div className="flex gap-2 mt-2 overflow-x-auto no-scrollbar pb-1">
+                                        <button type="button" onClick={setDatePlusOneHour} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap flex items-center gap-1">
+                                            <Timer size={14}/> +1 Hora
+                                        </button>
+                                        <button type="button" onClick={setDateTomorrow} className="px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-xs font-bold rounded-lg hover:bg-purple-100 transition-colors whitespace-nowrap flex items-center gap-1">
+                                            <Sun size={14}/> Mañana 9am
+                                        </button>
+                                        <button type="button" onClick={setDateNextWeek} className="px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs font-bold rounded-lg hover:bg-orange-100 transition-colors whitespace-nowrap flex items-center gap-1">
+                                            <Calendar size={14}/> Próx. Semana
+                                        </button>
+                                        <button type="button" onClick={() => setEditDate('')} className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap">
+                                            Sin Fecha
+                                        </button>
+                                    </div>
+                                    
+                                    <p className="text-[10px] text-textSecondary mt-2">Te avisaremos 30 minutos antes de esta hora.</p>
                                 </div>
                             </div>
 
@@ -243,7 +301,7 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                                         onClick={() => handleDelete(selectedTask.id)}
                                         className="py-3 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <Trash2 size={18}/> Eliminar/Cancelar
+                                        <Trash2 size={18}/> Eliminar
                                     </button>
                                 </div>
                             </div>
