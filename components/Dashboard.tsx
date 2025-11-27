@@ -123,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                  )}
                  {user.permissions?.trial_ends_at && (
                      <p className="text-[10px] text-orange-600 dark:text-orange-400 font-medium leading-tight mt-1">
-                         Aprovecha las funciones PRO antes de que termine.
+                         Aprovecha las funciones PRO antes de que termine tu prueba.
                      </p>
                  )}
              </div>

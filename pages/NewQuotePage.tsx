@@ -62,16 +62,19 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     // Limit Logic
     const [quoteCount, setQuoteCount] = useState(0);
     const isFreePlan = user.permissions?.plan === 'free';
-    const isTrial = !!user.permissions?.trial_ends_at;
+    const isTrial = !!user.permissions?.trial_ends_at; // Check if trial key exists
     const quoteLimit = 5;
     
-    // Only enforce limit if user is truly on Free (and not on Trial)
+    // Strict Limit: Applies if user is Free Plan AND not currently on Trial
     const limitReached = isFreePlan && !isTrial && quoteCount >= quoteLimit;
     
     // AI Limit Logic
     const aiUsageLimit = 2;
     const currentAiUsage = user.ai_usage_count || 0;
     const aiLimitReached = isFreePlan && !isTrial && currentAiUsage >= aiUsageLimit;
+
+    // Check if user is effectively PRO (either paid or trial)
+    const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise' || isTrial;
 
     // Determine if we are updating an existing quote
     const isEditing = (!!quoteIdToEdit || !!internalQuoteId) && !isDuplicating;
@@ -750,7 +753,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     const textareaClasses = `${inputClasses} min-h-[100px] resize-y`;
 
     const sendButtonEnabled = items.length > 0 && clientName && clientPhone && !isSending && !sentSuccess;
-    const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
     
     const pageTitle = isEditing ? 'Editar Cotización' : isDuplicating ? 'Duplicar Cotización' : 'Nueva Cotización';
 
@@ -1085,28 +1087,28 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                                     </div>
 
                                     {/* Button 2: Manual Link (PRO Only) */}
-                                    {isPro && (
-                                        <div>
-                                            <div className="flex justify-between items-center mb-1.5">
-                                                <span className="text-xs font-semibold text-textSecondary uppercase tracking-wide">Envío Directo</span>
-                                                <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold flex items-center gap-1"><Zap size={10}/> PRO</span>
-                                            </div>
-                                            <button
-                                                onClick={handleManualSendWithLink}
-                                                disabled={!sendButtonEnabled || (limitReached && !hasBeenFinalized && !isEditing)}
-                                                className="group w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-gray-800 text-white font-bold text-base rounded-xl shadow-md transition-all duration-300 hover:bg-black hover:shadow-lg border-2 border-transparent hover:border-gray-600"
-                                            >
-                                                <Smartphone size={20} className="text-green-400"/>
-                                                Enviar desde mi número
-                                            </button>
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-xs font-semibold text-textSecondary uppercase tracking-wide">Envío Directo</span>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${isPro ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                {isPro ? <><Zap size={10}/> PRO</> : <Lock size={10}/>}
+                                            </span>
                                         </div>
-                                    )}
+                                        <button
+                                            onClick={isPro ? handleManualSendWithLink : () => alert('Actualiza a PRO para desbloquear el envío manual sin marca de agua.')}
+                                            disabled={!isPro || !sendButtonEnabled || (limitReached && !hasBeenFinalized && !isEditing)}
+                                            className={`group w-full flex items-center justify-center gap-3 px-4 py-3.5 font-bold text-base rounded-xl shadow-md transition-all duration-300 border-2 border-transparent ${isPro ? 'bg-gray-800 text-white hover:bg-black hover:shadow-lg hover:border-gray-600' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                                        >
+                                            <Smartphone size={20} className={isPro ? "text-green-400" : "text-gray-400"}/>
+                                            {isPro ? 'Enviar desde mi número' : 'Solo en PRO'}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {!isPro && (
                                     <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
                                         <p className="text-xs text-center text-blue-800 dark:text-blue-300">
-                                            🔒 <span className="font-bold">¿Quieres enviar desde tu propio número?</span> <br/>Actualiza a PRO para desbloquear el envío directo y quitar la publicidad.
+                                            🔒 <span className="font-bold">¿Quieres enviar desde tu propio número?</span> <br/>Actualiza a PRO para desbloquear el envío directo.
                                         </p>
                                     </div>
                                 )}

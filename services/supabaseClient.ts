@@ -150,7 +150,7 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
     const initialPermissions: UserPermissions = { 
         can_use_ai: true, 
         can_download_pdf: true, 
-        plan: 'pro', // Start as PRO
+        plan: 'pro', // Start as PRO for trial
         is_active: true,
         trial_ends_at: trialEndDate.toISOString() 
     };
