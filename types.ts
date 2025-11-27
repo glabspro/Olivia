@@ -62,12 +62,21 @@ export interface Settings {
   paymentMethods: PaymentOption[];
   quotationPrefix: string;
   quotationNextNumber: number;
-  quotationPadding?: number; // New field for zero padding (e.g., 0001 vs 000001)
+  quotationPadding?: number; 
   themeColor: string;
   headerImage: string | null;
   taxType: TaxType;
   taxRate: number;
-  calComLink?: string; // Link de agenda Cal.com
+  calComLink?: string; 
+}
+
+// System Wide Configuration (Managed by Super Admin)
+export interface SystemConfig {
+    salesPhoneNumber: string;
+    paymentPhoneNumber: string;
+    mercadoPagoPublicKey?: string;
+    mercadoPagoAccessToken?: string;
+    isMaintenanceMode?: boolean;
 }
 
 // Admin & Permissions Types
@@ -91,7 +100,8 @@ export interface User {
   verify_token?: string;
   is_verified?: boolean;
   ai_usage_count?: number;
-  settings?: Settings; // Cloud Settings
+  settings?: Settings; 
+  system_config?: SystemConfig; // Only present if user is Super Admin (mock)
 }
 
 // Database Types
@@ -101,7 +111,7 @@ export interface DbClient {
   phone: string;
   email?: string;
   address?: string;
-  document?: string; // RUC or DNI
+  document?: string; 
 }
 
 export interface DbProduct {
@@ -117,13 +127,13 @@ export interface DbTask {
   description: string;
   due_date?: string;
   is_completed: boolean;
-  is_important?: boolean; // New field
+  is_important?: boolean; 
   reminder_sent?: boolean;
   created_at: string;
 }
 
 export interface CrmMeta {
-    next_followup?: string; // ISO string date
+    next_followup?: string; 
     notes?: string;
 }
 

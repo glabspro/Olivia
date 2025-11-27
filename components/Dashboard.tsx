@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Theme } from '../types';
-import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown, ClipboardList, Crown, Clock } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown, ClipboardList, Crown, Clock, Zap } from 'lucide-react';
 import Logo from './Logo';
 import QuickTaskFab from './QuickTaskFab';
 import { getPendingTaskCount } from '../services/supabaseClient';
@@ -13,6 +13,7 @@ interface LayoutProps {
   toggleTheme: () => void;
   activePage: string;
   setActivePage: (page: 'new_quote' | 'history' | 'clients' | 'products' | 'settings' | 'admin' | 'tasks') => void;
+  onShowPricing: () => void;
   children: React.ReactNode;
 }
 
@@ -43,11 +44,12 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
 const PlanBadge = ({ user }: { user: User }) => {
     const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
     const trialEnds = user.permissions?.trial_ends_at ? new Date(user.permissions.trial_ends_at) : null;
-    const now = new Date();
     
+    // Calculate days left
     let daysLeft = 0;
-    if (trialEnds && trialEnds > now) {
-        const diffTime = Math.abs(trialEnds.getTime() - now.getTime());
+    if (trialEnds) {
+        const now = new Date();
+        const diffTime = trialEnds.getTime() - now.getTime();
         daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
@@ -68,7 +70,7 @@ const PlanBadge = ({ user }: { user: User }) => {
 }
 
 
-const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, activePage, setActivePage, children }) => {
+const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, activePage, setActivePage, onShowPricing, children }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [pendingTasks, setPendingTasks] = useState(0);
 
@@ -78,7 +80,6 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
           setPendingTasks(count);
       };
       fetchCount();
-      // Refresh every time active page changes to 'tasks' to ensure count is accurate
       if (activePage === 'tasks' || activePage === 'history') {
           fetchCount();
       }
@@ -93,10 +94,12 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
     { id: 'settings', label: 'Ajustes', icon: SlidersHorizontal, colorClass: 'text-accent-yellow' },
   ];
 
-  // Add Admin item if user is admin
   if (user.is_admin) {
       navItems.push({ id: 'admin', label: 'Admin', icon: Shield, colorClass: 'text-red-500' });
   }
+
+  const isFree = user.permissions?.plan === 'free';
+  const isTrial = !!user.permissions?.trial_ends_at;
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background text-textPrimary dark:bg-dark-background dark:text-dark-textPrimary">
@@ -107,6 +110,17 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
          </div>
          <nav className="flex-grow px-4 py-4 space-y-1">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} />)}
+            
+            {/* Upgrade Button in Nav (only if Free or Trial) */}
+            {(isFree || isTrial) && (
+                <button
+                    onClick={onShowPricing}
+                    className="w-full flex items-center gap-3 px-3 py-2 font-medium rounded-lg transition-colors text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 mt-4 group"
+                >
+                    <Zap size={20} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-sm">Pasar a PRO</span>
+                </button>
+            )}
          </nav>
          
          {/* Plan Status in Sidebar Footer */}
@@ -116,15 +130,20 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                      <span className="text-xs font-bold text-textSecondary uppercase">Tu Plan</span>
                      <PlanBadge user={user} />
                  </div>
-                 {user.permissions?.plan === 'free' && (
-                     <p className="text-[10px] text-textSecondary leading-tight">
-                         Límite: 5 cotizaciones/mes.
-                     </p>
+                 {isFree && (
+                     <div className="space-y-2">
+                        <p className="text-[10px] text-textSecondary leading-tight">
+                            Límite: 5 cotizaciones/mes.
+                        </p>
+                        <button onClick={onShowPricing} className="w-full text-xs bg-primary text-white py-1 rounded font-bold hover:opacity-90 transition-opacity">
+                            Mejorar Plan
+                        </button>
+                     </div>
                  )}
-                 {user.permissions?.trial_ends_at && (
-                     <p className="text-[10px] text-orange-600 dark:text-orange-400 font-medium leading-tight mt-1">
-                         Aprovecha las funciones PRO antes de que termine tu prueba.
-                     </p>
+                 {isTrial && (
+                     <button onClick={onShowPricing} className="w-full mt-2 text-center block text-[10px] text-orange-600 dark:text-orange-400 font-bold hover:underline cursor-pointer">
+                         Suscribirse antes de vencer
+                     </button>
                  )}
              </div>
          </div>
@@ -139,15 +158,23 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                  <div className="md:hidden"><PlanBadge user={user} /></div>
                </div>
                
-               {/* Spacer to push profile to right on mobile or if logo is hidden on desktop */}
                <div className="flex-1 lg:hidden"></div>
 
               <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
+                {(isFree || isTrial) && (
+                    <button 
+                        onClick={onShowPricing}
+                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full text-xs font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
+                    >
+                        <Zap size={12} fill="currentColor"/>
+                        {isTrial ? 'ACTIVAR PRO' : 'MEJORAR PLAN'}
+                    </button>
+                )}
+
                 <button onClick={toggleTheme} className="text-textSecondary dark:text-dark-textSecondary hover:text-textPrimary dark:hover:text-dark-textPrimary p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5">
                   {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
                 
-                {/* Profile Dropdown (Prominent Position) */}
                 <div className="relative">
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)} 
@@ -192,6 +219,16 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                       >
                         <SettingsIcon size={16} /> Mi Perfil / Configuración
                       </button>
+                      
+                      {(isFree || isTrial) && (
+                          <button 
+                            onClick={onShowPricing}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors font-bold"
+                        >
+                            <Zap size={16} /> Mejorar Plan
+                        </button>
+                      )}
+
                       <button 
                         onClick={onLogout}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
@@ -208,13 +245,10 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
         
         <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative pb-36 lg:pb-0">
           {children}
-          
-          {/* Floating Assistant Widget - Accessible on all pages */}
           <QuickTaskFab user={user} />
         </main>
       </div>
 
-       {/* Mobile Bottom Navigation */}
        <nav className="fixed bottom-0 left-0 right-0 h-[70px] bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-lg border-t border-border dark:border-dark-border flex justify-between px-2 items-center lg:hidden z-20 pb-safe">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} isMobile={true} />)}
        </nav>
