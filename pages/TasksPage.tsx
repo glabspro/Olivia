@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, DbTask } from '../types';
 import { getTasks, deleteTask, updateTaskCompletion, updateTaskImportance, updateTask } from '../services/supabaseClient';
-import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, X, Edit2, Save, ArrowRight, Sun, Timer } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Trash2, Clock, Calendar, RefreshCw, BellRing, Phone, Briefcase, AlertTriangle, Mail, FileText, Star, X, Edit2, Save, ArrowRight, Sun, Timer, Check } from 'lucide-react';
 
 interface TasksPageProps {
     user: User;
@@ -74,7 +74,6 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         setEditDescription(task.description);
         
         if (task.due_date) {
-            // Convert UTC to local time string for input[type="datetime-local"]
             const d = new Date(task.due_date);
             const offsetMs = d.getTimezoneOffset() * 60000;
             const localISOTime = (new Date(d.getTime() - offsetMs)).toISOString().slice(0, 16);
@@ -95,7 +94,6 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
             d.setHours(9, 0, 0, 0);
         }
 
-        // Adjust for timezone for the input value
         const offsetMs = d.getTimezoneOffset() * 60000;
         const localISOTime = (new Date(d.getTime() - offsetMs)).toISOString().slice(0, 16);
         setEditDate(localISOTime);
@@ -106,9 +104,8 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
     
     const setDateNextWeek = () => {
         const d = new Date();
-        // Calculate days until next Monday
         const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1) + 7; // Next Monday
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1) + 7; 
         d.setDate(diff);
         d.setHours(9, 0, 0, 0);
         
@@ -116,7 +113,6 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         const localISOTime = (new Date(d.getTime() - offsetMs)).toISOString().slice(0, 16);
         setEditDate(localISOTime);
     };
-    // ---------------------------
 
     const handleSaveChanges = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -153,6 +149,18 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
         });
     };
 
+    const getRelativeTime = (dateString: string) => {
+        const date = new Date(dateString);
+        const diff = now.getTime() - date.getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) return `Hace ${days} día${days > 1 ? 's' : ''}`;
+        if (hours > 0) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+        return `Hace ${minutes} min`;
+    };
+
     if (loading) return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>;
 
     return (
@@ -185,20 +193,38 @@ const TasksPage: React.FC<TasksPageProps> = ({ user }) => {
                 ) : (
                     <div className="space-y-8">
                         {overdue.length > 0 && (
-                            <section>
-                                <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                    <Clock size={16}/> Vencidos
+                            <section className="bg-red-50/50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/30">
+                                <h3 className="text-sm font-bold text-red-600 dark:text-red-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <AlertTriangle size={16}/> Vencidos ({overdue.length})
                                 </h3>
                                 <div className="space-y-3">
                                     {sortTasks(overdue).map(task => (
-                                        <TaskCard 
-                                            key={task.id} 
-                                            task={task} 
-                                            onClick={() => openEditModal(task)}
-                                            onComplete={handleComplete} 
-                                            onToggleImportant={handleToggleImportant} 
-                                            isOverdue 
-                                        />
+                                        <div key={task.id} className="bg-white dark:bg-dark-surface p-3 rounded-lg shadow-sm border border-red-200 dark:border-red-900/50 flex items-center justify-between gap-3 group hover:shadow-md transition-all">
+                                            <div className="flex-grow min-w-0 cursor-pointer" onClick={() => openEditModal(task)}>
+                                                <p className="font-medium text-textPrimary dark:text-dark-textPrimary truncate">
+                                                    {task.description.replace(/^(📞|📅|⚠️|✉️|📝|CALL:|MEET:|SEND:|URGENT:|NOTE:)\s*/, '')}
+                                                </p>
+                                                <p className="text-xs text-red-500 font-semibold mt-0.5 flex items-center gap-1">
+                                                    <Clock size={10}/> Venció: {getRelativeTime(task.due_date!)}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <button 
+                                                    onClick={() => handleComplete(task.id)}
+                                                    className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-bold flex items-center gap-1"
+                                                    title="Marcar como realizado"
+                                                >
+                                                    <Check size={14}/> Hecho
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDelete(task.id)}
+                                                    className="p-1.5 bg-gray-100 text-gray-500 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 size={16}/>
+                                                </button>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </section>
