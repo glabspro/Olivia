@@ -70,6 +70,16 @@ export interface Settings {
   calComLink?: string; 
 }
 
+// Landing Page specific configuration
+export interface LandingConfig {
+    facebookUrl?: string;
+    instagramUrl?: string;
+    tiktokUrl?: string;
+    youtubeUrl?: string;
+    contactEmail?: string;
+    mainVideoUrl?: string; // URL for the main demo video button
+}
+
 // System Wide Configuration (Managed by Super Admin)
 export interface SystemConfig {
     salesPhoneNumber: string;
@@ -77,6 +87,7 @@ export interface SystemConfig {
     mercadoPagoPublicKey?: string;
     mercadoPagoAccessToken?: string;
     isMaintenanceMode?: boolean;
+    landing?: LandingConfig; // New field for landing page dynamic data
 }
 
 // Admin & Permissions Types

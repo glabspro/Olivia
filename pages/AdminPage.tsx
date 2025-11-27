@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions, SystemConfig } from '../types';
 import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
-import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe } from 'lucide-react';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe, Facebook, Instagram, Youtube, Mail, Video } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -25,18 +25,30 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
   const [editForm, setEditForm] = useState({ fullName: '', companyName: '', phone: '' });
   const [saving, setSaving] = useState(false);
 
-  // System Config State - Initialized with your specific numbers
+  // System Config State
   const [sysConfigForm, setSysConfigForm] = useState<SystemConfig>({
       salesPhoneNumber: '51944894541',
       paymentPhoneNumber: '975615244',
       mercadoPagoPublicKey: '',
-      mercadoPagoAccessToken: ''
+      mercadoPagoAccessToken: '',
+      landing: {
+          facebookUrl: '',
+          instagramUrl: '',
+          tiktokUrl: '',
+          youtubeUrl: '',
+          contactEmail: 'hola@olivia.com',
+          mainVideoUrl: 'https://youtube.com'
+      }
   });
 
   useEffect(() => {
     fetchUsers();
     if (systemConfig) {
-        setSysConfigForm(prev => ({ ...prev, ...systemConfig }));
+        setSysConfigForm(prev => ({ 
+            ...prev, 
+            ...systemConfig,
+            landing: { ...prev.landing, ...systemConfig.landing } // Ensure nested merge
+        }));
     }
   }, [systemConfig]);
 
@@ -131,6 +143,16 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
           onUpdateSystemConfig(sysConfigForm);
           showNotification('success', 'Configuración del Sistema Guardada');
       }
+  };
+
+  const updateLandingConfig = (field: string, value: string) => {
+      setSysConfigForm(prev => ({
+          ...prev,
+          landing: {
+              ...prev.landing,
+              [field]: value
+          }
+      }));
   };
 
   const filteredUsers = users.filter(u => 
@@ -296,7 +318,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                     <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600"><Globe size={32}/></div>
                     <div>
                         <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">Variables Globales del Sistema</h2>
-                        <p className="text-sm text-textSecondary mt-1">Define los números de contacto y claves API que utilizará toda la aplicación.</p>
+                        <p className="text-sm text-textSecondary mt-1">Define los números de contacto, claves API y personaliza la Landing Page.</p>
                     </div>
                 </div>
                 
@@ -309,14 +331,14 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                             <div>
                                 <label className="block text-sm font-bold text-textSecondary dark:text-dark-textSecondary mb-2">WhatsApp de Ventas</label>
                                 <p className="text-xs text-textSecondary mb-3 bg-blue-50 dark:bg-blue-900/10 p-2 rounded border border-blue-100 dark:border-blue-800">
-                                    A este número llegarán los mensajes de clientes queriendo comprar el Plan Pro.
+                                    Para mensajes de clientes interesados en Plan Pro.
                                 </p>
                                 <input type="text" value={sysConfigForm.salesPhoneNumber} onChange={e => setSysConfigForm({...sysConfigForm, salesPhoneNumber: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-lg" placeholder="51944894541"/>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-textSecondary dark:text-dark-textSecondary mb-2">Número Yape/Plin (Cobros)</label>
                                 <p className="text-xs text-textSecondary mb-3 bg-green-50 dark:bg-green-900/10 p-2 rounded border border-green-100 dark:border-green-800">
-                                    Este número se mostrará en el Modal de "Mejorar Plan" para pagos rápidos.
+                                    Se muestra en el Modal "Mejorar Plan" para pagos.
                                 </p>
                                 <input type="text" value={sysConfigForm.paymentPhoneNumber} onChange={e => setSysConfigForm({...sysConfigForm, paymentPhoneNumber: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-lg" placeholder="975615244"/>
                             </div>
@@ -325,7 +347,47 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                     
                     <div className="border-t border-border dark:border-dark-border my-6"></div>
 
-                    {/* Sección 2: MercadoPago */}
+                    {/* Sección 2: Landing Page Customization */}
+                    <div className="space-y-4">
+                         <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 text-lg"><Globe className="text-pink-500"/> Personalización de Landing Page</h3>
+                         <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-xl border border-border dark:border-dark-border space-y-6">
+                             
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Facebook size={12}/> Facebook URL</label>
+                                     <input type="text" value={sysConfigForm.landing?.facebookUrl || ''} onChange={e => updateLandingConfig('facebookUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"/>
+                                 </div>
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Instagram size={12}/> Instagram URL</label>
+                                     <input type="text" value={sysConfigForm.landing?.instagramUrl || ''} onChange={e => updateLandingConfig('instagramUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-pink-500 outline-none text-sm"/>
+                                 </div>
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Globe size={12}/> TikTok URL</label>
+                                     <input type="text" value={sysConfigForm.landing?.tiktokUrl || ''} onChange={e => updateLandingConfig('tiktokUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-gray-500 outline-none text-sm"/>
+                                 </div>
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Youtube size={12}/> YouTube Canal URL</label>
+                                     <input type="text" value={sysConfigForm.landing?.youtubeUrl || ''} onChange={e => updateLandingConfig('youtubeUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm"/>
+                                 </div>
+                             </div>
+
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Mail size={12}/> Correo de Contacto (Footer)</label>
+                                     <input type="text" value={sysConfigForm.landing?.contactEmail || ''} onChange={e => updateLandingConfig('contactEmail', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm"/>
+                                 </div>
+                                  <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Video size={12}/> Video Principal (Demo URL)</label>
+                                     <input type="text" value={sysConfigForm.landing?.mainVideoUrl || ''} onChange={e => updateLandingConfig('mainVideoUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm" placeholder="https://youtube.com/watch?v=..."/>
+                                 </div>
+                             </div>
+
+                         </div>
+                    </div>
+
+                    <div className="border-t border-border dark:border-dark-border my-6"></div>
+
+                    {/* Sección 3: MercadoPago */}
                     <div className="space-y-4">
                          <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 text-lg"><Terminal className="text-teal-500"/> Integración MercadoPago</h3>
                          <div className="bg-gray-50 dark:bg-white/5 p-4 rounded-lg border border-border dark:border-dark-border">
