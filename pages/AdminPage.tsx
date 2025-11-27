@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions, SystemConfig } from '../types';
 import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
-import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon } from 'lucide-react';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -25,7 +25,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
   const [editForm, setEditForm] = useState({ fullName: '', companyName: '', phone: '' });
   const [saving, setSaving] = useState(false);
 
-  // System Config State
+  // System Config State - Initialized with your specific numbers
   const [sysConfigForm, setSysConfigForm] = useState<SystemConfig>({
       salesPhoneNumber: '51944894541',
       paymentPhoneNumber: '975615244',
@@ -162,9 +162,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
             <div>
                 <h1 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-3">
                     <Shield className="text-red-500" size={32}/>
-                    Panel Admin
+                    Panel Super Admin
                 </h1>
-                <p className="text-textSecondary dark:text-dark-textSecondary mt-1">Gestión completa de Olivia SaaS.</p>
+                <p className="text-textSecondary dark:text-dark-textSecondary mt-1">Gestión centralizada de Olivia SaaS.</p>
             </div>
          </div>
 
@@ -182,33 +182,33 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
       </div>
       
       {/* Tabs */}
-      <div className="flex gap-4 mb-6 border-b border-border dark:border-dark-border">
+      <div className="flex gap-4 mb-8 border-b border-border dark:border-dark-border">
           <button 
             onClick={() => setActiveTab('users')} 
-            className={`pb-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'}`}
+            className={`pb-3 px-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'}`}
           >
-              Usuarios
+              <Users size={16}/> Usuarios
           </button>
           <button 
             onClick={() => setActiveTab('system')} 
-            className={`pb-3 px-4 text-sm font-bold border-b-2 transition-colors ${activeTab === 'system' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'}`}
+            className={`pb-3 px-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'system' ? 'border-primary text-primary' : 'border-transparent text-textSecondary hover:text-textPrimary'}`}
           >
-              Configuración del Sistema
+              <SettingsIcon size={16}/> Configuración del Sistema
           </button>
       </div>
 
       {activeTab === 'users' ? (
         <>
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary self-start md:self-center">Lista de Usuarios</h2>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 animate-fade-in">
+                <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary self-start md:self-center">Lista de Usuarios Registrados</h2>
                 <div className="relative w-full md:w-auto">
-                    <input type="text" placeholder="Buscar usuario..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-3 rounded-lg border border-border dark:border-dark-border bg-surface dark:bg-dark-surface text-sm w-full md:w-72 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm"/>
+                    <input type="text" placeholder="Buscar por nombre, empresa..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-3 rounded-lg border border-border dark:border-dark-border bg-surface dark:bg-dark-surface text-sm w-full md:w-72 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm"/>
                     <Search className="absolute left-3 top-3.5 text-gray-400" size={16} />
                 </div>
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border overflow-hidden shadow-sm">
+            <div className="hidden md:block bg-surface dark:bg-dark-surface rounded-xl border border-border dark:border-dark-border overflow-hidden shadow-sm animate-fade-in">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-gray-50 dark:bg-white/5 text-textSecondary dark:text-dark-textSecondary uppercase font-semibold text-xs">
@@ -255,7 +255,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
             </div>
             
             {/* Mobile View */}
-            <div className="md:hidden space-y-4">
+            <div className="md:hidden space-y-4 animate-fade-in">
               {filteredUsers.map(user => {
                   const perms = user.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true };
                   const isSelf = user.id === currentUser.id;
@@ -290,47 +290,65 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
         </>
       ) : (
         /* SYSTEM CONFIG TAB */
-        <div className="max-w-3xl animate-fade-in">
-             <div className="bg-surface dark:bg-dark-surface p-6 rounded-xl border border-border dark:border-dark-border shadow-sm mb-6">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border dark:border-dark-border">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600"><SettingsIcon size={24}/></div>
+        <div className="max-w-4xl animate-fade-in mx-auto">
+             <div className="bg-surface dark:bg-dark-surface p-8 rounded-xl border border-border dark:border-dark-border shadow-md mb-8">
+                <div className="flex items-center gap-4 mb-8 pb-6 border-b border-border dark:border-dark-border">
+                    <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600"><Globe size={32}/></div>
                     <div>
-                        <h2 className="text-lg font-bold text-textPrimary dark:text-dark-textPrimary">Datos Globales de Ventas</h2>
-                        <p className="text-sm text-textSecondary">Configura los números que verán los clientes al intentar comprar el Plan Pro.</p>
+                        <h2 className="text-xl font-bold text-textPrimary dark:text-dark-textPrimary">Variables Globales del Sistema</h2>
+                        <p className="text-sm text-textSecondary mt-1">Define los números de contacto y claves API que utilizará toda la aplicación.</p>
                     </div>
                 </div>
                 
-                <form onSubmit={handleSaveSystemConfig} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                             <label className="block text-sm font-bold text-textSecondary dark:text-dark-textSecondary mb-2 flex items-center gap-2"><Smartphone size={16}/> WhatsApp de Ventas</label>
-                             <p className="text-xs text-textSecondary mb-2">Aquí recibirás las solicitudes de upgrade.</p>
-                             <input type="text" value={sysConfigForm.salesPhoneNumber} onChange={e => setSysConfigForm({...sysConfigForm, salesPhoneNumber: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono" placeholder="51944894541"/>
-                        </div>
-                        <div>
-                             <label className="block text-sm font-bold text-textSecondary dark:text-dark-textSecondary mb-2 flex items-center gap-2"><CreditCard size={16}/> Número Yape/Plin</label>
-                             <p className="text-xs text-textSecondary mb-2">Número que se mostrará en el modal de pago.</p>
-                             <input type="text" value={sysConfigForm.paymentPhoneNumber} onChange={e => setSysConfigForm({...sysConfigForm, paymentPhoneNumber: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono" placeholder="975615244"/>
+                <form onSubmit={handleSaveSystemConfig} className="space-y-8">
+                    
+                    {/* Sección 1: Contacto */}
+                    <div className="space-y-4">
+                        <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 text-lg"><Smartphone className="text-blue-500"/> Canales de Atención</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold text-textSecondary dark:text-dark-textSecondary mb-2">WhatsApp de Ventas</label>
+                                <p className="text-xs text-textSecondary mb-3 bg-blue-50 dark:bg-blue-900/10 p-2 rounded border border-blue-100 dark:border-blue-800">
+                                    A este número llegarán los mensajes de clientes queriendo comprar el Plan Pro.
+                                </p>
+                                <input type="text" value={sysConfigForm.salesPhoneNumber} onChange={e => setSysConfigForm({...sysConfigForm, salesPhoneNumber: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-lg" placeholder="51944894541"/>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-textSecondary dark:text-dark-textSecondary mb-2">Número Yape/Plin (Cobros)</label>
+                                <p className="text-xs text-textSecondary mb-3 bg-green-50 dark:bg-green-900/10 p-2 rounded border border-green-100 dark:border-green-800">
+                                    Este número se mostrará en el Modal de "Mejorar Plan" para pagos rápidos.
+                                </p>
+                                <input type="text" value={sysConfigForm.paymentPhoneNumber} onChange={e => setSysConfigForm({...sysConfigForm, paymentPhoneNumber: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-lg" placeholder="975615244"/>
+                            </div>
                         </div>
                     </div>
                     
-                    <div className="pt-4 border-t border-border dark:border-dark-border">
-                         <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary mb-4 flex items-center gap-2"><Terminal size={18}/> Integración MercadoPago (Próximamente)</h3>
-                         <div className="space-y-4">
-                             <div>
-                                 <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Public Key</label>
-                                 <input type="text" value={sysConfigForm.mercadoPagoPublicKey || ''} onChange={e => setSysConfigForm({...sysConfigForm, mercadoPagoPublicKey: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm" placeholder="TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                    <div className="border-t border-border dark:border-dark-border my-6"></div>
+
+                    {/* Sección 2: MercadoPago */}
+                    <div className="space-y-4">
+                         <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 text-lg"><Terminal className="text-teal-500"/> Integración MercadoPago</h3>
+                         <div className="bg-gray-50 dark:bg-white/5 p-4 rounded-lg border border-border dark:border-dark-border">
+                             <div className="flex items-start gap-3 mb-4">
+                                <AlertTriangle className="text-orange-500 mt-0.5" size={18}/>
+                                <p className="text-sm text-textSecondary">Coloca aquí tus credenciales de producción o pruebas para habilitar pagos con tarjeta en el futuro.</p>
                              </div>
-                             <div>
-                                 <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Access Token</label>
-                                 <input type="password" value={sysConfigForm.mercadoPagoAccessToken || ''} onChange={e => setSysConfigForm({...sysConfigForm, mercadoPagoAccessToken: e.target.value})} className="w-full px-4 py-3 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm" placeholder="APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                             <div className="space-y-4">
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Public Key</label>
+                                     <input type="text" value={sysConfigForm.mercadoPagoPublicKey || ''} onChange={e => setSysConfigForm({...sysConfigForm, mercadoPagoPublicKey: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none font-mono text-sm" placeholder="TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                                 </div>
+                                 <div>
+                                     <label className="block text-xs font-bold text-textSecondary uppercase mb-1">Access Token</label>
+                                     <input type="password" value={sysConfigForm.mercadoPagoAccessToken || ''} onChange={e => setSysConfigForm({...sysConfigForm, mercadoPagoAccessToken: e.target.value})} className="w-full px-4 py-3 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none font-mono text-sm" placeholder="APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                                 </div>
                              </div>
                          </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end">
-                        <button type="submit" className="px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-opacity-90 transition-all flex items-center gap-2">
-                            <Save size={18}/> Guardar Configuración
+                    <div className="pt-6 flex justify-end sticky bottom-0 bg-surface dark:bg-dark-surface py-4 border-t border-transparent">
+                        <button type="submit" className="px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-opacity-90 transition-all flex items-center gap-3 transform hover:scale-105">
+                            <Save size={20}/> Guardar Cambios del Sistema
                         </button>
                     </div>
                 </form>
@@ -342,7 +360,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
       {showEditModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
               <div className="bg-surface dark:bg-dark-surface rounded-2xl w-full max-w-md shadow-2xl border border-border dark:border-dark-border animate-fade-in">
-                  <div className="px-6 py-4 border-b border-border dark:border-dark-border flex justify-between items-center">
+                  <div className="px-6 py-4 border-b border-border dark:border-dark-border flex justify-between items-center bg-gray-50 dark:bg-white/5">
                       <h3 className="font-bold text-lg text-textPrimary dark:text-dark-textPrimary">Editar Usuario</h3>
                       <button onClick={() => setShowEditModal(false)} className="text-textSecondary hover:text-textPrimary"><X size={20}/></button>
                   </div>
@@ -350,7 +368,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                       <div><label className="block text-sm font-medium text-textSecondary mb-1">Nombre Completo</label><input type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})} className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"/></div>
                       <div><label className="block text-sm font-medium text-textSecondary mb-1">Nombre del Negocio</label><input type="text" value={editForm.companyName} onChange={e => setEditForm({...editForm, companyName: e.target.value})} className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"/></div>
                       <div><label className="block text-sm font-medium text-textSecondary mb-1">Teléfono</label><input type="text" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none"/></div>
-                      <div className="pt-4 flex gap-3"><button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-2.5 text-sm font-semibold text-textSecondary hover:bg-gray-100 rounded-lg">Cancelar</button><button type="submit" disabled={saving} className="flex-1 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-opacity-90 rounded-lg shadow-md flex items-center justify-center gap-2">{saving ? 'Guardando...' : <><Save size={16}/> Guardar Cambios</>}</button></div>
+                      <div className="pt-4 flex gap-3"><button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-2.5 text-sm font-semibold text-textSecondary hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg">Cancelar</button><button type="submit" disabled={saving} className="flex-1 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-opacity-90 rounded-lg shadow-md flex items-center justify-center gap-2">{saving ? 'Guardando...' : <><Save size={16}/> Guardar Cambios</>}</button></div>
                   </form>
               </div>
           </div>

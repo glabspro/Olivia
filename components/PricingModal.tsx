@@ -12,13 +12,16 @@ interface PricingModalProps {
 const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, systemConfig }) => {
   if (!isOpen) return null;
 
-  // Default Fallbacks if system config is missing
-  const salesPhone = systemConfig?.salesPhoneNumber || '51944894541';
+  // Default Fallbacks using the specific numbers requested by user
+  // This ensures it works even if Admin config hasn't been touched yet
+  const salesPhone = systemConfig?.salesPhoneNumber || '51944894541'; 
   const paymentPhone = systemConfig?.paymentPhoneNumber || '975615244';
 
   const handleSubscribe = () => {
     const message = `Hola Olivia SaaS! 👋 Quiero activar mi Plan PRO 🚀.\n\nAdjunto mi comprobante de pago por Yape/Plin al número: ${paymentPhone}`;
-    const url = `https://wa.me/${salesPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    // Ensure clean number format for WhatsApp link
+    const cleanSalesPhone = salesPhone.replace(/\D/g, ''); 
+    const url = `https://wa.me/${cleanSalesPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
