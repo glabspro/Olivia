@@ -62,13 +62,16 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
     // Limit Logic
     const [quoteCount, setQuoteCount] = useState(0);
     const isFreePlan = user.permissions?.plan === 'free';
+    const isTrial = !!user.permissions?.trial_ends_at;
     const quoteLimit = 5;
-    const limitReached = isFreePlan && quoteCount >= quoteLimit;
+    
+    // Only enforce limit if user is truly on Free (and not on Trial)
+    const limitReached = isFreePlan && !isTrial && quoteCount >= quoteLimit;
     
     // AI Limit Logic
     const aiUsageLimit = 2;
     const currentAiUsage = user.ai_usage_count || 0;
-    const aiLimitReached = isFreePlan && currentAiUsage >= aiUsageLimit;
+    const aiLimitReached = isFreePlan && !isTrial && currentAiUsage >= aiUsageLimit;
 
     // Determine if we are updating an existing quote
     const isEditing = (!!quoteIdToEdit || !!internalQuoteId) && !isDuplicating;
@@ -463,12 +466,6 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
              alert(`Has alcanzado tu límite mensual de ${quoteLimit} cotizaciones en el plan Free.`);
              return;
         }
-        
-        // Even if email is missing, we allow trying so user sees the validation
-        // if (!clientEmail) {
-        //     alert("Por favor, ingresa un correo electrónico válido para el cliente.");
-        //     return;
-        // }
 
         setIsLoading(true);
         setIsSendingEmail(true);
@@ -766,9 +763,14 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                      <div className="text-center mb-10">
                         <h2 className="text-3xl font-bold text-textPrimary dark:text-dark-textPrimary">{pageTitle}</h2>
                         <p className="text-textSecondary dark:text-dark-textSecondary mt-2">Elige cómo quieres empezar.</p>
-                        {isFreePlan && (
+                        {isFreePlan && !isTrial && (
                             <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gray-100 dark:bg-white/5 text-sm text-textSecondary border border-border">
                                 <span>Cotizaciones este mes: <strong>{quoteCount} / {quoteLimit}</strong></span>
+                            </div>
+                        )}
+                        {isTrial && (
+                            <div className="mt-4 inline-flex items-center gap-2 px-4 py-1 rounded-full bg-orange-100 text-orange-700 text-sm border border-orange-200">
+                                <Sparkles size={14}/> <span>Modo Prueba PRO Activo</span>
                             </div>
                         )}
                      </div>
@@ -807,7 +809,7 @@ const NewQuotePage: React.FC<NewQuotePageProps> = ({ user, quoteIdToEdit, isDupl
                             className={`flex flex-col text-center items-center justify-center p-8 bg-surface dark:bg-dark-surface rounded-xl border-2 transition-all duration-300 cursor-pointer group hover:shadow-xl hover:-translate-y-1 ${isDragging ? 'border-primary dark:border-dark-primary shadow-lg scale-105' : 'border-dashed border-border dark:border-dark-border'} ${aiLimitReached ? 'opacity-75' : ''}`}
                         >
                             <div className="absolute top-4 right-4">
-                                {isFreePlan ? (
+                                {isFreePlan && !isTrial ? (
                                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${aiLimitReached ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                                         {aiLimitReached ? <span className="flex items-center gap-1"><Lock size={10}/> 0/2 Usos</span> : <span className="flex items-center gap-1"><Sparkles size={10}/> {currentAiUsage}/2 Gratis</span>}
                                     </span>

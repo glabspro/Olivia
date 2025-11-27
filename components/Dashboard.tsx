@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Theme } from '../types';
-import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown, ClipboardList } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Sun, Moon, FilePlus, LayoutDashboard, SlidersHorizontal, Users, Package, Shield, ChevronDown, ClipboardList, Crown, Clock } from 'lucide-react';
 import Logo from './Logo';
 import QuickTaskFab from './QuickTaskFab';
 import { getPendingTaskCount } from '../services/supabaseClient';
@@ -37,6 +37,33 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
         </div>
         <span className={isMobile ? 'text-[10px] mt-0.5 leading-tight text-center' : 'text-sm'}>{label}</span>
         </button>
+    );
+}
+
+const PlanBadge = ({ user }: { user: User }) => {
+    const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
+    const trialEnds = user.permissions?.trial_ends_at ? new Date(user.permissions.trial_ends_at) : null;
+    const now = new Date();
+    
+    let daysLeft = 0;
+    if (trialEnds && trialEnds > now) {
+        const diffTime = Math.abs(trialEnds.getTime() - now.getTime());
+        daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    if (isPro) {
+        return (
+            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${trialEnds ? 'bg-orange-100 text-orange-700' : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'}`}>
+                {trialEnds ? <Clock size={10} /> : <Crown size={10} />}
+                {trialEnds ? `${daysLeft} Días Prueba` : 'Plan PRO'}
+            </div>
+        );
+    }
+    
+    return (
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-200 text-gray-600 text-[10px] font-bold uppercase">
+            Plan Free
+        </div>
     );
 }
 
@@ -81,14 +108,35 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
          <nav className="flex-grow px-4 py-4 space-y-1">
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} />)}
          </nav>
+         
+         {/* Plan Status in Sidebar Footer */}
+         <div className="p-4 border-t border-border dark:border-dark-border">
+             <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+                 <div className="flex items-center justify-between mb-2">
+                     <span className="text-xs font-bold text-textSecondary uppercase">Tu Plan</span>
+                     <PlanBadge user={user} />
+                 </div>
+                 {user.permissions?.plan === 'free' && (
+                     <p className="text-[10px] text-textSecondary leading-tight">
+                         Límite: 5 cotizaciones/mes.
+                     </p>
+                 )}
+                 {user.permissions?.trial_ends_at && (
+                     <p className="text-[10px] text-orange-600 dark:text-orange-400 font-medium leading-tight mt-1">
+                         Aprovecha las funciones PRO antes de que termine.
+                     </p>
+                 )}
+             </div>
+         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <header className="bg-surface/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-border dark:border-dark-border z-30 flex-shrink-0 sticky top-0">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-14 md:h-16">
-               <div className="lg:hidden flex-shrink-0">
+               <div className="lg:hidden flex-shrink-0 flex items-center gap-2">
                  <Logo />
+                 <div className="md:hidden"><PlanBadge user={user} /></div>
                </div>
                
                {/* Spacer to push profile to right on mobile or if logo is hidden on desktop */}
@@ -110,7 +158,10 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                     </div>
                     <div className="hidden md:flex flex-col items-start">
                         <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary leading-tight max-w-[100px] truncate">{user.companyName}</span>
-                        <span className="text-xs text-textSecondary dark:text-dark-textSecondary">Propietario</span>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-textSecondary dark:text-dark-textSecondary">Propietario</span>
+                            {user.permissions?.plan === 'pro' && <Crown size={10} className="text-yellow-500" />}
+                        </div>
                     </div>
                     <ChevronDown size={16} className="text-textSecondary hidden md:block"/>
                   </button>
@@ -123,9 +174,13 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                       <div className="px-4 py-3 border-b border-border dark:border-dark-border md:hidden">
                         <p className="font-semibold text-textPrimary dark:text-dark-textPrimary truncate">{user.companyName}</p>
                         <p className="text-sm text-textSecondary dark:text-dark-textSecondary">{user.phone}</p>
+                        <div className="mt-2"><PlanBadge user={user} /></div>
                       </div>
                       <div className="px-4 py-3 border-b border-border dark:border-dark-border hidden md:block">
-                        <p className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase tracking-wider mb-1">Cuenta</p>
+                        <div className="flex justify-between items-center mb-1">
+                             <p className="text-xs text-textSecondary dark:text-dark-textSecondary uppercase tracking-wider">Cuenta</p>
+                             <PlanBadge user={user} />
+                        </div>
                         <p className="font-medium text-textPrimary dark:text-dark-textPrimary truncate">{user.fullName}</p>
                         <p className="text-sm text-textSecondary dark:text-dark-textSecondary">{user.phone}</p>
                          {user.is_admin && <span className="mt-1 inline-block text-xs text-red-500 font-bold uppercase tracking-wider bg-red-100 dark:bg-red-900/20 px-2 py-0.5 rounded">Admin</span>}

@@ -55,15 +55,41 @@ const seedInitialData = async (userId: string) => {
     }
 }
 
+// --- Logic: Check Trial Expiration ---
+const checkAndEnforcePlan = async (userProfile: any): Promise<any> => {
+    if (!supabase) return userProfile;
+
+    // Si el usuario es PRO y tiene una fecha de fin de prueba
+    if (userProfile.permissions?.plan === 'pro' && userProfile.permissions?.trial_ends_at) {
+        const trialEnd = new Date(userProfile.permissions.trial_ends_at);
+        const now = new Date();
+
+        // Si la fecha actual es mayor a la fecha de fin de prueba
+        if (now > trialEnd) {
+            console.log("Trial expired. Downgrading to Free.");
+            const newPermissions: UserPermissions = {
+                ...userProfile.permissions,
+                plan: 'free',
+                trial_ends_at: undefined // Remove trial date so we know it ended
+            };
+
+            // Update DB
+            await supabase.from('profiles').update({ permissions: newPermissions }).eq('id', userProfile.id);
+            
+            // Return updated profile locally
+            return { ...userProfile, permissions: newPermissions };
+        }
+    }
+    return userProfile;
+};
+
 // --- User & Auth Functions ---
 
 export const getUserByPhone = async (phone: string): Promise<User | null> => {
     if (!supabase) return null;
 
-    // Normalizamos el teléfono (solo números)
     const cleanPhone = phone.replace(/\D/g, '');
 
-    // Buscamos en la tabla profiles directamente
     const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -80,18 +106,21 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
     }
 
     if (data) {
+        // Check for trial expiration on login
+        const updatedData = await checkAndEnforcePlan(data);
+
         return {
-            id: data.id,
-            fullName: data.full_name,
-            companyName: data.company_name,
-            phone: data.phone,
-            is_admin: data.is_admin,
-            email: data.email,
-            is_onboarded: data.is_onboarded,
-            permissions: data.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
-            is_verified: data.is_verified,
-            ai_usage_count: data.ai_usage_count || 0,
-            settings: data.settings // Load settings from cloud
+            id: updatedData.id,
+            fullName: updatedData.full_name,
+            companyName: updatedData.company_name,
+            phone: updatedData.phone,
+            is_admin: updatedData.is_admin,
+            email: updatedData.email,
+            is_onboarded: updatedData.is_onboarded,
+            permissions: updatedData.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+            is_verified: updatedData.is_verified,
+            ai_usage_count: updatedData.ai_usage_count || 0,
+            settings: updatedData.settings 
         };
     }
 
@@ -113,7 +142,20 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
     const newId = crypto.randomUUID();
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit code
 
-    // 1. Guardar en Supabase (is_verified = false)
+    // *** TRIAL LOGIC: 7 Days PRO ***
+    const trialDays = 7;
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + trialDays);
+
+    const initialPermissions: UserPermissions = { 
+        can_use_ai: true, 
+        can_download_pdf: true, 
+        plan: 'pro', // Start as PRO
+        is_active: true,
+        trial_ends_at: trialEndDate.toISOString() 
+    };
+
+    // 1. Guardar en Supabase
     const { error } = await supabase
         .from('profiles')
         .insert({
@@ -125,7 +167,7 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
             is_onboarded: false,
             is_verified: false,
             verify_token: otpCode,
-            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+            permissions: initialPermissions,
             ai_usage_count: 0
         });
 
@@ -151,7 +193,6 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
                 date: new Date().toISOString()
             })
         });
-        console.log("Webhook enviado.");
     } catch (e) {
         console.error("Error trigger webhook:", e);
     }
@@ -165,7 +206,7 @@ export const registerNewUser = async (userData: { fullName: string, companyName:
             is_admin: false,
             is_onboarded: false,
             is_verified: false,
-            permissions: { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
+            permissions: initialPermissions,
             ai_usage_count: 0
         },
         alreadyVerified: false
@@ -186,7 +227,6 @@ export const resendOTP = async (userData: { fullName: string, companyName: strin
 
     // Reenviar a n8n
     try {
-        console.log(`Reenviando OTP ${otpCode} al webhook de n8n...`);
         await fetch(N8N_REGISTRATION_WEBHOOK, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -240,18 +280,21 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
 
     if (error) return null;
 
+    // Enforce Trial Logic on refresh
+    const updatedData = await checkAndEnforcePlan(data);
+
     return {
-        id: data.id,
-        fullName: data.full_name,
-        companyName: data.company_name,
-        phone: data.phone || supabaseUser.phone || '',
-        is_admin: data.is_admin,
+        id: updatedData.id,
+        fullName: updatedData.full_name,
+        companyName: updatedData.company_name,
+        phone: updatedData.phone || supabaseUser.phone || '',
+        is_admin: updatedData.is_admin,
         email: supabaseUser.email,
-        is_onboarded: data.is_onboarded,
-        permissions: data.permissions,
-        is_verified: data.is_verified,
-        ai_usage_count: data.ai_usage_count || 0,
-        settings: data.settings // Fetch settings
+        is_onboarded: updatedData.is_onboarded,
+        permissions: updatedData.permissions,
+        is_verified: updatedData.is_verified,
+        ai_usage_count: updatedData.ai_usage_count || 0,
+        settings: updatedData.settings 
     };
 };
 
@@ -272,8 +315,6 @@ export const completeOnboarding = async (userId: string) => {
 
 export const incrementAIUsage = async (userId: string) => {
     if (!supabase) return;
-    
-    // Fetch current count to allow incrementing without complex RPC for now
     const { data } = await supabase.from('profiles').select('ai_usage_count').eq('id', userId).single();
     const current = data?.ai_usage_count || 0;
     
@@ -286,19 +327,15 @@ export const incrementAIUsage = async (userId: string) => {
 // --- Storage Functions ---
 
 export const uploadQuotationPDF = async (file: File): Promise<string> => {
-    // Wrapper for legacy calls, defaulting to PDF logic if needed, 
-    // but really just re-using the generic uploader now.
     return uploadGenericFile(file);
 };
 
 export const uploadGenericFile = async (file: File): Promise<string> => {
     if (!supabase) throw new Error("Supabase client not initialized");
 
-    // Extract extension
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-    // Using 'quotations' bucket as the general public storage for now
     const { error } = await supabase.storage
         .from('quotations')
         .upload(fileName, file, {
@@ -346,16 +383,21 @@ export const getAllUsers = async (): Promise<User[]> => {
 
 export const updateUserPermissions = async (userId: string, permissions: UserPermissions) => {
     if (!supabase) return;
-    // Use select() to ensure rows were actually updated (check against RLS)
+    
+    // Si se cambia manualmente a PRO, asegurarse de borrar la fecha de prueba para que sea permanente (o establecer una nueva si es una extensión)
+    const permsToSave = { ...permissions };
+    if (permissions.plan === 'pro' && !permissions.trial_ends_at) {
+        // Permanent pro, ensure no trial date
+        delete permsToSave.trial_ends_at;
+    }
+
     const { data, error } = await supabase
         .from('profiles')
-        .update({ permissions })
+        .update({ permissions: permsToSave })
         .eq('id', userId)
         .select();
 
     if (error) throw error;
-    
-    // If no data returned, it means RLS blocked the update (or ID doesn't exist)
     if (!data || data.length === 0) {
         throw new Error("Permiso denegado: La base de datos ignoró la actualización. Verifica las políticas RLS.");
     }
@@ -374,7 +416,6 @@ export const updateUserProfile = async (userId: string, data: { fullName: string
         .select();
     
     if (error) throw error;
-
     if (!updatedData || updatedData.length === 0) {
         throw new Error("Permiso denegado: No se pudo actualizar el perfil. Verifica las políticas RLS.");
     }
@@ -389,7 +430,6 @@ export const deleteUserProfile = async (userId: string) => {
         .select();
 
     if (error) throw error;
-
     if (!data || data.length === 0) {
         throw new Error("Permiso denegado: No se pudo eliminar el usuario. Verifica las políticas RLS.");
     }
@@ -427,8 +467,6 @@ export const saveQuotation = async (
 
     let clientId: string | null = null;
 
-    // 1. ROBUST CLIENT MATCHING
-    // Priority: Match by Document (Unique ID)
     if (clientData.document) {
         const { data: clientByDoc } = await supabase
             .from('clients')
@@ -436,11 +474,9 @@ export const saveQuotation = async (
             .eq('user_id', userId)
             .eq('document', clientData.document)
             .maybeSingle();
-        
         if (clientByDoc) clientId = clientByDoc.id;
     }
 
-    // Secondary: Match by Name (if no document found or provided)
     if (!clientId && clientData.name) {
         const { data: clientByName } = await supabase
             .from('clients')
@@ -448,13 +484,10 @@ export const saveQuotation = async (
             .eq('user_id', userId)
             .eq('name', clientData.name)
             .maybeSingle();
-        
         if (clientByName) clientId = clientByName.id;
     }
 
-    // 2. CLIENT UPSERT (Create or Update)
     if (clientId) {
-        // Update existing client with latest info
         await supabase
             .from('clients')
             .update({
@@ -466,7 +499,6 @@ export const saveQuotation = async (
             })
             .eq('id', clientId);
     } else {
-        // Create new client
         const { data: newClient, error: clientError } = await supabase
             .from('clients')
             .insert({
@@ -479,12 +511,10 @@ export const saveQuotation = async (
             })
             .select('id')
             .single();
-        
         if (clientError) throw new Error(`Error creando cliente: ${clientError.message}`);
         clientId = newClient.id;
     }
 
-    // 3. INSERT QUOTATION
     const { data: newQuote, error: quoteError } = await supabase
         .from('quotations')
         .insert({
@@ -502,7 +532,6 @@ export const saveQuotation = async (
 
     if (quoteError) throw new Error(`Error guardando cotización: ${quoteError.message}`);
 
-    // 4. INSERT ITEMS
     const itemsToInsert = quoteData.items.map(item => ({
         quotation_id: newQuote.id,
         description: item.description,
@@ -517,7 +546,6 @@ export const saveQuotation = async (
 
     if (itemsError) throw new Error(`Error guardando items: ${itemsError.message}`);
 
-    // 5. UPSERT PRODUCTS (Catalog) - Only if NOT skipped (e.g. tasks)
     if (!skipProductSave) {
         const productsToUpsert = quoteData.items.map(item => ({
             user_id: userId,
@@ -525,15 +553,11 @@ export const saveQuotation = async (
             unit_price: item.unitPrice,
             currency: quoteData.currency
         }));
-
-        const { error: productsError } = await supabase
+        await supabase
             .from('products')
             .upsert(productsToUpsert, { onConflict: 'user_id, name' });
-
-        if (productsError) console.warn("Error actualizando catálogo:", productsError);
     }
 
-    // Return ID so frontend can switch to "Edit Mode"
     return newQuote.id;
 };
 
@@ -545,7 +569,6 @@ export const updateQuotation = async (
 ) => {
      if (!supabase) throw new Error("Supabase no configurado");
 
-     // Update Quotation Header
      const updateData: any = {
         total_amount: quoteData.total,
         currency: quoteData.currency,
@@ -561,7 +584,6 @@ export const updateQuotation = async (
 
      if (headerError) throw new Error(headerError.message);
 
-     // 2. Replace Items (Delete all and Insert new)
      await supabase.from('quotation_items').delete().eq('quotation_id', quotationId);
      
      const itemsToInsert = quoteData.items.map(item => ({
@@ -591,7 +613,6 @@ export const updateQuotationTags = async (quotationId: string, tags: string[], m
     if (meta) {
         updateData.crm_meta = meta;
     }
-    
     const { error } = await supabase
         .from('quotations')
         .update(updateData)
@@ -664,7 +685,6 @@ export const getQuotations = async (userId: string): Promise<SavedQuotation[]> =
     }));
 };
 
-// --- Specific Client History ---
 export const getClientQuotations = async (clientId: string): Promise<SavedQuotation[]> => {
     if (!supabase) return [];
 
@@ -688,7 +708,6 @@ export const getClientQuotations = async (clientId: string): Promise<SavedQuotat
         return [];
     }
 
-    // Adapt structure to SavedQuotation (simplified for display)
     return data.map((q: any) => ({
         id: q.id,
         quotation_number: q.quotation_number,
@@ -697,7 +716,7 @@ export const getClientQuotations = async (clientId: string): Promise<SavedQuotat
         status: q.status,
         created_at: q.created_at,
         tags: q.tags || [],
-        client: { id: clientId, name: '', phone: '' }, // Placeholder
+        client: { id: clientId, name: '', phone: '' }, 
         items: q.quotation_items?.map((i: any) => ({ description: i.description }))
     }));
 };
@@ -735,15 +754,13 @@ export const getQuotationById = async (quotationId: string) => {
     };
 };
 
-// --- TASKS FUNCTIONS (NEW TABLE) ---
-
 export const getTasks = async (userId: string): Promise<DbTask[]> => {
     if (!supabase) return [];
     const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
-        .order('is_important', { ascending: false }) // Sort by importance first
+        .order('is_important', { ascending: false }) 
         .order('created_at', { ascending: false });
     
     if (error) return [];
@@ -769,8 +786,8 @@ export const triggerTaskAutomation = async (
         description: string, 
         date?: string, 
         email?: string, 
-        phone?: string, // Client phone
-        name?: string   // Client name
+        phone?: string, 
+        name?: string   
     }
 ) => {
     try {
@@ -786,9 +803,6 @@ export const triggerTaskAutomation = async (
             client_name: taskData.name || ''
         };
 
-        console.log("Sending task to n8n:", payload);
-
-        // Fire and forget - we don't await the result to block UI
         fetch(N8N_TASK_WEBHOOK, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -816,7 +830,7 @@ export const updateTask = async (taskId: string, description: string, dueDate?: 
     const { error } = await supabase.from('tasks').update({
         description,
         due_date: dueDate,
-        reminder_sent: false // Reset reminder if details change
+        reminder_sent: false
     }).eq('id', taskId);
     if (error) throw error;
 }
@@ -838,9 +852,6 @@ export const deleteTask = async (taskId: string) => {
     const { error } = await supabase.from('tasks').delete().eq('id', taskId);
     if (error) throw error;
 }
-
-
-// --- Client Management Functions ---
 
 export const getClients = async (userId: string): Promise<DbClient[]> => {
     if (!supabase) return [];
@@ -893,8 +904,6 @@ export const deleteClient = async (id: string) => {
     const { error } = await supabase.from('clients').delete().eq('id', id);
     if (error) throw new Error(error.message);
 }
-
-// --- Product Management Functions ---
 
 export const getProducts = async (userId: string): Promise<DbProduct[]> => {
     if (!supabase) return [];
