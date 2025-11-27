@@ -1,401 +1,83 @@
-
-<!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olivia - El Sistema de Cotizaciones para Emprendedores</title>
-    <meta name="description" content="Crea cotizaciones profesionales en segundos, envíalas por WhatsApp y cierra más ventas. Olvídate del Excel.">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Ubuntu', sans-serif; }
-        .gradient-text {
-            background: linear-gradient(to right, #EC4899, #8B5CF6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-bg {
-            background: radial-gradient(circle at top center, #fdf2f8 0%, #ffffff 70%);
-        }
-        .feature-card {
-            transition: all 0.3s ease;
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px -10px rgba(236, 72, 153, 0.2);
-        }
-        /* Tab Animation */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-</head>
-<body class="text-gray-800 bg-white">
-
-    <!-- NAVBAR -->
-    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
-                <div class="w-8 h-8 flex items-center justify-center bg-pink-500 rounded-lg shadow-sm">
-                    <span class="text-white font-bold text-xl">O</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight">Olivia</span>
-            </div>
-            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-                <a href="#tour" class="hover:text-pink-500 transition">Cómo Funciona</a>
-                <a href="#features" class="hover:text-pink-500 transition">Beneficios</a>
-                <a href="#pricing" class="hover:text-pink-500 transition">Precios</a>
-            </div>
-            <div class="flex items-center gap-4">
-                <a href="/" class="text-sm font-bold text-gray-600 hover:text-gray-900 hidden sm:block">Iniciar Sesión</a>
-                <a href="/" class="px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-full hover:bg-black transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    Empezar Gratis
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- HERO SECTION -->
-    <header class="hero-bg pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
-        <div class="container mx-auto px-6 text-center relative z-10">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-50 border border-pink-100 text-pink-600 text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in-up">
-                <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
-                Nuevo: 7 Días de Prueba PRO Automático
-            </div>
-            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 max-w-5xl mx-auto">
-                Tus cotizaciones, <br>
-                <span class="gradient-text">listas para enviar en segundos.</span>
-            </h1>
-            <p class="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Olvídate del Excel. Olivia es el sistema todo-en-uno que te permite cotizar, gestionar clientes y organizar tu día desde tu celular o PC.
-            </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                <a href="/" class="w-full sm:w-auto px-8 py-4 bg-pink-600 text-white font-bold text-lg rounded-xl shadow-xl hover:bg-pink-700 transition transform hover:scale-105 flex items-center justify-center gap-2">
-                    Iniciar Prueba Gratuita
-                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                </a>
-                <a href="#tour" class="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 font-bold text-lg rounded-xl border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2">
-                    <i data-lucide="play-circle" class="w-5 h-5 text-gray-400"></i>
-                    Ver cómo funciona
-                </a>
-            </div>
-            
-            <!-- Mockup Visual -->
-            <div class="relative max-w-4xl mx-auto perspective-1000">
-                <div class="bg-white rounded-t-2xl shadow-2xl border border-gray-200 p-2 transform rotate-1 hover:rotate-0 transition duration-700">
-                    <div class="bg-gray-50 rounded-t-xl overflow-hidden h-64 md:h-96 flex items-center justify-center border-b border-gray-100 relative">
-                        <!-- Simulated Interface -->
-                        <div class="absolute inset-0 flex">
-                            <!-- Sidebar -->
-                            <div class="hidden md:block w-48 bg-white border-r border-gray-200 p-4 space-y-3">
-                                <div class="w-8 h-8 bg-pink-500 rounded-lg mb-6"></div>
-                                <div class="h-2 w-24 bg-gray-100 rounded"></div>
-                                <div class="h-2 w-32 bg-gray-100 rounded"></div>
-                                <div class="h-2 w-20 bg-gray-100 rounded"></div>
-                            </div>
-                            <!-- Main Content -->
-                            <div class="flex-1 p-6">
-                                <div class="flex justify-between mb-6">
-                                    <div class="h-8 w-48 bg-gray-200 rounded-lg animate-pulse"></div>
-                                    <div class="h-8 w-24 bg-pink-100 rounded-lg"></div>
-                                </div>
-                                <div class="grid grid-cols-3 gap-4 mb-4">
-                                    <div class="h-24 bg-white border border-gray-100 rounded-xl shadow-sm"></div>
-                                    <div class="h-24 bg-white border border-gray-100 rounded-xl shadow-sm"></div>
-                                    <div class="h-24 bg-white border border-gray-100 rounded-xl shadow-sm"></div>
-                                </div>
-                                <div class="h-32 bg-white border border-gray-100 rounded-xl shadow-sm"></div>
-                            </div>
-                        </div>
-                        <div class="absolute bottom-4 right-4 bg-gray-900 text-white text-xs px-3 py-1 rounded-full opacity-50">Vista Previa Dashboard</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- INTERACTIVE TOUR SECTION -->
-    <section id="tour" class="py-20 bg-gray-50">
-        <div class="container mx-auto px-6">
-            <div class="text-center max-w-3xl mx-auto mb-12">
-                <h2 class="text-3xl font-bold mb-4">Un recorrido por Olivia</h2>
-                <p class="text-gray-500">Descubre lo fácil que es profesionalizar tu negocio en 4 pasos.</p>
-            </div>
-
             <!-- Tabs Navigation -->
             <div class="flex flex-wrap justify-center gap-2 mb-12">
-                <button onclick="switchTab('step1')" id="tab-step1" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-pink-600 text-white shadow-lg transition-all">
-                    1. Registro Rápido
+                <button onclick="switchTab('step1')" id="tab-step1" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-pink-600 text-white shadow-lg transition-all flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> 1. Crea o Importa
                 </button>
-                <button onclick="switchTab('step2')" id="tab-step2" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all">
-                    2. Cotización Pro
+                <button onclick="switchTab('step2')" id="tab-step2" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all flex items-center gap-2">
+                    <i data-lucide="send" class="w-4 h-4"></i> 2. Envía al Instante
                 </button>
-                <button onclick="switchTab('step3')" id="tab-step3" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all">
-                    3. CRM Visual
+                <button onclick="switchTab('step3')" id="tab-step3" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all flex items-center gap-2">
+                    <i data-lucide="list-todo" class="w-4 h-4"></i> 3. Tareas y Llamadas
                 </button>
-                <button onclick="switchTab('step4')" id="tab-step4" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all">
-                    4. Asistente IA
+                <button onclick="switchTab('step4')" id="tab-step4" class="tab-btn px-6 py-3 rounded-full font-bold text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all flex items-center gap-2">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i> 4. Agenda Reuniones
                 </button>
             </div>
 
             <!-- Tab Contents -->
-            <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-h-[400px]">
+            <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-h-[450px]">
                 
-                <!-- STEP 1: ONBOARDING -->
+                <!-- STEP 1: CREATE OR IMPORT (The Choice) -->
                 <div id="step1" class="tab-content active p-8 md:p-12 flex flex-col md:flex-row items-center gap-12">
                     <div class="flex-1 space-y-6">
-                        <div class="inline-block p-3 bg-green-100 text-green-700 rounded-xl"><i data-lucide="user-plus" class="w-6 h-6"></i></div>
-                        <h3 class="text-2xl font-bold">Empieza sin contraseñas</h3>
+                        <div class="inline-block p-3 bg-pink-100 text-pink-700 rounded-xl"><i data-lucide="layers" class="w-6 h-6"></i></div>
+                        <h3 class="text-2xl font-bold">Flexibilidad Total: Tú Eliges</h3>
                         <p class="text-gray-500 leading-relaxed">
-                            Olvídate de recordar claves. Regístrate usando solo tu <strong>número de celular</strong>. Te enviamos un código de seguridad a WhatsApp y listo.
+                            Olivia se adapta a tu forma de trabajar. ¿Tienes una lista de precios en PDF? Que la IA lo haga por ti. ¿Prefieres hacerlo a tu ritmo? Usa el editor manual.
                         </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-center gap-2 text-sm text-gray-700"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Verificación segura por OTP</li>
-                            <li class="flex items-center gap-2 text-sm text-gray-700"><i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Configura tu Logo y Color de marca al instante</li>
-                            <li class="flex items-center gap-2 text-sm font-bold text-pink-600"><i data-lucide="gift" class="w-4 h-4"></i> Recibe 7 Días de Plan PRO Gratis automáticamente</li>
-                        </ul>
-                    </div>
-                    <div class="flex-1 w-full flex justify-center">
-                        <!-- CSS Mockup Phone Login -->
-                        <div class="w-64 bg-gray-900 rounded-[2rem] p-3 shadow-2xl border-4 border-gray-800">
-                            <div class="bg-white rounded-[1.5rem] h-96 overflow-hidden flex flex-col items-center justify-center p-6 relative">
-                                <div class="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-                                <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mb-4"><span class="font-bold text-pink-600">O</span></div>
-                                <div class="w-full h-10 bg-gray-100 rounded-lg mb-2"></div>
-                                <div class="w-full h-10 bg-gray-900 rounded-lg flex items-center justify-center text-white text-xs font-bold">Enviar Código</div>
-                                <div class="mt-4 text-[10px] text-gray-400 text-center">Código enviado a WhatsApp...</div>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4 p-4 rounded-xl border border-pink-100 bg-pink-50/50">
+                                <div class="bg-white p-2 rounded-full shadow-sm text-pink-600"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 text-sm">Importar con IA</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Sube un PDF o Excel y extraemos los productos automáticamente.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50">
+                                <div class="bg-white p-2 rounded-full shadow-sm text-teal-600"><i data-lucide="edit-3" class="w-5 h-5"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 text-sm">Crear desde Cero</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Control total. Ideal para cotizaciones personalizadas o únicas.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- STEP 2: COTIZACION -->
-                <div id="step2" class="tab-content p-8 md:p-12 flex flex-col md:flex-row items-center gap-12">
-                    <div class="flex-1 space-y-6">
-                        <div class="inline-block p-3 bg-blue-100 text-blue-700 rounded-xl"><i data-lucide="file-text" class="w-6 h-6"></i></div>
-                        <h3 class="text-2xl font-bold">Editor de Cotizaciones Potente</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            Crea desde cero o usa la IA. Controla tus márgenes de ganancia, aplica descuentos y elige si tus precios incluyen IGV o no.
-                        </p>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <h4 class="font-bold text-sm mb-1">Plantillas</h4>
-                                <p class="text-xs text-gray-500">Moderna, Elegante, Audaz.</p>
+                    <div class="flex-1 w-full bg-gray-50 rounded-xl p-8 flex items-center justify-center relative border border-gray-100">
+                        <!-- Visual Mockup: The Choice Screen -->
+                        <div class="w-full max-w-sm bg-white rounded-xl shadow-xl p-6 relative border border-gray-200">
+                            <div class="text-center mb-6">
+                                <h4 class="font-bold text-lg text-gray-800">Nueva Cotización</h4>
+                                <p class="text-xs text-gray-400">Elige cómo quieres empezar.</p>
                             </div>
-                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <h4 class="font-bold text-sm mb-1">Botón WhatsApp</h4>
-                                <p class="text-xs text-gray-500">Envío directo sin guardar contacto.</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Option 1: AI -->
+                                <div class="border-2 border-dashed border-pink-300 bg-pink-50/30 rounded-xl p-4 flex flex-col items-center text-center gap-3 cursor-pointer hover:bg-pink-50 transition-colors transform hover:scale-105 duration-200">
+                                    <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
+                                        <i data-lucide="file-up" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="block text-xs font-bold text-gray-800">Importar (IA)</span>
+                                        <span class="block text-[9px] text-gray-500">Desde PDF/Excel</span>
+                                    </div>
+                                </div>
+                                <!-- Option 2: Manual -->
+                                <div class="border-2 border-gray-100 bg-white rounded-xl p-4 flex flex-col items-center text-center gap-3 cursor-pointer hover:border-teal-400 hover:shadow-md transition-all transform hover:scale-105 duration-200">
+                                    <div class="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center text-teal-600">
+                                        <i data-lucide="edit" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="block text-xs font-bold text-gray-800">Crear Manual</span>
+                                        <span class="block text-[9px] text-gray-500">Desde Cero</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="flex-1 w-full bg-gray-100 rounded-xl p-6 flex items-center justify-center relative overflow-hidden">
-                        <!-- CSS Mockup Paper -->
-                        <div class="w-48 h-64 bg-white shadow-lg rounded-sm p-4 text-[6px] text-gray-300 relative transform rotate-3 hover:rotate-0 transition">
-                            <div class="flex justify-between mb-4">
-                                <div class="w-8 h-8 bg-pink-200 rounded-full"></div>
-                                <div class="w-12 h-2 bg-gray-200"></div>
+                            
+                            <!-- Decorator Cursor -->
+                            <div class="absolute bottom-10 right-10 pointer-events-none animate-bounce">
+                                <svg class="w-8 h-8 text-gray-800 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2l12 11.2-5.8.5 3.3 7.3-2.2.9-3.2-7.4-4.4 4.6z"/></svg>
                             </div>
-                            <div class="space-y-2 mb-4">
-                                <div class="w-full h-1 bg-gray-100"></div>
-                                <div class="w-full h-1 bg-gray-100"></div>
-                            </div>
-                            <div class="w-full h-20 bg-blue-50 rounded mb-2 border border-blue-100 flex items-center justify-center text-blue-300 font-bold uppercase tracking-widest">
-                                Tabla de Productos
-                            </div>
-                            <div class="absolute bottom-4 right-4 text-right">
-                                <div class="w-16 h-2 bg-gray-800 mb-1 ml-auto"></div>
-                                <div class="w-10 h-1 bg-gray-300 ml-auto"></div>
-                            </div>
-                        </div>
-                        <div class="absolute bottom-6 right-8 bg-green-500 text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs flex items-center gap-2 animate-bounce">
-                            <i data-lucide="send" class="w-3 h-3"></i> Enviado
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 3: CRM -->
-                <div id="step3" class="tab-content p-8 md:p-12 flex flex-col md:flex-row items-center gap-12">
-                     <div class="flex-1 space-y-6">
-                        <div class="inline-block p-3 bg-purple-100 text-purple-700 rounded-xl"><i data-lucide="kanban" class="w-6 h-6"></i></div>
-                        <h3 class="text-2xl font-bold">CRM y Tablero Kanban</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            Visualiza el estado de todas tus ventas. Arrastra y suelta tus cotizaciones desde "Enviada" hasta "Ganada".
-                        </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-center gap-2 text-sm text-gray-700"><i data-lucide="check" class="w-4 h-4 text-purple-500"></i> Historial completo por cliente</li>
-                            <li class="flex items-center gap-2 text-sm text-gray-700"><i data-lucide="check" class="w-4 h-4 text-purple-500"></i> Métricas de ventas en tiempo real</li>
-                        </ul>
-                    </div>
-                    <div class="flex-1 w-full bg-gray-50 rounded-xl p-6 flex justify-center gap-3 overflow-hidden">
-                        <!-- Kanban Mockup -->
-                        <div class="w-24 bg-gray-200 rounded-lg p-2 space-y-2 opacity-50">
-                            <div class="h-2 w-10 bg-gray-400 rounded mb-2"></div>
-                            <div class="bg-white p-2 rounded shadow-sm h-12"></div>
-                        </div>
-                        <div class="w-24 bg-blue-50 rounded-lg p-2 space-y-2 border-t-2 border-blue-400">
-                            <div class="h-2 w-12 bg-blue-300 rounded mb-2"></div>
-                            <div class="bg-white p-2 rounded shadow-sm h-16 border border-blue-100 relative">
-                                <div class="absolute top-1 right-1 w-2 h-2 bg-blue-400 rounded-full"></div>
-                            </div>
-                            <div class="bg-white p-2 rounded shadow-sm h-10 border border-blue-100"></div>
-                        </div>
-                        <div class="w-24 bg-green-50 rounded-lg p-2 space-y-2 border-t-2 border-green-400">
-                             <div class="h-2 w-10 bg-green-300 rounded mb-2"></div>
-                             <div class="bg-white p-2 rounded shadow-sm h-14 border border-green-100 flex items-center justify-center">
-                                 <i data-lucide="dollar-sign" class="text-green-500 w-4 h-4"></i>
-                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- STEP 4: ASSISTANT -->
-                <div id="step4" class="tab-content p-8 md:p-12 flex flex-col md:flex-row items-center gap-12">
-                     <div class="flex-1 space-y-6">
-                        <div class="inline-block p-3 bg-pink-100 text-pink-700 rounded-xl"><i data-lucide="bot" class="w-6 h-6"></i></div>
-                        <h3 class="text-2xl font-bold">Asistente Oliv-IA</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            Tu secretaria virtual. Usa el botón flotante para crear tareas rápidas o agendar llamadas sin salir de la pantalla.
-                        </p>
-                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm italic text-gray-600">
-                            "Llamar al cliente Juan Pérez mañana a las 3pm para cerrar el trato."
-                        </div>
-                        <p class="text-xs text-gray-400 uppercase font-bold">Simplemente escríbelo y Olivia lo agendará.</p>
-                    </div>
-                    <div class="flex-1 w-full h-64 flex items-center justify-center relative">
-                        <!-- Bot Button Mockup -->
-                        <div class="absolute bottom-0 right-10">
-                            <div class="w-14 h-14 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full shadow-2xl flex items-center justify-center text-white animate-bounce">
-                                <i data-lucide="bot" class="w-8 h-8"></i>
-                            </div>
-                        </div>
-                        <!-- Chat Bubble -->
-                        <div class="bg-white border border-gray-200 shadow-xl rounded-2xl rounded-br-none p-4 mb-16 mr-12 max-w-[200px]">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                <span class="text-xs font-bold text-gray-400">Olivia</span>
-                            </div>
-                            <p class="text-sm font-medium text-gray-800">¡Tarea guardada! Te recordaré llamar a Juan mañana. 📝</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- PRICING -->
-    <section id="pricing" class="py-20 bg-gray-900 text-white">
-        <div class="container mx-auto px-6">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold mb-4">Un precio simple. Sin contratos.</h2>
-                <p class="text-gray-400">Comienza gratis y mejora cuando tu negocio crezca.</p>
-            </div>
-
-            <div class="flex flex-col md:flex-row justify-center gap-8 max-w-4xl mx-auto">
-                <!-- Free Plan -->
-                <div class="w-full md:w-1/2 p-8 rounded-2xl border border-gray-700 bg-gray-800/50">
-                    <h3 class="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Plan Inicial</h3>
-                    <div class="text-4xl font-bold mb-6">Gratis</div>
-                    <ul class="space-y-4 mb-8 text-gray-300">
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-400"></i> 5 Cotizaciones al mes</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-400"></i> Catálogo de 10 productos</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-green-400"></i> PDF Básico (Con marca de agua)</li>
-                    </ul>
-                    <a href="/" class="block w-full py-3 rounded-xl border border-gray-600 font-bold text-center hover:bg-gray-700 transition">Crear cuenta Gratis</a>
-                </div>
-
-                <!-- PRO Plan -->
-                <div class="w-full md:w-1/2 p-8 rounded-2xl border-2 border-pink-500 bg-gray-800 relative transform md:-translate-y-4 shadow-2xl shadow-pink-900/20">
-                    <div class="absolute top-0 right-0 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">MÁS POPULAR</div>
-                    <h3 class="font-bold text-pink-400 uppercase tracking-wider text-sm mb-2">Plan PRO</h3>
-                    <div class="flex items-baseline gap-1 mb-6">
-                        <span class="text-4xl font-bold">S/ 29.90</span>
-                        <span class="text-gray-400">/mes</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-gray-300">
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-pink-500"></i> <strong>Cotizaciones Ilimitadas</strong></li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-pink-500"></i> Sin marca de agua</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-pink-500"></i> Envío directo a WhatsApp</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-pink-500"></i> Catálogo Ilimitado</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-5 h-5 text-pink-500"></i> Asistente de IA (Olivia)</li>
-                    </ul>
-                    <a href="/" class="block w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-center hover:bg-pink-700 transition shadow-lg">Prueba 7 Días Gratis</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="py-20 bg-white">
-        <div class="container mx-auto px-6 max-w-3xl">
-            <h2 class="text-3xl font-bold text-center mb-12">Preguntas Frecuentes</h2>
-            
-            <div class="space-y-6">
-                <div class="border-b border-gray-100 pb-6">
-                    <h3 class="font-bold text-lg mb-2">¿Necesito tarjeta de crédito para la prueba?</h3>
-                    <p class="text-gray-500">No. Te registras solo con tu número de teléfono y tienes 7 días de acceso total al Plan PRO automáticamente.</p>
-                </div>
-                <div class="border-b border-gray-100 pb-6">
-                    <h3 class="font-bold text-lg mb-2">¿Cómo puedo pagar después?</h3>
-                    <p class="text-gray-500">Aceptamos Yape, Plin y Transferencias BCP. Puedes coordinar el pago directamente por WhatsApp con nuestro equipo.</p>
-                </div>
-                <div class="border-b border-gray-100 pb-6">
-                    <h3 class="font-bold text-lg mb-2">¿Mis datos están seguros?</h3>
-                    <p class="text-gray-500">Sí, tus clientes y productos son tuyos. Usamos servidores seguros para proteger tu información comercial.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="bg-gray-50 pt-20 pb-10 border-t border-gray-200">
-        <div class="container mx-auto px-6 text-center">
-            <div class="flex items-center justify-center gap-2 mb-6">
-                <div class="w-8 h-8 flex items-center justify-center bg-gray-900 rounded-lg">
-                    <span class="text-white font-bold text-xl">O</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-gray-900">Olivia</span>
-            </div>
-            <p class="text-gray-500 mb-8">Ayudando a emprendedores a cerrar más ventas en menos tiempo.</p>
-            <div class="flex justify-center gap-6 mb-8 text-sm text-gray-600">
-                <a href="#" class="hover:text-pink-600">Términos</a>
-                <a href="#" class="hover:text-pink-600">Privacidad</a>
-                <a href="#" class="hover:text-pink-600">Soporte</a>
-            </div>
-            <p class="text-gray-400 text-sm">© 2024 Olivia SaaS. Hecho con ❤️ en Perú.</p>
-        </div>
-    </footer>
-
-    <script>
-        lucide.createIcons();
-
-        function switchTab(stepId) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // Reset buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-pink-600', 'text-white', 'shadow-lg');
-                btn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
-            });
-
-            // Show selected tab
-            document.getElementById(stepId).classList.add('active');
-            
-            // Highlight button
-            const activeBtn = document.getElementById('tab-' + stepId);
-            activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
-            activeBtn.classList.add('bg-pink-600', 'text-white', 'shadow-lg');
-        }
-    </script>
-</body>
-</html>
+                <!-- STEP 2: SENDING (Omnichannel) -->
