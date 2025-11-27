@@ -1,3 +1,565 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Olivia - El Sistema de Cotizaciones para Emprendedores</title>
+    <meta name="description" content="Crea cotizaciones profesionales en segundos, envíalas por WhatsApp y cierra más ventas. Olvídate del Excel.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Ubuntu', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .gradient-text {
+            background: linear-gradient(to right, #EC4899, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-bg {
+            background: radial-gradient(circle at top center, #fdf2f8 0%, #ffffff 70%);
+        }
+        /* Tab Animation */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Chat Widget Animations */
+        .chat-slide-up {
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar for Chat & Tables */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 20px; }
+        
+        /* Hide Scrollbar for specific elements */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-gray-800 bg-white overflow-x-hidden">
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-lg border-b border-gray-100 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 md:px-6 py-3 md:py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <div class="w-8 h-8 flex items-center justify-center bg-pink-600 rounded-lg shadow-sm">
+                        <span class="text-white font-bold text-xl">O</span>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Olivia</span>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+                    <a href="#tour" class="hover:text-pink-600 transition">Cómo Funciona</a>
+                    <a href="#demos" class="hover:text-pink-600 transition">Academia</a>
+                    <a href="#pricing" class="hover:text-pink-600 transition">Precios</a>
+                </div>
+
+                <!-- Desktop CTAs -->
+                <div class="hidden md:flex items-center gap-4">
+                    <a href="https://olivia-sandy.vercel.app" class="text-sm font-bold text-gray-600 hover:text-gray-900">Iniciar Sesión</a>
+                    <a href="https://olivia-sandy.vercel.app" class="px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-full hover:bg-black transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        Empezar Gratis
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <a href="https://olivia-sandy.vercel.app" class="mr-4 text-sm font-bold text-pink-600">Ingresar</a>
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-pink-600 focus:outline-none p-1 rounded-md hover:bg-gray-50">
+                        <i data-lucide="menu" class="w-7 h-7"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Dropdown -->
+            <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-xl animate-fade-in-up">
+                <div class="flex flex-col p-4 space-y-4">
+                    <a href="#tour" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="closeMobileMenu()">
+                        <div class="p-2 bg-pink-50 text-pink-600 rounded-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                        Cómo Funciona
+                    </a>
+                    <a href="#demos" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="closeMobileMenu()">
+                        <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="play-circle" class="w-5 h-5"></i></div>
+                        Academia
+                    </a>
+                    <a href="#pricing" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="closeMobileMenu()">
+                        <div class="p-2 bg-green-50 text-green-600 rounded-lg"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
+                        Precios
+                    </a>
+                    <div class="border-t border-gray-100 pt-4 mt-2">
+                        <a href="https://olivia-sandy.vercel.app" class="block w-full text-center px-5 py-3.5 bg-gray-900 text-white font-bold rounded-xl shadow-md active:scale-95 transition-transform">
+                            Crear Cuenta Gratis
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="hero-bg pt-28 pb-16 md:pt-32 md:pb-20 lg:pt-40 lg:pb-32 overflow-hidden px-4 md:px-0">
+        <div class="container mx-auto text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-full bg-pink-50 border border-pink-100 text-pink-600 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-4 md:mb-6 animate-fade-in-up">
+                <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+                Nuevo: 7 Días de Prueba PRO Automático
+            </div>
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-4 md:mb-6 max-w-5xl mx-auto tracking-tight">
+                Tus cotizaciones, <br class="hidden md:block">
+                <span class="gradient-text">listas para enviar en segundos.</span>
+            </h1>
+            <p class="text-base md:text-xl text-gray-500 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed px-4">
+                Olvídate del Excel. Olivia es el sistema todo-en-uno que te permite cotizar, gestionar clientes y organizar tu día desde tu celular o PC.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-12 md:mb-16 w-full max-w-md mx-auto sm:max-w-none">
+                <a href="https://olivia-sandy.vercel.app" class="w-full sm:w-auto px-8 py-4 bg-pink-600 text-white font-bold text-lg rounded-xl shadow-xl hover:bg-pink-700 transition transform hover:scale-105 flex items-center justify-center gap-2 active:scale-95">
+                    Iniciar Prueba Gratuita
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                <a href="#tour" class="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 font-bold text-lg rounded-xl border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="play-circle" class="w-5 h-5 text-gray-400"></i>
+                    Ver cómo funciona
+                </a>
+            </div>
+            
+            <!-- Real Dashboard Mockup -->
+            <div class="relative max-w-5xl mx-auto perspective-1000 px-2 md:px-0">
+                <div class="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden transform hover:scale-[1.01] transition duration-500">
+                    <div class="flex h-[450px] md:h-[600px] bg-[#F9F9F9]">
+                        
+                        <!-- Sidebar (Hidden on Mobile) -->
+                        <div class="hidden md:flex w-64 bg-white border-r border-gray-100 flex-col p-4 shrink-0">
+                            <div class="flex items-center gap-2 mb-8 px-2">
+                                <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white font-bold">O</div>
+                                <span class="font-bold text-gray-900 text-lg">Olivia</span>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-3 px-3 py-2 bg-pink-50 text-pink-600 rounded-lg font-medium text-sm">
+                                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                                </div>
+                                <div class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-sm relative">
+                                    <i data-lucide="clipboard-list" class="w-5 h-5"></i> Tareas
+                                    <span class="absolute right-2 top-2 bg-red-500 text-white text-[9px] px-1.5 rounded-full">1</span>
+                                </div>
+                                <div class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-sm">
+                                    <i data-lucide="file-plus" class="w-5 h-5"></i> Crear
+                                </div>
+                                <div class="flex items-center gap-3 px-3 py-2 text-gray-500 hover:bg-gray-50 rounded-lg font-medium text-sm">
+                                    <i data-lucide="package" class="w-5 h-5"></i> Catálogo
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="flex-1 p-4 md:p-8 overflow-hidden flex flex-col text-left">
+                            <!-- Mobile Header Mockup -->
+                            <div class="flex md:hidden justify-between items-center mb-6">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white font-bold">O</div>
+                                </div>
+                                <div class="w-8 h-8 bg-gray-200 rounded-full"></div>
+                            </div>
+
+                            <!-- Header -->
+                            <div class="flex justify-between items-start mb-6 md:mb-8">
+                                <div>
+                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h2>
+                                    <p class="text-xs md:text-sm text-gray-500 mt-1">Resumen de ventas.</p>
+                                </div>
+                                <div class="hidden md:flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-pink-600 text-white flex items-center justify-center font-bold text-sm">M</div>
+                                    <div>
+                                        <p class="text-sm font-bold leading-none">Mitiendape</p>
+                                        <p class="text-[10px] text-gray-500">Propietario</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Metrics (Stacked on Mobile) -->
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+                                <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm col-span-2 md:col-span-1">
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">VENTAS REALES</p>
+                                    <p class="text-lg md:text-xl font-bold text-green-500">S/ 0</p>
+                                </div>
+                                <div class="bg-blue-50 p-3 md:p-4 rounded-xl border border-blue-100 shadow-sm">
+                                    <p class="text-[10px] text-blue-400 uppercase font-bold tracking-wider mb-1">COTIZACIONES</p>
+                                    <p class="text-lg md:text-xl font-bold text-blue-600">2</p>
+                                </div>
+                                <div class="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm">
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">ESTE MES</p>
+                                    <p class="text-lg md:text-xl font-bold text-purple-500">2</p>
+                                </div>
+                            </div>
+
+                            <!-- Search -->
+                            <div class="flex gap-2 mb-4 md:mb-6">
+                                <div class="bg-white flex-1 p-2 rounded-lg border border-gray-200 flex items-center gap-2 text-sm text-gray-400">
+                                    <i data-lucide="search" class="w-4 h-4 ml-1"></i> Buscar...
+                                </div>
+                            </div>
+
+                            <!-- Table Mockup (Scrollable on Mobile) -->
+                            <div class="bg-white rounded-xl border border-gray-200 flex-1 shadow-sm overflow-x-auto no-scrollbar">
+                                <div class="min-w-[500px]">
+                                    <div class="bg-gray-50 px-4 md:px-6 py-3 border-b border-gray-200 flex text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                        <div class="w-1/4">Cotización</div>
+                                        <div class="w-1/4">Cliente</div>
+                                        <div class="w-1/4">Estado</div>
+                                        <div class="w-1/4 text-right">Monto</div>
+                                    </div>
+                                    <div class="px-4 md:px-6 py-4 border-b border-gray-100 flex items-center text-sm">
+                                        <div class="w-1/4"><p class="font-bold text-gray-900">P001-001</p></div>
+                                        <div class="w-1/4 font-medium text-gray-700">Copiermax</div>
+                                        <div class="w-1/4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-[10px] font-bold">ENVIADA</span></div>
+                                        <div class="w-1/4 text-right font-bold text-gray-900">S/ 6600.00</div>
+                                    </div>
+                                    <div class="px-4 md:px-6 py-4 border-b border-gray-100 flex items-center text-sm">
+                                        <div class="w-1/4"><p class="font-bold text-gray-900">COT-0002</p></div>
+                                        <div class="w-1/4 font-medium text-gray-700">Pedro</div>
+                                        <div class="w-1/4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-[10px] font-bold">BORRADOR</span></div>
+                                        <div class="w-1/4 text-right font-bold text-gray-900">S/ 9658.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Floating FAB Mockup -->
+                            <div class="absolute bottom-4 right-4 md:bottom-6 md:right-6 w-10 h-10 md:w-12 md:h-12 bg-pink-600 rounded-full shadow-lg flex items-center justify-center text-white animate-bounce">
+                                <i data-lucide="bot" class="w-5 h-5 md:w-6 md:h-6"></i>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- INTERACTIVE TOUR SECTION -->
+    <section id="tour" class="py-16 md:py-20 bg-gray-50">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center max-w-3xl mx-auto mb-10 md:mb-12">
+                <h2 class="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Lo que Olivia hace por ti</h2>
+                <p class="text-sm md:text-base text-gray-500">Un sistema completo diseñado para vender más con menos esfuerzo.</p>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="flex overflow-x-auto no-scrollbar gap-2 mb-8 md:mb-12 pb-2 md:justify-center px-1">
+                <button onclick="switchTab('step1')" id="tab-step1" class="tab-btn whitespace-nowrap px-4 py-2 md:px-6 md:py-3 rounded-full font-bold text-xs md:text-sm bg-pink-600 text-white shadow-lg transition-all flex items-center gap-2 flex-shrink-0">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> 1. Crea o Importa
+                </button>
+                <button onclick="switchTab('step2')" id="tab-step2" class="tab-btn whitespace-nowrap px-4 py-2 md:px-6 md:py-3 rounded-full font-bold text-xs md:text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all flex items-center gap-2 flex-shrink-0">
+                    <i data-lucide="send" class="w-4 h-4"></i> 2. Envía al Instante
+                </button>
+                <button onclick="switchTab('step3')" id="tab-step3" class="tab-btn whitespace-nowrap px-4 py-2 md:px-6 md:py-3 rounded-full font-bold text-xs md:text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all flex items-center gap-2 flex-shrink-0">
+                    <i data-lucide="list-todo" class="w-4 h-4"></i> 3. Tareas
+                </button>
+                <button onclick="switchTab('step4')" id="tab-step4" class="tab-btn whitespace-nowrap px-4 py-2 md:px-6 md:py-3 rounded-full font-bold text-xs md:text-sm bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 transition-all flex items-center gap-2 flex-shrink-0">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i> 4. Agenda
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="max-w-5xl mx-auto bg-white rounded-2xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-h-[400px] md:min-h-[450px]">
+                
+                <!-- STEP 1: CREATE OR IMPORT -->
+                <div id="step1" class="tab-content active p-6 md:p-12 flex-col md:flex-row items-center gap-8 md:gap-12">
+                    <div class="flex-1 space-y-4 md:space-y-6">
+                        <div class="inline-block p-2 md:p-3 bg-pink-100 text-pink-700 rounded-xl"><i data-lucide="layers" class="w-5 h-5 md:w-6 md:h-6"></i></div>
+                        <h3 class="text-xl md:text-2xl font-bold">Flexibilidad Total</h3>
+                        <p class="text-sm md:text-base text-gray-500 leading-relaxed">
+                            Olivia se adapta a tu forma de trabajar. ¿Tienes una lista de precios en PDF? Que la IA lo haga por ti. ¿Prefieres hacerlo a tu ritmo? Usa el editor manual.
+                        </p>
+                        <div class="space-y-3 md:space-y-4">
+                            <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl border border-pink-100 bg-pink-50/50">
+                                <div class="bg-white p-2 rounded-full shadow-sm text-pink-600"><i data-lucide="sparkles" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 text-sm">Importar con IA</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Sube un PDF y extraemos los productos.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl border border-gray-100 bg-gray-50">
+                                <div class="bg-white p-2 rounded-full shadow-sm text-teal-600"><i data-lucide="edit-3" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 text-sm">Crear desde Cero</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Control total para cotizaciones únicas.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full bg-gray-50 rounded-xl p-6 md:p-8 flex items-center justify-center relative border border-gray-100">
+                        <div class="w-full max-w-sm bg-white rounded-xl shadow-xl p-4 md:p-6 relative border border-gray-200">
+                            <div class="text-center mb-4 md:mb-6">
+                                <h4 class="font-bold text-base md:text-lg text-gray-800">Nueva Cotización</h4>
+                                <p class="text-[10px] md:text-xs text-gray-400">Elige cómo quieres empezar.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 md:gap-4">
+                                <div class="border-2 border-dashed border-pink-300 bg-pink-50/30 rounded-xl p-3 md:p-4 flex flex-col items-center text-center gap-2 md:gap-3">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
+                                        <i data-lucide="file-up" class="w-4 h-4 md:w-5 md:h-5"></i>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <span class="block text-xs font-bold text-gray-800">Importar (IA)</span>
+                                    </div>
+                                </div>
+                                <div class="border-2 border-gray-100 bg-white rounded-xl p-3 md:p-4 flex flex-col items-center text-center gap-2 md:gap-3">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 bg-teal-50 rounded-full flex items-center justify-center text-teal-600">
+                                        <i data-lucide="edit" class="w-4 h-4 md:w-5 md:h-5"></i>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <span class="block text-xs font-bold text-gray-800">Crear Manual</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: SENDING -->
+                <div id="step2" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-8 md:gap-12">
+                    <div class="flex-1 space-y-4 md:space-y-6">
+                        <div class="inline-block p-3 bg-green-100 text-green-700 rounded-xl"><i data-lucide="send" class="w-6 h-6"></i></div>
+                        <h3 class="text-xl md:text-2xl font-bold">Envíos Omnicanal</h3>
+                        <p class="text-sm md:text-base text-gray-500 leading-relaxed">
+                            No descargues PDFs para luego adjuntarlos. Envía tu cotización directamente desde Olivia por el canal que prefiera tu cliente.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                            <div class="p-4 bg-green-50 border border-green-100 rounded-xl flex items-center gap-3">
+                                <div class="bg-green-500 text-white p-2 rounded-full"><i data-lucide="message-circle" class="w-5 h-5"></i></div>
+                                <div><h4 class="font-bold text-sm">WhatsApp</h4><p class="text-xs text-gray-500">Envío directo.</p></div>
+                            </div>
+                            <div class="p-4 bg-orange-50 border border-orange-100 rounded-xl flex items-center gap-3">
+                                <div class="bg-orange-500 text-white p-2 rounded-full"><i data-lucide="mail" class="w-5 h-5"></i></div>
+                                <div><h4 class="font-bold text-sm">Correo</h4><p class="text-xs text-gray-500">Formal.</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full flex justify-center">
+                        <div class="w-56 md:w-64 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+                            <div class="bg-green-600 p-3 flex items-center gap-2 text-white">
+                                <div class="w-8 h-8 bg-white/20 rounded-full"></div>
+                                <span class="font-bold text-sm">Cliente</span>
+                            </div>
+                            <div class="p-4 bg-[#E5DDD5] h-56 md:h-64 flex flex-col justify-end space-y-3">
+                                <div class="self-end bg-[#DCF8C6] p-2 rounded-lg rounded-tr-none shadow-sm max-w-[85%] text-xs">
+                                    <p class="text-gray-800">Hola! Aquí tienes la cotización 👇</p>
+                                </div>
+                                <div class="self-end bg-white p-2 rounded-lg shadow-sm max-w-[85%] flex items-center gap-2 border border-gray-200">
+                                    <div class="bg-red-100 p-2 rounded text-red-500"><i data-lucide="file-text" class="w-4 h-4"></i></div>
+                                    <div class="text-[10px]">
+                                        <p class="font-bold">Cotización #001.pdf</p>
+                                        <p class="text-gray-400">PDF</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3 & 4 (Simplified for Mobile view length) -->
+                <div id="step3" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-12">
+                     <div class="flex-1 space-y-6">
+                        <div class="inline-block p-3 bg-blue-100 text-blue-700 rounded-xl"><i data-lucide="check-square" class="w-6 h-6"></i></div>
+                        <h3 class="text-2xl font-bold">Tu Secretaria Virtual</h3>
+                        <p class="text-gray-500 leading-relaxed">
+                            ¿Necesitas recordar algo? Solo díselo a Olivia. Ella registra tareas, llamadas pendientes y notas urgentes por ti.
+                        </p>
+                    </div>
+                    <div class="flex-1 w-full bg-white rounded-xl flex items-center justify-center">
+                        <div class="grid grid-cols-2 gap-4 w-full max-w-xs">
+                            <div class="bg-blue-50 p-4 rounded-xl text-center border border-blue-100">
+                                <i data-lucide="phone" class="w-6 h-6 text-blue-500 mx-auto mb-2"></i>
+                                <span class="text-xs font-bold text-blue-700">Llamada</span>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl text-center border border-gray-200">
+                                <i data-lucide="sticky-note" class="w-6 h-6 text-gray-500 mx-auto mb-2"></i>
+                                <span class="text-xs font-bold text-gray-700">Nota</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step4" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-12">
+                     <div class="flex-1 space-y-6">
+                        <div class="inline-block p-3 bg-purple-100 text-purple-700 rounded-xl"><i data-lucide="calendar-check" class="w-6 h-6"></i></div>
+                        <h3 class="text-2xl font-bold">Agenda Reuniones</h3>
+                        <p class="text-gray-500 leading-relaxed">
+                            Olivia envía tu enlace de calendario (Cal.com) directamente al WhatsApp de tu cliente.
+                        </p>
+                    </div>
+                    <div class="flex-1 w-full bg-gray-50 rounded-xl p-8 flex items-center justify-center">
+                        <div class="bg-white p-6 rounded-xl shadow-xl border border-gray-100 w-64 text-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="link" class="w-6 h-6 text-purple-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-900 mb-1">Link Enviado</h4>
+                            <p class="text-xs text-gray-500">cal.com/tu-empresa</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- VIDEO ACADEMY SECTION -->
+    <section id="demos" class="py-16 md:py-20 bg-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center max-w-3xl mx-auto mb-10 md:mb-12">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-50 border border-pink-100 text-pink-600 text-xs font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="youtube" class="w-4 h-4"></i> Academia Olivia
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold mb-4">Aprende con nuestros Tutoriales</h2>
+            </div>
+
+            <div class="max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                    <!-- Main Video -->
+                    <div class="lg:col-span-2 bg-gray-900 rounded-2xl overflow-hidden shadow-xl relative group aspect-video">
+                        <div class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image: url('https://images.unsplash.com/photo-1531403009284-440f080d1e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80');"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <a href="#" class="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 active:scale-95 transition-transform">
+                                <i data-lucide="play" class="w-6 h-6 md:w-8 md:h-8 text-white fill-current ml-1"></i>
+                            </a>
+                        </div>
+                        <div class="absolute bottom-0 left-0 p-4 md:p-6 w-full bg-gradient-to-t from-black/90 to-transparent">
+                            <h3 class="text-white text-lg md:text-xl font-bold">Tour Completo por Olivia SaaS</h3>
+                            <p class="text-gray-300 text-xs md:text-sm mt-1">Configura tu cuenta en 2 minutos.</p>
+                        </div>
+                    </div>
+
+                    <!-- Side List -->
+                    <div class="space-y-3 md:space-y-4 flex flex-col h-full">
+                        <a href="#" class="flex gap-4 p-3 bg-gray-50 border border-gray-100 rounded-xl active:bg-gray-100 transition-all">
+                            <div class="w-24 md:w-32 h-16 md:h-20 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
+                                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=300&q=80')"></div>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/20"><i data-lucide="play-circle" class="w-6 h-6 text-white"></i></div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs md:text-sm text-gray-900 line-clamp-2">Importar cotizaciones con IA</h4>
+                                <p class="text-[10px] md:text-xs text-gray-500 mt-1">1:30</p>
+                            </div>
+                        </a>
+                        <a href="#" class="flex gap-4 p-3 bg-gray-50 border border-gray-100 rounded-xl active:bg-gray-100 transition-all">
+                            <div class="w-24 md:w-32 h-16 md:h-20 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
+                                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=300&q=80')"></div>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/20"><i data-lucide="play-circle" class="w-6 h-6 text-white"></i></div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs md:text-sm text-gray-900 line-clamp-2">Conecta tu WhatsApp</h4>
+                                <p class="text-[10px] md:text-xs text-gray-500 mt-1">0:45</p>
+                            </div>
+                        </a>
+                        
+                        <div class="mt-auto pt-4">
+                            <a href="https://youtube.com" target="_blank" class="w-full py-3 border border-red-100 bg-red-50 text-red-600 font-bold rounded-xl flex items-center justify-center gap-2 active:bg-red-100 transition-colors text-sm">
+                                <i data-lucide="youtube" class="w-4 h-4"></i> Canal de YouTube
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing" class="py-16 md:py-20 bg-gray-900 text-white">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4">Un precio simple.</h2>
+                <p class="text-gray-400 text-sm">Comienza gratis y mejora cuando crezcas.</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-center gap-6 max-w-4xl mx-auto">
+                <div class="w-full md:w-1/2 p-6 md:p-8 rounded-2xl border border-gray-700 bg-gray-800/50">
+                    <h3 class="font-bold text-gray-400 uppercase tracking-wider text-xs mb-2">Plan Inicial</h3>
+                    <div class="text-3xl md:text-4xl font-bold mb-6">Gratis</div>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 5 Cotizaciones/mes</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> Catálogo de 10 productos</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> PDF Básico</li>
+                    </ul>
+                    <a href="https://olivia-sandy.vercel.app" class="block w-full py-3 rounded-xl border border-gray-600 font-bold text-center active:bg-gray-700 transition text-sm">Crear cuenta Gratis</a>
+                </div>
+
+                <div class="w-full md:w-1/2 p-6 md:p-8 rounded-2xl border-2 border-pink-500 bg-gray-800 relative transform md:-translate-y-4 shadow-2xl shadow-pink-900/20">
+                    <div class="absolute top-0 right-0 bg-pink-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">MÁS POPULAR</div>
+                    <h3 class="font-bold text-pink-400 uppercase tracking-wider text-xs mb-2">Plan PRO</h3>
+                    <div class="flex items-baseline gap-1 mb-6">
+                        <span class="text-3xl md:text-4xl font-bold">S/ 29.90</span>
+                        <span class="text-gray-400 text-xs">/mes</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> <strong>Ilimitado</strong></li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> Sin marca de agua</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> Envío WhatsApp Directo</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> Asistente IA</li>
+                    </ul>
+                    <a href="https://olivia-sandy.vercel.app" class="block w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-center active:bg-pink-700 transition shadow-lg text-sm">Prueba 7 Días Gratis</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-gray-900 text-white pt-16 pb-24 md:pb-10 border-t border-gray-800 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500"></div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <div class="flex items-center justify-center gap-3 mb-8">
+                <div class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
+                    <span class="text-pink-500 font-bold text-2xl">O</span>
+                </div>
+                <span class="text-2xl font-bold tracking-tight text-white">Olivia</span>
+            </div>
+            
+            <p class="text-gray-400 mb-8 max-w-md mx-auto text-sm">La herramienta definitiva para emprendedores.</p>
+            
+            <div class="flex justify-center gap-6 mb-10">
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                </a>
+                <a href="https://wa.me/51944894541" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg></a>
+            </div>
+            
+            <p class="text-gray-600 text-xs">© 2024 Olivia SaaS. Hecho con ❤️ en Perú.</p>
+        </div>
+    </footer>
+
     <!-- OLIVIA SALES BOT WIDGET (Updated with requested design) -->
     <div id="olivia-widget" class="fixed bottom-4 right-4 z-[100] flex items-center gap-3 group cursor-pointer animate-fade-in-up" onclick="toggleChat()">
         <!-- Label Pill (Hidden on tiny screens to avoid overlay) -->
@@ -39,9 +601,172 @@
         <!-- Input Area (Lead Capture) -->
         <div class="p-3 bg-white border-t border-gray-100 shrink-0">
             <a href="https://wa.me/51944894541?text=Hola%20Olivia%2C%20quiero%20una%20demo%20del%20sistema%20SaaS." target="_blank" class="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg">
-                <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg>
                 <span>Hablar con un Humano</span>
             </a>
             <p class="text-[10px] text-center text-gray-400 mt-2">Te responderé al instante en WhatsApp.</p>
         </div>
     </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Tabs Logic ---
+        function switchTab(stepId) {
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+                el.style.display = 'none'; // Force hide
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-pink-600', 'text-white', 'shadow-lg');
+                btn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+            });
+            
+            const activeContent = document.getElementById(stepId);
+            activeContent.style.display = 'flex'; // Restore flex for layout
+            setTimeout(() => activeContent.classList.add('active'), 10); // Trigger animation
+
+            const activeBtn = document.getElementById('tab-' + stepId);
+            activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+            activeBtn.classList.add('bg-pink-600', 'text-white', 'shadow-lg');
+        }
+
+        // --- Mobile Menu Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        function closeMobileMenu() {
+            mobileMenu.classList.add('hidden');
+        }
+
+        // --- SALES BOT LOGIC ---
+        let chatOpen = false;
+        let hasGreeted = false;
+        const messagesContainer = document.getElementById('chat-messages');
+        const chatWindow = document.getElementById('chat-window');
+        const widget = document.getElementById('olivia-widget');
+
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            if (chatOpen) {
+                chatWindow.classList.remove('hidden');
+                widget.style.opacity = '0'; // Hide trigger button
+                widget.style.pointerEvents = 'none';
+                if (!hasGreeted) {
+                    setTimeout(() => addBotMessage("¡Hola! Soy Olivia, tu asistente de ventas. 👋"), 500);
+                    setTimeout(() => addBotMessage("Estoy aquí para ayudarte a digitalizar tu negocio. ¿Qué te gustaría saber?", true), 1500);
+                    hasGreeted = true;
+                }
+            } else {
+                chatWindow.classList.add('hidden');
+                widget.style.opacity = '1'; // Show trigger button
+                widget.style.pointerEvents = 'auto';
+            }
+        }
+
+        function addBotMessage(text, showOptions = false) {
+            // Typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex gap-2 items-end';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-sm"><i data-lucide="bot" class="w-4 h-4"></i></div>
+                <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm text-gray-600 flex gap-1">
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            lucide.createIcons();
+
+            setTimeout(() => {
+                typingDiv.remove();
+                
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'flex gap-2 items-end animate-fade-in-up';
+                msgDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-sm flex-shrink-0"><i data-lucide="bot" class="w-4 h-4"></i></div>
+                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm text-gray-800 leading-relaxed">
+                        ${text}
+                    </div>
+                `;
+                messagesContainer.appendChild(msgDiv);
+                lucide.createIcons();
+
+                if (showOptions) {
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.className = 'flex flex-col gap-2 pl-10 mt-2 animate-fade-in-up';
+                    optionsDiv.innerHTML = `
+                        <button onclick="handleOption('features')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-pink-50 text-gray-700 hover:text-pink-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-pink-200 shadow-sm flex items-center gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-pink-500"></i> ¿Qué hace el Asistente Virtual?</button>
+                        <button onclick="handleOption('pricing')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-blue-200 shadow-sm flex items-center gap-2"><i data-lucide="credit-card" class="w-3 h-3 text-blue-500"></i> Ver Precios y Planes</button>
+                        <button onclick="handleOption('ai')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-purple-200 shadow-sm flex items-center gap-2"><i data-lucide="bot" class="w-3 h-3 text-purple-500"></i> ¿Cómo funciona la IA?</button>
+                    `;
+                    messagesContainer.appendChild(optionsDiv);
+                    lucide.createIcons();
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+        }
+
+        function handleOption(option) {
+            // Remove options buttons visually to clean up chat
+            const lastOptions = messagesContainer.lastElementChild;
+            if(lastOptions) lastOptions.style.display = 'none';
+
+            let userText = "";
+            if(option === 'features') userText = "⚡ ¿Qué hace el Asistente?";
+            if(option === 'pricing') userText = "💰 Precios";
+            if(option === 'ai') userText = "🤖 Sobre la IA";
+
+            // User Message Bubble
+            const userDiv = document.createElement('div');
+            userDiv.className = 'flex justify-end animate-fade-in-up mb-2';
+            userDiv.innerHTML = `
+                <div class="bg-gray-900 px-4 py-2 rounded-2xl rounded-br-none text-white text-sm font-medium shadow-md">
+                    ${userText}
+                </div>
+            `;
+            messagesContainer.appendChild(userDiv);
+
+            // Bot Response Logic
+            if (option === 'features') {
+                setTimeout(() => addBotMessage("Mi IA integrada te ayuda en dos áreas clave para ahorrarte tiempo:"), 500);
+                
+                // Detailed Breakdown Card
+                const featuresHTML = `
+                    <div class="space-y-3">
+                        <div class="p-2 rounded bg-purple-50 border border-purple-100">
+                            <p class="text-xs font-bold text-purple-700 uppercase mb-1">🗣️ Comunicaciones</p>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                <li>• <strong>Reunión:</strong> Envía invitaciones de calendario automáticas.</li>
+                                <li>• <strong>Correo:</strong> Redacta emails profesionales con un clic.</li>
+                            </ul>
+                        </div>
+                        <div class="p-2 rounded bg-blue-50 border border-blue-100">
+                            <p class="text-xs font-bold text-blue-700 uppercase mb-1">⚙️ Gestión Interna</p>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                <li>• <strong>Llamadas:</strong> Te recuerda a quién llamar y cuándo.</li>
+                                <li>• <strong>Tareas:</strong> Guarda pendientes normales o urgentes.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => addBotMessage(featuresHTML, true), 1500);
+            } 
+            else if (option === 'pricing') {
+                setTimeout(() => addBotMessage("Tenemos un plan para cada etapa de tu negocio:"), 500);
+                setTimeout(() => addBotMessage("🆓 <strong>Plan Gratis:</strong> 5 cotizaciones al mes.<br>💎 <strong>Plan PRO (S/ 29.90):</strong> Ilimitado, sin marca de agua y envíos directos.", true), 1500);
+            } 
+            else if (option === 'ai') {
+                setTimeout(() => addBotMessage("¡Es magia! ✨ Solo subes un PDF o Excel de tu proveedor, y mi IA extrae los productos y precios automáticamente."), 500);
+                setTimeout(() => addBotMessage("Así no tienes que escribir nada a mano. ¿Quieres ver una demo en vivo?", true), 1500);
+            }
+        }
+    </script>
+</body>
+</html>
