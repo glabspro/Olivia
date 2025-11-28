@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions, SystemConfig } from '../types';
 import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
-import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe, Facebook, Instagram, Youtube, Mail, Video, Image as ImageIcon, PlayCircle } from 'lucide-react';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe, Facebook, Instagram, Youtube, Mail, Video, Image as ImageIcon, PlayCircle, Link as LinkIcon } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -32,6 +32,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
       mercadoPagoPublicKey: '',
       mercadoPagoAccessToken: '',
       landing: {
+          appUrl: 'https://olivia-site-psi.vercel.app', // Default
           facebookUrl: '',
           instagramUrl: '',
           tiktokUrl: '',
@@ -356,6 +357,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                          <h3 className="font-bold text-textPrimary dark:text-dark-textPrimary flex items-center gap-2 text-lg"><Globe className="text-pink-500"/> Personalización de Landing Page</h3>
                          <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-xl border border-border dark:border-dark-border space-y-6">
                              
+                             {/* URL DE LA APLICACIÓN */}
+                             <div className="bg-white dark:bg-black/20 p-4 rounded-lg border border-border dark:border-dark-border mb-4">
+                                 <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><LinkIcon size={12}/> URL de la Aplicación (Login/Registro)</label>
+                                 <p className="text-xs text-textSecondary mb-2">A donde se redirige a los usuarios cuando hacen clic en "Iniciar Sesión" o "Empezar Gratis".</p>
+                                 <input type="text" value={sysConfigForm.landing?.appUrl || ''} onChange={e => updateLandingConfig('appUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm font-mono" placeholder="https://tu-dominio.com"/>
+                             </div>
+
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div>
                                      <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Facebook size={12}/> Facebook URL</label>

@@ -72,6 +72,10 @@ export interface Settings {
 
 // Landing Page specific configuration
 export interface LandingConfig {
+    // Domain Settings
+    appUrl?: string; // URL where the "Login/Start" buttons redirect (e.g., https://app.olivia.com)
+
+    // Socials
     facebookUrl?: string;
     instagramUrl?: string;
     tiktokUrl?: string;
