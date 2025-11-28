@@ -7,7 +7,7 @@ import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activit
 interface AdminPageProps {
   currentUser: User;
   systemConfig?: SystemConfig;
-  onUpdateSystemConfig?: (config: SystemConfig) => void;
+  onUpdateSystemConfig?: (config: SystemConfig) => Promise<boolean>;
 }
 
 const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpdateSystemConfig }) => {
@@ -142,11 +142,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
       }
   };
 
-  const handleSaveSystemConfig = (e: React.FormEvent) => {
+  const handleSaveSystemConfig = async (e: React.FormEvent) => {
       e.preventDefault();
       if (onUpdateSystemConfig) {
-          onUpdateSystemConfig(sysConfigForm);
-          showNotification('success', 'Configuración del Sistema Guardada');
+          setSaving(true);
+          const success = await onUpdateSystemConfig(sysConfigForm);
+          setSaving(false);
+          
+          if (success) {
+              showNotification('success', 'Configuración guardada y sincronizada en la nube.');
+          } else {
+              showNotification('error', 'Error al guardar en la nube. Verifica tu conexión o permisos.');
+          }
       }
   };
 
@@ -444,8 +451,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                     </div>
 
                     <div className="pt-6 flex justify-end sticky bottom-0 bg-surface dark:bg-dark-surface py-4 border-t border-transparent">
-                        <button type="submit" className="px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-opacity-90 transition-all flex items-center gap-3 transform hover:scale-105">
-                            <Save size={20}/> Guardar Cambios del Sistema
+                        <button type="submit" disabled={saving} className="px-8 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-opacity-90 transition-all flex items-center gap-3 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed">
+                            {saving ? 'Guardando...' : <><Save size={20}/> Guardar Cambios del Sistema</>}
                         </button>
                     </div>
                 </form>

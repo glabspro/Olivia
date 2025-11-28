@@ -184,10 +184,13 @@ const App: React.FC = () => {
               // Persist to DB if user is logged in
               await updateSystemConfig(profile.id, newConfig);
               console.log("System config saved to cloud");
+              return true;
           } catch (error) {
               console.error("Failed to save system config to cloud", error);
+              return false;
           }
       }
+      return false;
   };
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-background dark:bg-dark-background"><div className="animate-spin rounded-full h-12 w-12 border-t-4 border-primary"></div></div>;
