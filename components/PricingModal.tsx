@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, Check, Crown, Zap, MessageCircle, CreditCard, ShieldCheck } from 'lucide-react';
 import { SystemConfig } from '../types';
@@ -12,39 +11,24 @@ interface PricingModalProps {
 const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, systemConfig }) => {
   if (!isOpen) return null;
 
-  // Default Fallbacks using the specific numbers requested by user
-  // This ensures it works even if Admin config hasn't been touched yet
   const salesPhone = systemConfig?.salesPhoneNumber || '51944894541'; 
   const paymentPhone = systemConfig?.paymentPhoneNumber || '975615244';
 
   const handleSubscribe = () => {
     const message = `Hola Olivia SaaS! 👋 Quiero activar mi Plan PRO 🚀.\n\nAdjunto mi comprobante de pago por Yape/Plin al número: ${paymentPhone}`;
-    // Ensure clean number format for WhatsApp link
     const cleanSalesPhone = salesPhone.replace(/\D/g, ''); 
     const url = `https://wa.me/${cleanSalesPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      ></div>
-
-      {/* Modal Content */}
-      <div className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-slide-up border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+      
+      {/* Modal Container - Height Constrained with Flex Column */}
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col md:flex-row overflow-hidden max-h-[90dvh] animate-slide-up">
         
-        <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-2 bg-black/10 dark:bg-white/10 hover:bg-black/20 rounded-full transition-colors"
-        >
-            <X size={20} className="text-gray-600 dark:text-gray-300" />
-        </button>
-
-        {/* Left Side: Visual / Value Prop */}
-        <div className="w-full md:w-2/5 bg-gradient-to-br from-indigo-900 to-purple-900 p-8 text-white flex flex-col justify-between relative overflow-hidden">
+        {/* Left Side: Visual (Hidden on Mobile to save space) */}
+        <div className="hidden md:flex w-2/5 bg-gradient-to-br from-indigo-900 to-purple-900 p-8 text-white flex-col justify-between relative shrink-0">
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <div className="relative z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/20 text-xs font-bold uppercase tracking-wider mb-6">
@@ -73,72 +57,87 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, systemConf
             </div>
         </div>
 
-        {/* Right Side: Plans */}
-        <div className="w-full md:w-3/5 p-8 bg-white dark:bg-zinc-900">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Elige tu Plan</h3>
+        {/* Right Side: Content (Scrollable Body, Fixed Header/Footer) */}
+        <div className="flex-1 flex flex-col w-full md:w-3/5 bg-white dark:bg-zinc-900 min-h-0">
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {/* Free Plan */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 relative opacity-70 hover:opacity-100 transition-opacity">
-                    <h4 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">Plan Actual</h4>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white mb-4">Gratis</p>
-                    <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                        <li className="flex items-center gap-2"><Check size={14}/> 5 Cotizaciones/mes</li>
-                        <li className="flex items-center gap-2"><Check size={14}/> 2 Usos de IA</li>
-                        <li className="flex items-center gap-2 text-gray-400"><X size={14}/> Marca de agua</li>
-                    </ul>
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Elige tu Plan</h3>
+                <button onClick={onClose} className="p-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 rounded-full transition-colors text-gray-600 dark:text-gray-300">
+                    <X size={20} />
+                </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 custom-scrollbar">
+                <div className="grid grid-cols-1 gap-4">
+                    {/* Free Plan */}
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex justify-between items-center bg-gray-50 dark:bg-white/5">
+                        <div>
+                             <h4 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Plan Actual</h4>
+                             <p className="text-lg font-bold text-gray-900 dark:text-white">Gratis</p>
+                        </div>
+                        <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 text-right">
+                            <li>5 Cotizaciones/mes</li>
+                            <li>Con Marca de Agua</li>
+                        </ul>
+                    </div>
+
+                    {/* Pro Plan (Highlighted) */}
+                    <div className="border-2 border-primary rounded-xl p-5 relative bg-primary/5 shadow-md">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                            Recomendado
+                        </div>
+                        <div className="flex justify-between items-end mb-4">
+                             <div>
+                                <h4 className="font-bold text-primary uppercase text-xs tracking-wider mb-1">Plan PRO</h4>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl font-black text-gray-900 dark:text-white">S/ 29.90</span>
+                                    <span className="text-xs text-gray-500">/mes</span>
+                                </div>
+                             </div>
+                        </div>
+                        
+                        <ul className="space-y-3 text-sm text-gray-700 dark:text-gray-300 mb-2">
+                            <li className="flex items-center gap-2"><div className="p-0.5 bg-green-100 rounded-full"><Check size={12} className="text-green-600"/></div> <span className="font-bold">Ilimitadas</span> Cotizaciones</li>
+                            <li className="flex items-center gap-2"><div className="p-0.5 bg-green-100 rounded-full"><Check size={12} className="text-green-600"/></div> IA Ilimitada</li>
+                            <li className="flex items-center gap-2"><div className="p-0.5 bg-green-100 rounded-full"><Check size={12} className="text-green-600"/></div> Envío directo por WhatsApp</li>
+                            <li className="flex items-center gap-2"><div className="p-0.5 bg-green-100 rounded-full"><Check size={12} className="text-green-600"/></div> Sin marca de agua</li>
+                        </ul>
+                    </div>
                 </div>
 
-                {/* Pro Plan */}
-                <div className="border-2 border-primary rounded-xl p-5 relative bg-primary/5 shadow-xl scale-105 transform">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                        Recomendado
+                <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-3 text-center">Métodos de Pago Aceptados</p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+                        <div className="flex items-center gap-2 bg-white dark:bg-black/20 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 w-full sm:w-auto">
+                            <div className="bg-purple-600 text-white p-1.5 rounded shadow-sm"><CreditCard size={16}/></div>
+                            <div className="flex-1">
+                                <p className="font-bold text-gray-900 dark:text-white text-xs">Yape / Plin</p>
+                                <p className="text-xs text-gray-500 font-mono">{paymentPhone}</p>
+                            </div>
+                        </div>
+                         <div className="flex items-center gap-2 bg-white dark:bg-black/20 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 w-full sm:w-auto">
+                            <div className="bg-blue-600 text-white p-1.5 rounded shadow-sm"><CreditCard size={16}/></div>
+                            <div className="flex-1">
+                                <p className="font-bold text-gray-900 dark:text-white text-xs">BCP</p>
+                                <p className="text-xs text-gray-500">Transferencia</p>
+                            </div>
+                        </div>
                     </div>
-                    <h4 className="font-bold text-primary uppercase text-xs tracking-wider mb-2">Plan PRO</h4>
-                    <div className="flex items-baseline gap-1 mb-4">
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">S/ 29.90</span>
-                        <span className="text-xs text-gray-500">/mes</span>
-                    </div>
-                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                        <li className="flex items-center gap-2"><Check size={14} className="text-green-500"/> <strong>Ilimitadas</strong> Cotizaciones</li>
-                        <li className="flex items-center gap-2"><Check size={14} className="text-green-500"/> IA Ilimitada</li>
-                        <li className="flex items-center gap-2"><Check size={14} className="text-green-500"/> Envío directo por WhatsApp</li>
-                        <li className="flex items-center gap-2"><Check size={14} className="text-green-500"/> Sin marca de agua</li>
-                    </ul>
                 </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-6 border border-gray-100 dark:border-gray-700">
-                <p className="text-xs font-bold text-gray-500 uppercase mb-2 text-center">Método de Activación Rápida</p>
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                         <div className="bg-purple-600 text-white p-1.5 rounded"><CreditCard size={16}/></div>
-                         <div>
-                             <p className="text-xs font-bold text-gray-900 dark:text-white">Yape / Plin</p>
-                             <p className="text-xs text-gray-500 font-mono select-all cursor-pointer hover:text-primary">{paymentPhone}</p>
-                         </div>
-                    </div>
-                    <div className="h-8 w-px bg-gray-300 dark:bg-gray-600"></div>
-                     <div className="flex items-center gap-2">
-                         <div className="bg-blue-600 text-white p-1.5 rounded"><CreditCard size={16}/></div>
-                         <div>
-                             <p className="text-xs font-bold text-gray-900 dark:text-white">BCP</p>
-                             <p className="text-xs text-gray-500">Solicitar CCI</p>
-                         </div>
-                    </div>
-                </div>
+            {/* Sticky Footer */}
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-zinc-900 shrink-0 z-10">
+                <button 
+                    onClick={handleSubscribe}
+                    className="w-full py-3.5 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 animate-pulse"
+                >
+                    <MessageCircle size={20} />
+                    <span>Confirmar y Activar por WhatsApp</span>
+                </button>
             </div>
-
-            <button 
-                onClick={handleSubscribe}
-                className="w-full py-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 hover:-translate-y-1"
-            >
-                <MessageCircle size={24} />
-                <span>Activar por WhatsApp</span>
-            </button>
-            <p className="text-[10px] text-center text-gray-400 mt-3">
-                Al hacer clic, se abrirá un chat con nuestro soporte para validar tu pago.
-            </p>
         </div>
       </div>
     </div>
