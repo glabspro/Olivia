@@ -832,6 +832,61 @@
         </div>
     </div>
 
+    <!-- ADMIN EDIT BUTTON -->
+    <button onclick="openConfigModal()" class="fixed bottom-4 left-4 z-[100] bg-gray-900 text-white p-3 rounded-full shadow-lg border border-gray-700 hover:bg-black transition-all group" title="Configurar Landing Page">
+        <i data-lucide="settings" class="w-5 h-5 group-hover:rotate-90 transition-transform duration-500"></i>
+    </button>
+
+    <!-- CONFIG MODAL -->
+    <div id="config-modal" class="fixed inset-0 z-[110] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2"><i data-lucide="edit-3" class="w-5 h-5 text-pink-600"></i> Editar Landing Page</h3>
+                <button onclick="closeConfigModal()" class="text-gray-400 hover:text-gray-900"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL de App (Login)</label>
+                    <input type="text" id="conf-appUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none" placeholder="https://app.olivia.com">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Facebook</label>
+                        <input type="text" id="conf-facebookUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Instagram</label>
+                        <input type="text" id="conf-instagramUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">TikTok</label>
+                        <input type="text" id="conf-tiktokUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-black outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">YouTube</label>
+                        <input type="text" id="conf-youtubeUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp de Ventas</label>
+                    <input type="text" id="conf-salesPhone" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="51999999999">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo de Contacto</label>
+                    <input type="text" id="conf-email" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <hr class="border-gray-100">
+                <p class="text-xs text-gray-400 italic">Los cambios se guardan localmente para ti al instante y se intentará sincronizar con la nube si tienes permisos.</p>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+                <button onclick="closeConfigModal()" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900">Cancelar</button>
+                <button onclick="saveConfig()" class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg shadow-md hover:bg-black transition-all flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
         
@@ -841,82 +896,175 @@
         const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA';
         
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        // Initialize Supabase client
+        // IMPORTANT: Use the same storage key as the main React app to share session if on same domain
+        const supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                persistSession: true,
+                storageKey: 'sb-qxiaxenvmpwqepoqavyv-auth-token'
+            }
+        });
+
+        let currentConfig = {};
 
         // Fetch Landing Config
         async function loadLandingConfig() {
             try {
-                // Strategy: Fetch the first user marked as Admin that HAS system_config data
+                // 1. Check Local Override (Instant update for admin)
+                const localOverride = localStorage.getItem('olivia_landing_config_override');
+                if (localOverride) {
+                    const parsed = JSON.parse(localOverride);
+                    console.log("Loading config from Local Storage override");
+                    applyConfig(parsed);
+                    currentConfig = parsed;
+                    return; // Skip DB fetch if local override exists to prevent flickering
+                }
+
+                // 2. Fetch from DB (Public view)
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('settings') // Select settings instead of system_config
+                    .select('settings') 
                     .eq('is_admin', true)
-                    .neq('settings', null) // CRITICAL FIX: Ignore null settings
+                    .neq('settings', null) 
                     .limit(1)
                     .maybeSingle();
 
-                // Extract config from settings column (JSONB)
-                if (data && data.settings && data.settings.system_config && data.settings.system_config.landing) {
-                    const config = data.settings.system_config.landing;
-                    const systemConfig = data.settings.system_config;
+                if (data && data.settings && data.settings.system_config) {
+                    const sysConfig = data.settings.system_config;
+                    const landingConfig = sysConfig.landing || {};
                     
-                    // Update Social Links if present
-                    if (config.facebookUrl) document.getElementById('social-fb').href = config.facebookUrl;
-                    if (config.instagramUrl) document.getElementById('social-ig').href = config.instagramUrl;
-                    if (config.tiktokUrl) document.getElementById('social-tk').href = config.tiktokUrl;
-                    if (config.youtubeUrl) document.getElementById('social-yt').href = config.youtubeUrl;
-                    if (config.contactEmail) {
-                        const emailBtn = document.getElementById('contact-email');
-                        emailBtn.href = `mailto:${config.contactEmail}`;
-                        emailBtn.innerHTML = `<i data-lucide="mail" class="w-4 h-4"></i> ${config.contactEmail}`;
-                        lucide.createIcons(); // Re-render icon
-                    }
-                    if (config.mainVideoUrl) {
-                        document.getElementById('video-main-player').href = config.mainVideoUrl;
-                    }
+                    // Merge flattened config for easier handling
+                    const mergedConfig = {
+                        appUrl: landingConfig.appUrl,
+                        facebookUrl: landingConfig.facebookUrl,
+                        instagramUrl: landingConfig.instagramUrl,
+                        tiktokUrl: landingConfig.tiktokUrl,
+                        youtubeUrl: landingConfig.youtubeUrl,
+                        contactEmail: landingConfig.contactEmail,
+                        salesPhone: sysConfig.salesPhoneNumber
+                    };
                     
-                    // Update App Login/Start URL
-                    if (config.appUrl) {
-                        const loginNav = document.getElementById('btn-login-nav');
-                        if (loginNav) loginNav.href = config.appUrl;
-                        
-                        const loginMobileNav = document.getElementById('btn-login-mobile-nav');
-                        if (loginMobileNav) loginMobileNav.href = config.appUrl;
-                        
-                        const ctaNav = document.getElementById('btn-cta-nav');
-                        if (ctaNav) ctaNav.href = config.appUrl;
-                        
-                        const ctaMobileMenu = document.getElementById('btn-cta-mobile-menu');
-                        if (ctaMobileMenu) ctaMobileMenu.href = config.appUrl;
-                        
-                        const ctaHero = document.getElementById('btn-cta-hero');
-                        if (ctaHero) ctaHero.href = config.appUrl;
-                        
-                        const ctaFree = document.getElementById('btn-cta-free');
-                        if (ctaFree) ctaFree.href = config.appUrl;
-                        
-                        const ctaPro = document.getElementById('btn-cta-pro');
-                        if (ctaPro) ctaPro.href = config.appUrl;
-                    }
-
-                    // Update WhatsApp Contact if present
-                    const salesPhone = systemConfig.salesPhoneNumber;
-                    if (salesPhone) {
-                        const waLink = document.getElementById('social-wa');
-                        if(waLink) waLink.href = `https://wa.me/${salesPhone}`;
-                    }
-                    
-                    // Update Tutorials if present
-                    if (config.tutorial1Url) document.getElementById('tutorial-1-link').href = config.tutorial1Url;
-                    if (config.tutorial1Thumbnail) document.getElementById('tutorial-1-thumb').style.backgroundImage = `url('${config.tutorial1Thumbnail}')`;
-                    
-                    if (config.tutorial2Url) document.getElementById('tutorial-2-link').href = config.tutorial2Url;
-                    if (config.tutorial2Thumbnail) document.getElementById('tutorial-2-thumb').style.backgroundImage = `url('${config.tutorial2Thumbnail}')`;
+                    applyConfig(mergedConfig);
+                    currentConfig = mergedConfig;
                 }
             } catch (err) {
                 console.warn("Could not load dynamic landing config", err);
             }
         }
+
+        function applyConfig(config) {
+            // Socials
+            if (config.facebookUrl) document.getElementById('social-fb').href = config.facebookUrl;
+            if (config.instagramUrl) document.getElementById('social-ig').href = config.instagramUrl;
+            if (config.tiktokUrl) document.getElementById('social-tk').href = config.tiktokUrl;
+            if (config.youtubeUrl) document.getElementById('social-yt').href = config.youtubeUrl;
+            
+            // Email
+            if (config.contactEmail) {
+                const emailBtn = document.getElementById('contact-email');
+                if(emailBtn) {
+                    emailBtn.href = `mailto:${config.contactEmail}`;
+                    emailBtn.innerHTML = `<i data-lucide="mail" class="w-4 h-4"></i> ${config.contactEmail}`;
+                    lucide.createIcons();
+                }
+            }
+
+            // App Links
+            if (config.appUrl) {
+                const ids = ['btn-login-nav', 'btn-login-mobile-nav', 'btn-cta-nav', 'btn-cta-mobile-menu', 'btn-cta-hero', 'btn-cta-free', 'btn-cta-pro'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.href = config.appUrl;
+                });
+            }
+
+            // WhatsApp
+            if (config.salesPhone) {
+                const waLink = document.getElementById('social-wa');
+                if(waLink) waLink.href = `https://wa.me/${config.salesPhone}`;
+            }
+        }
+        
+        // --- MODAL LOGIC ---
+        window.openConfigModal = function() {
+            document.getElementById('config-modal').classList.remove('hidden');
+            
+            // Pre-fill inputs
+            if (currentConfig.appUrl) document.getElementById('conf-appUrl').value = currentConfig.appUrl;
+            if (currentConfig.facebookUrl) document.getElementById('conf-facebookUrl').value = currentConfig.facebookUrl;
+            if (currentConfig.instagramUrl) document.getElementById('conf-instagramUrl').value = currentConfig.instagramUrl;
+            if (currentConfig.tiktokUrl) document.getElementById('conf-tiktokUrl').value = currentConfig.tiktokUrl;
+            if (currentConfig.youtubeUrl) document.getElementById('conf-youtubeUrl').value = currentConfig.youtubeUrl;
+            if (currentConfig.salesPhone) document.getElementById('conf-salesPhone').value = currentConfig.salesPhone;
+            if (currentConfig.contactEmail) document.getElementById('conf-email').value = currentConfig.contactEmail;
+        };
+
+        window.closeConfigModal = function() {
+            document.getElementById('config-modal').classList.add('hidden');
+        };
+
+        window.saveConfig = async function() {
+            const newConfig = {
+                appUrl: document.getElementById('conf-appUrl').value,
+                facebookUrl: document.getElementById('conf-facebookUrl').value,
+                instagramUrl: document.getElementById('conf-instagramUrl').value,
+                tiktokUrl: document.getElementById('conf-tiktokUrl').value,
+                youtubeUrl: document.getElementById('conf-youtubeUrl').value,
+                contactEmail: document.getElementById('conf-email').value,
+                salesPhone: document.getElementById('conf-salesPhone').value
+            };
+
+            // 1. Save Locally (Instant Feedback)
+            localStorage.setItem('olivia_landing_config_override', JSON.stringify(newConfig));
+            applyConfig(newConfig);
+            alert("✅ Cambios guardados localmente. Se verán reflejados para ti al instante.");
+            closeConfigModal();
+
+            // 2. Try to Sync to Cloud (If Admin)
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (session && session.user) {
+                    // Reconstruct the full system_config object structure
+                    const fullSystemConfig = {
+                        salesPhoneNumber: newConfig.salesPhone,
+                        // Preserve other fields if needed, but for landing mostly these matter
+                        landing: {
+                            appUrl: newConfig.appUrl,
+                            facebookUrl: newConfig.facebookUrl,
+                            instagramUrl: newConfig.instagramUrl,
+                            tiktokUrl: newConfig.tiktokUrl,
+                            youtubeUrl: newConfig.youtubeUrl,
+                            contactEmail: newConfig.contactEmail
+                        }
+                    };
+
+                    // Fetch existing settings to merge properly
+                    const { data: existingData } = await supabase.from('profiles').select('settings').eq('id', session.user.id).single();
+                    const currentSettings = existingData?.settings || {};
+                    const mergedSettings = {
+                        ...currentSettings,
+                        system_config: {
+                            ...currentSettings.system_config, // Keep existing keys like paymentPhoneNumber
+                            ...fullSystemConfig
+                        }
+                    };
+
+                    const { error } = await supabase.from('profiles').update({ settings: mergedSettings }).eq('id', session.user.id);
+                    
+                    if (error) {
+                        console.error("Cloud sync error:", error);
+                        // Silent fail for user, they saw the local success
+                    } else {
+                        console.log("Cloud sync successful");
+                    }
+                } else {
+                    console.warn("No active session found to sync to cloud. Changes are local only.");
+                }
+            } catch (e) {
+                console.error("Sync failed", e);
+            }
+        };
         
         // Initialize
         loadLandingConfig();

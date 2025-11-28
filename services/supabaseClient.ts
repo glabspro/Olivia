@@ -231,7 +231,13 @@ export const updateSystemConfig = async (userId: string, config: SystemConfig) =
     if (!supabase) return;
     
     // 1. Fetch current settings to avoid partial updates destroying other data
-    const { data } = await supabase.from('profiles').select('settings').eq('id', userId).single();
+    const { data, error: fetchError } = await supabase.from('profiles').select('settings').eq('id', userId).single();
+    
+    if (fetchError) {
+        console.error("Error fetching current settings:", fetchError);
+        throw fetchError;
+    }
+
     const currentSettings = data?.settings || {};
     
     // 2. Nest system_config inside settings
