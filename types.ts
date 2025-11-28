@@ -78,6 +78,12 @@ export interface LandingConfig {
     youtubeUrl?: string;
     contactEmail?: string;
     mainVideoUrl?: string; // URL for the main demo video button
+    
+    // Side Tutorials
+    tutorial1Url?: string;
+    tutorial1Thumbnail?: string; // URL to image (Postimages, etc)
+    tutorial2Url?: string;
+    tutorial2Thumbnail?: string;
 }
 
 // System Wide Configuration (Managed by Super Admin)

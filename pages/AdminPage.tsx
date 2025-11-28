@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserPermissions, SystemConfig } from '../types';
 import { getAllUsers, updateUserPermissions, deleteUserProfile, updateUserProfile } from '../services/supabaseClient';
-import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe, Facebook, Instagram, Youtube, Mail, Video } from 'lucide-react';
+import { Shield, Search, AlertTriangle, Trash2, Briefcase, Users, Crown, Activity, Edit2, Save, X, CheckCircle, Copy, Terminal, CreditCard, Smartphone, Settings as SettingsIcon, Globe, Facebook, Instagram, Youtube, Mail, Video, Image as ImageIcon, PlayCircle } from 'lucide-react';
 
 interface AdminPageProps {
   currentUser: User;
@@ -37,7 +37,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
           tiktokUrl: '',
           youtubeUrl: '',
           contactEmail: 'hola@olivia.com',
-          mainVideoUrl: 'https://youtube.com'
+          mainVideoUrl: 'https://youtube.com',
+          tutorial1Url: '',
+          tutorial1Thumbnail: '',
+          tutorial2Url: '',
+          tutorial2Thumbnail: ''
       }
   });
 
@@ -380,6 +384,29 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                                      <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Video size={12}/> Video Principal (Demo URL)</label>
                                      <input type="text" value={sysConfigForm.landing?.mainVideoUrl || ''} onChange={e => updateLandingConfig('mainVideoUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm" placeholder="https://youtube.com/watch?v=..."/>
                                  </div>
+                             </div>
+                             
+                            {/* New Tutorials Section */}
+                             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <h4 className="text-sm font-bold text-textPrimary dark:text-dark-textPrimary mb-4 flex items-center gap-2"><PlayCircle size={16} className="text-red-500"/> Videos Tutoriales (Barra Lateral)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-bold text-textSecondary uppercase">Tutorial #1</p>
+                                        <input type="text" placeholder="Link Video YouTube (Ej. https://youtu.be/...)" value={sysConfigForm.landing?.tutorial1Url || ''} onChange={e => updateLandingConfig('tutorial1Url', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none"/>
+                                        <div className="flex items-center gap-2">
+                                            <ImageIcon size={14} className="text-gray-400"/>
+                                            <input type="text" placeholder="URL Miniatura (Postimages, etc)" value={sysConfigForm.landing?.tutorial1Thumbnail || ''} onChange={e => updateLandingConfig('tutorial1Thumbnail', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none"/>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-bold text-textSecondary uppercase">Tutorial #2</p>
+                                        <input type="text" placeholder="Link Video YouTube" value={sysConfigForm.landing?.tutorial2Url || ''} onChange={e => updateLandingConfig('tutorial2Url', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none"/>
+                                        <div className="flex items-center gap-2">
+                                            <ImageIcon size={14} className="text-gray-400"/>
+                                            <input type="text" placeholder="URL Miniatura" value={sysConfigForm.landing?.tutorial2Thumbnail || ''} onChange={e => updateLandingConfig('tutorial2Thumbnail', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none"/>
+                                        </div>
+                                    </div>
+                                </div>
                              </div>
 
                          </div>
