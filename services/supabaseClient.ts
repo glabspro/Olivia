@@ -1,6 +1,6 @@
 
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
-import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta, DbTask, Settings } from '../types';
+import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta, DbTask, Settings, SystemConfig } from '../types';
 
 const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co'; 
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA';
@@ -99,7 +99,8 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
             permissions: updatedData.permissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true },
             is_verified: updatedData.is_verified,
             ai_usage_count: updatedData.ai_usage_count || 0,
-            settings: updatedData.settings 
+            settings: updatedData.settings,
+            system_config: updatedData.system_config // Return system config if present
         };
     }
     return null;
@@ -208,15 +209,20 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         permissions: updatedData.permissions,
         is_verified: updatedData.is_verified,
         ai_usage_count: updatedData.ai_usage_count || 0,
-        settings: updatedData.settings 
+        settings: updatedData.settings,
+        system_config: updatedData.system_config
     };
 };
 
-// ... Rest of the functions (updateUserSettings, etc.) remain the same, just keeping the file robust ...
-// Re-exporting common functions for context completeness
 export const updateUserSettings = async (userId: string, settings: Settings) => {
     if (!supabase) return;
     const { error } = await supabase.from('profiles').update({ settings }).eq('id', userId);
+    if (error) throw error;
+};
+
+export const updateSystemConfig = async (userId: string, config: SystemConfig) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('profiles').update({ system_config: config }).eq('id', userId);
     if (error) throw error;
 };
 

@@ -156,6 +156,7 @@ export interface DbTask {
 export interface CrmMeta {
     next_followup?: string; 
     notes?: string;
+    reminder_sent?: boolean;
 }
 
 export interface SavedQuotation {

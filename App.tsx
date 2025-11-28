@@ -12,7 +12,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import TasksPage from './pages/TasksPage';
 import AdminPage from './pages/AdminPage';
 import PricingModal from './components/PricingModal';
-import { supabase, getProfile, getUserByPhone } from './services/supabaseClient';
+import { supabase, getProfile, getUserByPhone, updateSystemConfig } from './services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import Spinner from './components/Spinner';
 
@@ -34,6 +34,10 @@ const App: React.FC = () => {
   const fetchAndSetProfile = async (supabaseUser: SupabaseUser) => {
     const profileData = await getProfile(supabaseUser);
     setProfile(profileData);
+    if (profileData && profileData.system_config) {
+        setSystemConfig(profileData.system_config);
+        localStorage.setItem('olivia_system_config', JSON.stringify(profileData.system_config));
+    }
     return profileData;
   };
 
@@ -102,6 +106,9 @@ const App: React.FC = () => {
                 // 1. Load local cache immediately for speed
                 setProfile(parsedUser);
                 setSession({ access_token: 'simulated' } as any);
+                if (parsedUser.system_config) {
+                    setSystemConfig(parsedUser.system_config);
+                }
                 
                 // 2. Background Sync: Fetch latest data from Cloud (Supabase) to get settings updates from other devices
                 if (parsedUser.phone) {
@@ -113,6 +120,10 @@ const App: React.FC = () => {
                                 freshUser.settings = parsedUser.settings;
                             }
                             setProfile(freshUser);
+                            if (freshUser.system_config) {
+                                setSystemConfig(freshUser.system_config);
+                                localStorage.setItem('olivia_system_config', JSON.stringify(freshUser.system_config));
+                            }
                             localStorage.setItem('olivia_simulated_profile', JSON.stringify(freshUser));
                         }
                     }).catch(err => console.error("Error syncing profile", err));
@@ -164,9 +175,19 @@ const App: React.FC = () => {
       setIsDuplicating(false);
   };
   
-  const handleUpdateSystemConfig = (newConfig: SystemConfig) => {
+  const handleUpdateSystemConfig = async (newConfig: SystemConfig) => {
       setSystemConfig(newConfig);
       localStorage.setItem('olivia_system_config', JSON.stringify(newConfig));
+      
+      if (profile) {
+          try {
+              // Persist to DB if user is logged in
+              await updateSystemConfig(profile.id, newConfig);
+              console.log("System config saved to cloud");
+          } catch (error) {
+              console.error("Failed to save system config to cloud", error);
+          }
+      }
   };
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-background dark:bg-dark-background"><div className="animate-spin rounded-full h-12 w-12 border-t-4 border-primary"></div></div>;
@@ -176,6 +197,10 @@ const App: React.FC = () => {
         setProfile(user); 
         setSession({ access_token: 'simulated' } as any);
         localStorage.setItem('olivia_simulated_profile', JSON.stringify(user));
+        if (user.system_config) {
+            setSystemConfig(user.system_config);
+            localStorage.setItem('olivia_system_config', JSON.stringify(user.system_config));
+        }
     }} />;
   }
 
