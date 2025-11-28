@@ -57,6 +57,7 @@ export interface LandingConfig {
     youtubeUrl?: string;
     contactEmail?: string;
     mainVideoUrl?: string; // URL for the main demo video button
+    mainVideoThumbnail?: string; // NEW: Custom thumbnail for the main video
     
     // Side Tutorials
     tutorial1Url?: string;

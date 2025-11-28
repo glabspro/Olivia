@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
@@ -21,108 +22,48 @@
             background: radial-gradient(circle at top center, #fdf2f8 0%, #ffffff 70%);
         }
         /* Tab Animation */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.5s ease-out;
-        }
-        .tab-content.active {
-            display: flex;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .tab-content { display: none; animation: fadeIn 0.5s ease-out; }
+        .tab-content.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Chat Widget Animations */
-        .chat-slide-up {
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .typing-dot {
-            animation: typing 1.4s infinite ease-in-out both;
-        }
+        .chat-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
         
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-        
-        .animate-fade-in-up {
-            animation: fadeInUp 0.4s ease-out forwards;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Scroll Reveal Animation Classes */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
-        }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        /* Scroll Reveal */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
 
-        /* Custom Scrollbar for Chat & Tables */
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 20px; }
-        
-        /* Hide Scrollbar for specific elements */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- NEW ANIMATIONS FOR TOUR MOCKUPS --- */
-        
-        /* Tab 1: File Drop */
-        @keyframes fileDrop {
-            0% { transform: translateY(-20px); opacity: 0; }
-            40% { transform: translateY(0); opacity: 1; }
-            80% { transform: translateY(0); opacity: 1; scale: 1; }
-            100% { transform: translateY(10px); opacity: 0; scale: 0.8; }
-        }
-        @keyframes listAppear {
-            0% { opacity: 0; transform: translateY(10px); }
-            80% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
+        /* Animations for Mockups */
+        @keyframes fileDrop { 0% { transform: translateY(-20px); opacity: 0; } 40% { transform: translateY(0); opacity: 1; } 80% { transform: translateY(0); opacity: 1; scale: 1; } 100% { transform: translateY(10px); opacity: 0; scale: 0.8; } }
+        @keyframes listAppear { 0% { opacity: 0; transform: translateY(10px); } 80% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
         .anim-file { animation: fileDrop 3s infinite ease-in-out; }
         .anim-list { animation: listAppear 3s infinite ease-in-out; }
 
-        /* Tab 2: Message Pop */
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         .anim-msg-1 { animation: popIn 0.5s ease-out forwards 0.5s; opacity: 0; }
         .anim-msg-2 { animation: popIn 0.5s ease-out forwards 1.2s; opacity: 0; }
 
-        /* Tab 4: Cursor Move */
-        @keyframes cursorMove {
-            0% { transform: translate(0, 0); }
-            40% { transform: translate(40px, 40px); }
-            60% { transform: translate(40px, 40px) scale(0.9); } /* Click */
-            100% { transform: translate(40px, 40px); }
-        }
-        @keyframes dateSelect {
-            0% { background-color: transparent; color: #4B5563; }
-            50% { background-color: transparent; color: #4B5563; }
-            60% { background-color: #8B5CF6; color: white; }
-            100% { background-color: #8B5CF6; color: white; }
-        }
+        @keyframes cursorMove { 0% { transform: translate(0, 0); } 40% { transform: translate(40px, 40px); } 60% { transform: translate(40px, 40px) scale(0.9); } 100% { transform: translate(40px, 40px); } }
+        @keyframes dateSelect { 0%, 50% { background-color: transparent; color: #4B5563; } 60%, 100% { background-color: #8B5CF6; color: white; } }
         .anim-cursor { animation: cursorMove 3s infinite ease-in-out; }
         .anim-date-cell { animation: dateSelect 3s infinite; }
 
-        /* Tab 5: Template Stack */
         @keyframes floatCard1 { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(-6deg) translateY(-5px); } }
         @keyframes floatCard2 { 0%, 100% { transform: rotate(6deg) translateY(0); } 50% { transform: rotate(6deg) translateY(-5px); } }
         @keyframes floatCardMain { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
@@ -130,15 +71,22 @@
         .anim-card-2 { animation: floatCard2 4s infinite ease-in-out 0.5s; }
         .anim-card-main { animation: floatCardMain 4s infinite ease-in-out; }
 
-        /* Progress Bar for Auto-Rotation */
-        .progress-bar {
-            height: 3px;
-            background: #EC4899;
-            width: 0%;
-            transition: width 0.1s linear;
+        .progress-bar { height: 3px; background: #EC4899; width: 0%; transition: width 0.1s linear; }
+        
+        /* Mobile Touch Fixes */
+        .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
+
+        /* --- NEW: Video Highlight Animation --- */
+        @keyframes videoGlow {
+            0% { box-shadow: 0 0 0 rgba(236, 72, 153, 0); transform: scale(1); border-color: transparent; }
+            50% { box-shadow: 0 0 50px rgba(236, 72, 153, 0.6); transform: scale(1.02); border-color: #EC4899; }
+            100% { box-shadow: 0 0 0 rgba(236, 72, 153, 0); transform: scale(1); border-color: transparent; }
         }
-        .tab-btn.active .progress-bg {
-            background-color: rgba(236, 72, 153, 0.1);
+        .highlight-effect {
+            animation: videoGlow 2s ease-in-out;
+            z-index: 20;
+            position: relative;
+            border: 2px solid transparent;
         }
     </style>
 </head>
@@ -149,7 +97,7 @@
         <div class="container mx-auto px-4 md:px-6 py-3 md:py-4">
             <div class="flex justify-between items-center">
                 <!-- Logo -->
-                <div class="flex items-center gap-2 cursor-pointer select-none" onclick="handleLogoClick(event)">
+                <div class="flex items-center gap-2 cursor-pointer select-none" onclick="window.handleLogoClick(event)">
                     <div class="w-8 h-8 flex items-center justify-center bg-pink-600 rounded-lg shadow-sm">
                         <span class="text-white font-bold text-xl">O</span>
                     </div>
@@ -183,15 +131,15 @@
             <!-- Mobile Menu Dropdown -->
             <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-xl animate-fade-in-up">
                 <div class="flex flex-col p-4 space-y-4">
-                    <a href="#tour" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="closeMobileMenu()">
+                    <a href="#tour" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="window.closeMobileMenu()">
                         <div class="p-2 bg-pink-50 text-pink-600 rounded-lg"><i data-lucide="zap" class="w-5 h-5"></i></div>
                         Cómo Funciona
                     </a>
-                    <a href="#demos" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="closeMobileMenu()">
+                    <a href="#demos" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="window.closeMobileMenu()">
                         <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="play-circle" class="w-5 h-5"></i></div>
                         Academia
                     </a>
-                    <a href="#pricing" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="closeMobileMenu()">
+                    <a href="#pricing" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-gray-600 font-medium" onclick="window.closeMobileMenu()">
                         <div class="p-2 bg-green-50 text-green-600 rounded-lg"><i data-lucide="credit-card" class="w-5 h-5"></i></div>
                         Precios
                     </a>
@@ -224,8 +172,9 @@
                     Iniciar Prueba Gratuita
                     <i data-lucide="arrow-right" class="w-5 h-5"></i>
                 </a>
-                <a href="#tour" class="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 font-bold text-lg rounded-xl border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2 active:scale-95">
-                    <i data-lucide="play-circle" class="w-5 h-5 text-gray-400"></i>
+                <!-- UPDATE: Added onClick to scroll and highlight -->
+                <a href="#demos" onclick="window.scrollToVideo(event)" class="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 font-bold text-lg rounded-xl border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2 active:scale-95 group">
+                    <i data-lucide="play-circle" class="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition-colors"></i>
                     Ver cómo funciona
                 </a>
             </div>
@@ -342,7 +291,7 @@
         </div>
     </header>
 
-    <!-- INTERACTIVE TOUR SECTION (ENHANCED) -->
+    <!-- INTERACTIVE TOUR SECTION -->
     <section id="tour" class="py-16 md:py-20 bg-gray-50">
         <div class="container mx-auto px-4 md:px-6">
             <div class="text-center max-w-3xl mx-auto mb-10 md:mb-12 reveal">
@@ -350,7 +299,7 @@
                 <p class="text-sm md:text-base text-gray-500">Un sistema completo diseñado para vender más con menos esfuerzo.</p>
             </div>
 
-            <!-- Tabs Navigation (Auto-Rotating) -->
+            <!-- Tabs Navigation -->
             <div class="flex overflow-x-auto no-scrollbar gap-2 mb-8 md:mb-12 pb-2 md:justify-center px-1 reveal" id="tabs-container">
                 <button onclick="manualSwitchTab('step1')" id="tab-step1" class="tab-btn active relative whitespace-nowrap px-4 py-2 md:px-6 md:py-3 rounded-full font-bold text-xs md:text-sm bg-pink-600 text-white shadow-lg transition-all flex items-center gap-2 flex-shrink-0 overflow-hidden">
                     <span class="absolute bottom-0 left-0 h-1 bg-white/30 w-full transform origin-left progress-bar"></span>
@@ -377,7 +326,7 @@
             <!-- Tab Contents -->
             <div class="max-w-5xl mx-auto bg-white rounded-2xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-h-[400px] md:min-h-[450px] reveal" onmouseenter="stopAutoRotate()" onmouseleave="startAutoRotate()">
                 
-                <!-- STEP 1: IMPORT (Animated Mockup) -->
+                <!-- STEP 1: IMPORT -->
                 <div id="step1" class="tab-content active p-6 md:p-12 flex-col md:flex-row items-center gap-8 md:gap-12">
                     <div class="flex-1 space-y-4 md:space-y-6">
                         <div class="inline-block p-2 md:p-3 bg-pink-100 text-pink-700 rounded-xl"><i data-lucide="sparkles" class="w-5 h-5 md:w-6 md:h-6"></i></div>
@@ -385,8 +334,6 @@
                         <p class="text-sm md:text-base text-gray-500 leading-relaxed">
                             No pierdas tiempo copiando datos. Sube el PDF que te mandó tu proveedor y Olivia extraerá productos, precios y descripciones automáticamente.
                         </p>
-                        
-                        <!-- Social Proof -->
                         <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">JP</div>
                             <div>
@@ -396,7 +343,6 @@
                         </div>
                     </div>
                     <div class="flex-1 w-full bg-gray-50 rounded-xl p-6 md:p-8 flex items-center justify-center relative border border-gray-100 overflow-hidden">
-                        <!-- Animated File Drop -->
                         <div class="relative w-48 h-56 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col items-center justify-center gap-2 z-10 overflow-hidden">
                             <div class="anim-file absolute inset-0 flex items-center justify-center bg-white z-20">
                                 <div class="flex flex-col items-center">
@@ -418,7 +364,7 @@
                     </div>
                 </div>
 
-                <!-- STEP 2: SENDING (Animated Chat) -->
+                <!-- STEP 2: SENDING -->
                 <div id="step2" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-8 md:gap-12">
                     <div class="flex-1 space-y-4 md:space-y-6">
                         <div class="inline-block p-3 bg-green-100 text-green-700 rounded-xl"><i data-lucide="message-circle" class="w-6 h-6"></i></div>
@@ -426,7 +372,6 @@
                         <p class="text-sm md:text-base text-gray-500 leading-relaxed">
                             Genera un PDF profesional y envíalo directamente al chat de tu cliente con un solo clic. Sin descargas intermedias.
                         </p>
-                        
                         <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                             <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600">MR</div>
                             <div>
@@ -457,7 +402,7 @@
                     </div>
                 </div>
 
-                <!-- STEP 3: VIRTUAL ASSISTANT (Animated Menu) -->
+                <!-- STEP 3: VIRTUAL ASSISTANT -->
                 <div id="step3" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-12">
                      <div class="flex-1 space-y-6">
                         <div class="inline-block p-3 bg-gradient-to-br from-pink-500 to-purple-600 text-white rounded-xl shadow-lg"><i data-lucide="bot" class="w-6 h-6"></i></div>
@@ -481,7 +426,6 @@
                         </div>
                     </div>
                     <div class="flex-1 w-full flex justify-center">
-                        <!-- Simulated Assistant Menu -->
                         <div class="bg-surface dark:bg-dark-surface p-5 rounded-2xl border shadow-xl w-full max-w-sm relative overflow-hidden bg-white">
                             <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
                                 <div class="flex items-center gap-3">
@@ -505,7 +449,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <div>
                                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Gestión Interna</p>
                                     <div class="grid grid-cols-2 gap-3">
@@ -519,17 +462,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-3 cursor-pointer hover:bg-red-100 transition-colors">
-                                    <div class="p-1.5 bg-red-100 text-red-500 rounded-lg"><i data-lucide="alert-triangle" class="w-4 h-4"></i></div>
-                                    <span class="text-xs font-bold text-red-700">Tarea Prioritaria</span>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 4: CALENDAR (Animated Cursor) -->
+                <!-- STEP 4: CALENDAR -->
                 <div id="step4" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-12">
                      <div class="flex-1 space-y-6">
                         <div class="inline-block p-3 bg-purple-100 text-purple-700 rounded-xl"><i data-lucide="calendar-check" class="w-6 h-6"></i></div>
@@ -558,8 +496,6 @@
                                 Confirmar
                             </div>
                         </div>
-                        
-                        <!-- Animated Cursor -->
                         <div class="anim-cursor absolute top-1/3 left-1/3 z-20 pointer-events-none">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M5.5 3.5L11.5 20.5L14.5 13.5L21.5 10.5L5.5 3.5Z" fill="black" stroke="white" stroke-width="2"/>
@@ -568,13 +504,13 @@
                     </div>
                 </div>
 
-                <!-- STEP 5: PRO TEMPLATES (New) -->
+                <!-- STEP 5: PRO TEMPLATES -->
                 <div id="step5" class="tab-content p-6 md:p-12 flex-col md:flex-row items-center gap-12">
                      <div class="flex-1 space-y-6">
                         <div class="inline-block p-3 bg-indigo-100 text-indigo-700 rounded-xl"><i data-lucide="layout-template" class="w-6 h-6"></i></div>
                         <h3 class="text-2xl font-bold">Impacta con Diseños Profesionales</h3>
                         <p class="text-gray-500 leading-relaxed">
-                            No más documentos aburridos. Elige entre plantillas Modernas, Elegantes o Minimalistas. Personaliza con tu logo y color de marca para verte como una empresa grande.
+                            No más documentos aburridos. Elige entre plantillas Modernas, Elegantes o Minimalistas. Personaliza con tu logo y color de marca.
                         </p>
                         
                         <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -586,9 +522,7 @@
                         </div>
                     </div>
                     <div class="flex-1 w-full bg-gray-50 rounded-xl p-8 flex items-center justify-center relative overflow-hidden h-64">
-                        <!-- Stacked Templates Mockup -->
                         <div class="relative w-40 h-52">
-                            <!-- Card 1 (Back Left) -->
                             <div class="anim-card-1 absolute top-0 left-0 w-full h-full bg-white rounded-lg shadow border border-gray-200 p-2 transform -rotate-6 origin-bottom-left flex flex-col opacity-80">
                                 <div class="text-center mb-2 font-serif font-bold text-gray-800 text-[8px]">CLÁSICO</div>
                                 <div class="h-px bg-gray-300 w-full mb-2"></div>
@@ -597,7 +531,6 @@
                                     <div class="h-1 bg-gray-200 w-5/6"></div>
                                 </div>
                             </div>
-                            <!-- Card 2 (Back Right) -->
                             <div class="anim-card-2 absolute top-0 left-0 w-full h-full bg-white rounded-lg shadow border border-gray-200 p-0 transform rotate-6 origin-bottom-right flex flex-col overflow-hidden opacity-80">
                                 <div class="bg-gray-800 h-8 w-full flex items-center justify-center mb-2"><span class="text-white font-bold text-[8px]">AUDAZ</span></div>
                                 <div class="p-2 space-y-1">
@@ -605,7 +538,6 @@
                                     <div class="h-1 bg-gray-200 w-3/4"></div>
                                 </div>
                             </div>
-                            <!-- Card 3 (Front Center) -->
                             <div class="anim-card-main absolute top-2 left-0 w-full h-full bg-white rounded-lg shadow-xl border border-indigo-100 p-3 flex flex-col transform">
                                 <div class="flex justify-between items-center mb-3">
                                     <div class="w-6 h-6 bg-pink-500 rounded text-[6px] text-white flex items-center justify-center font-bold">O</div>
@@ -640,23 +572,28 @@
 
             <div class="max-w-6xl mx-auto">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    <!-- Main Video -->
-                    <div class="lg:col-span-2 bg-gray-900 rounded-2xl overflow-hidden shadow-xl relative group aspect-video reveal">
-                        <div id="video-main-bg" class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image: url('https://images.unsplash.com/photo-1531403009284-440f080d1e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80');"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <a href="#" id="video-main-player" target="_blank" class="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 active:scale-95 transition-transform hover:scale-110 duration-300">
-                                <i data-lucide="play" class="w-6 h-6 md:w-8 md:h-8 text-white fill-current ml-1"></i>
-                            </a>
+                    <!-- UPDATE: Added ID to video container for highlighting -->
+                    <div id="video-container" class="lg:col-span-2 bg-gray-900 rounded-2xl overflow-hidden shadow-xl relative group aspect-video reveal border-4 border-transparent transition-all duration-500">
+                        <!-- Placeholder Image Wrapper -->
+                        <div id="video-placeholder" class="absolute inset-0 w-full h-full">
+                            <div id="video-main-bg" class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image: url('https://images.unsplash.com/photo-1531403009284-440f080d1e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80');"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <!-- Play Button now calls playMainVideo() -->
+                                <button onclick="window.playMainVideo()" class="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 active:scale-95 transition-transform hover:scale-110 duration-300 z-20 cursor-pointer">
+                                    <i data-lucide="play" class="w-6 h-6 md:w-8 md:h-8 text-white fill-current ml-1"></i>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-0 left-0 p-4 md:p-6 w-full bg-gradient-to-t from-black/90 to-transparent pointer-events-none">
+                                <h3 class="text-white text-lg md:text-xl font-bold">Tour Completo por Olivia SaaS</h3>
+                                <p class="text-gray-300 text-xs md:text-sm mt-1">Configura tu cuenta en 2 minutos.</p>
+                            </div>
                         </div>
-                        <div class="absolute bottom-0 left-0 p-4 md:p-6 w-full bg-gradient-to-t from-black/90 to-transparent">
-                            <h3 class="text-white text-lg md:text-xl font-bold">Tour Completo por Olivia SaaS</h3>
-                            <p class="text-gray-300 text-xs md:text-sm mt-1">Configura tu cuenta en 2 minutos.</p>
-                        </div>
+                        <!-- Iframe Container (Hidden initially) -->
+                        <div id="video-frame" class="w-full h-full hidden"></div>
                     </div>
 
-                    <!-- Side List -->
                     <div class="space-y-3 md:space-y-4 flex flex-col h-full reveal" style="transition-delay: 200ms;">
-                        <a href="#" id="tutorial-1-link" class="flex gap-4 p-3 bg-gray-50 border border-gray-100 rounded-xl active:bg-gray-100 transition-all hover:shadow-md group">
+                        <a href="#" id="tutorial-1-link" target="_blank" class="flex gap-4 p-3 bg-gray-50 border border-gray-100 rounded-xl active:bg-gray-100 transition-all hover:shadow-md group">
                             <div class="w-24 md:w-32 h-16 md:h-20 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
                                 <div id="tutorial-1-thumb" class="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500" style="background-image: url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=300&q=80')"></div>
                                 <div class="absolute inset-0 flex items-center justify-center bg-black/20"><i data-lucide="play-circle" class="w-6 h-6 text-white"></i></div>
@@ -666,7 +603,7 @@
                                 <p class="text-[10px] md:text-xs text-gray-500 mt-1">1:30</p>
                             </div>
                         </a>
-                        <a href="#" id="tutorial-2-link" class="flex gap-4 p-3 bg-gray-50 border border-gray-100 rounded-xl active:bg-gray-100 transition-all hover:shadow-md group">
+                        <a href="#" id="tutorial-2-link" target="_blank" class="flex gap-4 p-3 bg-gray-50 border border-gray-100 rounded-xl active:bg-gray-100 transition-all hover:shadow-md group">
                             <div class="w-24 md:w-32 h-16 md:h-20 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
                                 <div id="tutorial-2-thumb" class="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500" style="background-image: url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=300&q=80')"></div>
                                 <div class="absolute inset-0 flex items-center justify-center bg-black/20"><i data-lucide="play-circle" class="w-6 h-6 text-white"></i></div>
@@ -689,116 +626,106 @@
     </section>
 
     <!-- PRICING -->
-    <section id="pricing" class="py-16 md:py-20 bg-gray-900 text-white">
-        <div class="container mx-auto px-4 md:px-6">
-            <div class="text-center max-w-3xl mx-auto mb-12 reveal">
-                <h2 class="text-2xl md:text-3xl font-bold mb-4">Un precio simple.</h2>
-                <p class="text-gray-400 text-sm">Comienza gratis y mejora cuando crezcas.</p>
+    <section id="pricing" class="py-20 bg-slate-950 relative overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl bg-purple-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <h2 class="text-3xl md:text-5xl font-black mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400">
+                    Un precio simple.
+                </h2>
+                <p class="text-slate-400 text-lg font-medium">Comienza gratis y mejora cuando crezcas.</p>
             </div>
 
-            <div class="flex flex-col md:flex-row justify-center gap-6 max-w-4xl mx-auto">
-                <div class="w-full md:w-1/2 p-6 md:p-8 rounded-2xl border border-gray-700 bg-gray-800/50 reveal" style="transition-delay: 100ms;">
-                    <h3 class="font-bold text-gray-400 uppercase tracking-wider text-xs mb-2">Plan Inicial</h3>
-                    <div class="text-3xl md:text-4xl font-bold mb-6">Gratis</div>
-                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> 5 Cotizaciones/mes</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> Catálogo de 10 productos</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-green-400"></i> PDF Básico</li>
+            <div class="flex flex-col md:flex-row justify-center gap-8 max-w-4xl mx-auto items-stretch">
+                <!-- Free Plan -->
+                <div class="w-full md:w-1/2 p-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-lg hover:bg-white/10 transition-colors reveal duration-500 flex flex-col">
+                    <h3 class="font-bold text-slate-400 uppercase tracking-widest text-xs mb-4">Plan Inicial</h3>
+                    <div class="text-5xl font-black text-white mb-6">Gratis</div>
+                    <ul class="space-y-5 mb-8 text-slate-300 text-sm flex-grow">
+                        <li class="flex items-center gap-4"><i data-lucide="check" class="w-5 h-5 text-green-400"></i> 5 Cotizaciones/mes</li>
+                        <li class="flex items-center gap-4"><i data-lucide="check" class="w-5 h-5 text-green-400"></i> Catálogo de 10 productos</li>
+                        <li class="flex items-center gap-4"><i data-lucide="check" class="w-5 h-5 text-green-400"></i> PDF Básico</li>
                     </ul>
-                    <a href="https://olivia-sandy.vercel.app" id="btn-cta-free" class="block w-full py-3 rounded-xl border border-gray-600 font-bold text-center active:bg-gray-700 transition text-sm hover:bg-gray-700">Crear cuenta Gratis</a>
+                    <a href="https://olivia-sandy.vercel.app" id="btn-cta-free" class="block w-full py-4 rounded-2xl border border-white/20 bg-transparent text-white font-bold text-center hover:bg-white hover:text-black transition-all transform active:scale-95">Crear cuenta Gratis</a>
                 </div>
 
-                <div class="w-full md:w-1/2 p-6 md:p-8 rounded-2xl border-2 border-pink-500 bg-gray-800 relative transform md:-translate-y-4 shadow-2xl shadow-pink-900/20 reveal" style="transition-delay: 200ms;">
-                    <div class="absolute top-0 right-0 bg-pink-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">MÁS POPULAR</div>
-                    <h3 class="font-bold text-pink-400 uppercase tracking-wider text-xs mb-2">Plan PRO</h3>
+                <!-- PRO Plan -->
+                <div class="w-full md:w-1/2 p-8 rounded-3xl border-2 border-pink-500/50 bg-slate-900/80 backdrop-blur-xl relative transform md:-translate-y-4 shadow-[0_0_40px_rgba(236,72,153,0.15)] hover:shadow-[0_0_60px_rgba(236,72,153,0.3)] transition-all duration-500 flex flex-col reveal delay-100">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full tracking-wider shadow-lg">MÁS POPULAR</div>
+                    <h3 class="font-bold text-pink-400 uppercase tracking-widest text-xs mb-4">Plan PRO</h3>
                     <div class="flex items-baseline gap-1 mb-6">
-                        <span class="text-3xl md:text-4xl font-bold">S/ 29.90</span>
-                        <span class="text-gray-400 text-xs">/mes</span>
+                        <span class="text-5xl font-black text-white">S/ 29.90</span>
+                        <span class="text-slate-400 text-sm font-medium">/mes</span>
                     </div>
-                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> <strong>Ilimitado</strong></li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> Sin marca de agua</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> Envío WhatsApp Directo</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-pink-500"></i> Asistente IA</li>
+                    <ul class="space-y-5 mb-8 text-slate-200 text-sm flex-grow">
+                        <li class="flex items-center gap-4"><div class="p-1 bg-pink-500/20 rounded-full"><i data-lucide="check" class="w-4 h-4 text-pink-400"></i></div> <strong>Ilimitado</strong></li>
+                        <li class="flex items-center gap-4"><div class="p-1 bg-pink-500/20 rounded-full"><i data-lucide="check" class="w-4 h-4 text-pink-400"></i></div> Sin marca de agua</li>
+                        <li class="flex items-center gap-4"><div class="p-1 bg-pink-500/20 rounded-full"><i data-lucide="check" class="w-4 h-4 text-pink-400"></i></div> Envío WhatsApp Directo</li>
+                        <li class="flex items-center gap-4"><div class="p-1 bg-pink-500/20 rounded-full"><i data-lucide="check" class="w-4 h-4 text-pink-400"></i></div> Asistente IA</li>
                     </ul>
-                    <a href="https://olivia-sandy.vercel.app" id="btn-cta-pro" class="block w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-center active:bg-pink-700 transition shadow-lg text-sm hover:bg-pink-700">Prueba 7 Días Gratis</a>
+                    <a href="https://olivia-sandy.vercel.app" id="btn-cta-pro" class="block w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold text-center hover:shadow-lg hover:shadow-pink-500/40 transition-all transform hover:scale-105 active:scale-95">Prueba 7 Días Gratis</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- FOOTER -->
-    <footer class="bg-slate-950 text-white pt-24 pb-24 md:pb-12 border-t border-slate-900 relative overflow-hidden">
-        <!-- Top Gradient Border with Animation -->
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-80"></div>
-        
-        <!-- Background Glow Effect -->
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-24 bg-pink-500/10 blur-[100px] pointer-events-none"></div>
-
-        <div class="container mx-auto px-6 text-center relative z-10">
-            
-            <!-- Brand & Description -->
-            <div class="flex flex-col items-center justify-center mb-10">
-                <div class="flex items-center gap-3 mb-6 group cursor-default">
-                    <div class="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 text-pink-500 font-bold text-2xl shadow-lg transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] group-hover:border-pink-500/30 group-hover:scale-105">O</div>
-                    <span class="text-3xl font-bold tracking-tight text-white">Olivia</span>
-                </div>
-                <p class="text-slate-400 max-w-lg mx-auto leading-relaxed text-base">
-                    La herramienta definitiva para emprendedores latinos. <br class="hidden md:block" />Cotiza, vende y organiza tu negocio desde un solo lugar.
-                </p>
-            </div>
-
-            <!-- Social Icons (Enhanced) -->
-            <div class="flex flex-wrap justify-center gap-4 mb-10">
-                <a href="#" id="social-fb" target="_blank" class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(24,119,242,0.5)] border border-slate-800 group">
-                    <i data-lucide="facebook" class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity"></i>
-                </a>
-                <a href="#" id="social-ig" target="_blank" class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(220,39,67,0.5)] border border-slate-800 group">
-                    <i data-lucide="instagram" class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity"></i>
-                </a>
-                <a href="#" id="social-tk" target="_blank" class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-white hover:text-black hover:border-transparent transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)] border border-slate-800 group">
-                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
-                </a>
-                <a href="https://wa.me/51944894541" id="social-wa" target="_blank" class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(37,211,102,0.5)] border border-slate-800 group">
-                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg>
-                </a>
-            </div>
-
-            <!-- Contact & Copyright -->
-            <div class="flex flex-col items-center justify-center gap-4">
-                <a href="mailto:hola@olivia.com" id="contact-email" class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all text-sm font-medium text-slate-400 hover:text-white">
-                    <i data-lucide="mail" class="w-4 h-4"></i> hola@olivia.com
-                </a>
+    <footer class="bg-slate-950 border-t border-slate-900 py-8 relative overflow-hidden">
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 
-                <div class="w-24 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent my-2"></div>
+                <!-- 1. Logo & Copyright (Left) -->
+                <div class="text-center md:text-left">
+                     <div class="flex items-center justify-center md:justify-start gap-2 mb-2 group cursor-default">
+                        <div class="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-md border border-white/10 text-pink-500 font-bold text-lg shadow-lg transition-all duration-500 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)] group-hover:border-pink-500/30 group-hover:scale-105">O</div>
+                        <span class="text-lg font-bold tracking-tight text-white">Olivia</span>
+                    </div>
+                     <p class="text-xs text-slate-500">© 2024 Olivia SaaS.</p>
+                </div>
 
-                <div class="text-xs text-slate-500 flex flex-col sm:flex-row items-center gap-2">
-                    <p>© 2024 Olivia SaaS. Todos los derechos reservados.</p>
-                    <span class="hidden sm:inline">•</span>
-                    <p class="flex items-center gap-1">
-                        Hecho con <span class="text-red-500 animate-pulse">❤️</span> en Perú 🇵🇪
-                    </p>
+                <!-- 2. Socials (Center/Right) -->
+                <div class="flex gap-4">
+                    <a href="#" id="social-fb" target="_blank" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(24,119,242,0.6)] border border-white/10 group">
+                        <i data-lucide="facebook" class="w-5 h-5 text-gray-300 group-hover:text-white transition-colors"></i>
+                    </a>
+                    <a href="#" id="social-ig" target="_blank" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(220,39,67,0.6)] border border-white/10 group">
+                        <i data-lucide="instagram" class="w-5 h-5 text-gray-300 group-hover:text-white transition-colors"></i>
+                    </a>
+                    <a href="#" id="social-tk" target="_blank" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)] border border-white/10 group">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-300 group-hover:text-black transition-colors"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                    </a>
+                    <a href="https://wa.me/51944894541" id="social-wa" target="_blank" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(37,211,102,0.6)] border border-white/10 group">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="w-5 h-5 text-gray-300 group-hover:text-white transition-colors"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg>
+                    </a>
+                </div>
+
+                <!-- 3. Contact (Right) -->
+                <div class="flex flex-col items-center md:items-end gap-1">
+                     <a href="mailto:hola@olivia.com" id="contact-email" class="text-sm text-slate-400 hover:text-white transition-colors font-medium flex items-center gap-2"><i data-lucide="mail" class="w-3 h-3"></i> hola@olivia.com</a>
+                     <p class="text-xs text-slate-500 flex items-center gap-1">Hecho con <span class="text-red-500 animate-pulse">❤️</span> en Perú 🇵🇪</p>
                 </div>
             </div>
         </div>
     </footer>
 
     <!-- OLIVIA SALES BOT WIDGET -->
-    <div id="olivia-widget" class="fixed bottom-4 right-4 z-[100] flex items-center gap-3 group cursor-pointer animate-fade-in-up" onclick="toggleChat()">
+    <!-- Added type=button and z-index 9999 for maximum mobile visibility -->
+    <button id="olivia-widget" type="button" class="fixed bottom-6 right-4 z-[9999] flex items-center gap-3 group cursor-pointer outline-none tap-highlight-transparent shadow-2xl rounded-full bg-pink-600 text-white hover:scale-105 transition-transform duration-300 p-4" onclick="window.toggleChat()">
         <!-- Label Pill -->
-        <div class="bg-gray-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transform transition-all group-hover:-translate-x-1 border border-gray-700 hidden sm:block">
+        <div class="bg-gray-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg absolute right-full mr-4 top-1/2 -translate-y-1/2 whitespace-nowrap hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             Asistente Oliv-IA
         </div>
         
         <!-- Circle Button -->
-        <div class="w-14 h-14 bg-pink-600 rounded-full shadow-2xl flex items-center justify-center relative hover:scale-110 transition-transform border-2 border-white/20">
-            <i data-lucide="bot" class="w-7 h-7 text-white fill-current"></i>
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-yellow-300 absolute top-2 right-2 animate-pulse fill-current"></i>
+        <div class="relative">
+            <i data-lucide="bot" class="w-7 h-7 fill-current"></i>
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-yellow-300 absolute -top-1 -right-1 animate-pulse fill-current"></i>
         </div>
-    </div>
+    </button>
 
-    <!-- Chat Window -->
-    <div id="chat-window" class="fixed bottom-24 right-4 left-4 sm:left-auto z-[100] hidden bg-white rounded-2xl shadow-2xl w-auto sm:w-96 border border-gray-200 overflow-hidden chat-slide-up transform origin-bottom-right max-w-[calc(100vw-2rem)] flex flex-col max-h-[70vh]">
+    <!-- Chat Window (Mobile Optimized Width & Height) -->
+    <div id="chat-window" class="fixed bottom-0 sm:bottom-24 right-0 sm:right-4 left-0 sm:left-auto z-[9999] hidden bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-96 border border-gray-200 overflow-hidden transform origin-bottom-right flex flex-col h-[80vh] sm:h-auto sm:max-h-[70vh] animate-fade-in-up">
+        <!-- Header -->
         <div class="bg-gradient-to-r from-pink-600 to-purple-600 p-4 text-white flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
                 <div class="relative">
@@ -812,14 +739,19 @@
                     <p class="text-xs text-pink-100 opacity-90">Asistente de Ventas</p>
                 </div>
             </div>
-            <button onclick="toggleChat()" class="p-1 hover:bg-white/10 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button onclick="window.toggleChat()" class="p-1 hover:bg-white/10 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
-        <div id="chat-messages" class="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-4 custom-scrollbar min-h-0"></div>
+        <!-- Messages Area (Flexible Height) -->
+        <div id="chat-messages" class="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-4 custom-scrollbar min-h-0">
+            <!-- Messages will be injected here by JS -->
+        </div>
 
+        <!-- Input Area (Lead Capture) -->
         <div class="p-3 bg-white border-t border-gray-100 shrink-0">
             <a href="https://wa.me/51944894541?text=Hola%20Olivia%2C%20quiero%20una%20demo%20del%20sistema%20SaaS." target="_blank" class="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg">
-                <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01s-.521.074-.792.372c-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
                 <span>Hablar con un Humano</span>
             </a>
             <p class="text-[10px] text-center text-gray-400 mt-2">Te responderé al instante en WhatsApp.</p>
@@ -831,7 +763,7 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2"><i data-lucide="edit-3" class="w-5 h-5 text-pink-600"></i> Editar Landing Page</h3>
-                <button onclick="closeConfigModal()" class="text-gray-400 hover:text-gray-900"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="window.closeConfigModal()" class="text-gray-400 hover:text-gray-900"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
             <!-- Auth Status Bar -->
@@ -839,45 +771,83 @@
                 <span id="auth-status-text" class="flex items-center gap-2 text-orange-600">
                     <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Modo Invitado (Local)
                 </span>
-                <button id="auth-login-btn" onclick="goToLogin()" class="text-pink-600 hover:underline">Iniciar Sesión</button>
+                <button id="auth-login-btn" onclick="window.goToLogin()" class="text-pink-600 hover:underline">Iniciar Sesión</button>
             </div>
 
             <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL de App (Login)</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL de la Aplicación (Login/Registro)</label>
+                    <p class="text-[10px] text-gray-400 mb-2">A donde se redirige a los usuarios cuando hacen clic en "Iniciar Sesión" o "Empezar Gratis".</p>
                     <input type="text" id="conf-appUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none" placeholder="https://app.olivia.com">
                 </div>
+                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Facebook</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Facebook URL</label>
                         <input type="text" id="conf-facebookUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Instagram</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Instagram URL</label>
                         <input type="text" id="conf-instagramUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">TikTok</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tiktok URL</label>
                         <input type="text" id="conf-tiktokUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-black outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">YouTube</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Youtube Canal URL</label>
                         <input type="text" id="conf-youtubeUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp de Ventas</label>
-                    <input type="text" id="conf-salesPhone" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="51999999999">
+
+                <div className="border-t border-gray-100 my-2"></div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo de Contacto (Footer)</label>
+                        <input type="text" id="conf-email" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Video Principal (Demo URL)</label>
+                        <input type="text" id="conf-mainVideo" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none" placeholder="https://youtube.com...">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Miniatura del Video Principal (URL)</label>
+                        <input type="text" id="conf-mainVideoThumb" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://...">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo de Contacto</label>
-                    <input type="text" id="conf-email" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                
+                {/* Hidden Sales Phone Field (Managed via Admin Panel usually, but kept for compatibility) */}
+                <input type="hidden" id="conf-salesPhone">
+
+                <div className="border-t border-gray-100 my-2 pt-2">
+                    <h4 class="text-xs font-bold text-red-500 flex items-center gap-1 mb-3"><i data-lucide="play-circle" class="w-3 h-3"></i> Videos Tutoriales (Barra Lateral)</h4>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tutorial #1</label>
+                            <input type="text" id="conf-tutorial1Url" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs mb-1 outline-none" placeholder="Link Video YouTube (Ej. https://youtu.be/...)">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="image" class="w-3 h-3 text-gray-400"></i>
+                                <input type="text" id="conf-tutorial1Thumb" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs outline-none" placeholder="URL Miniatura (Postimages, etc)">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tutorial #2</label>
+                            <input type="text" id="conf-tutorial2Url" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs mb-1 outline-none" placeholder="Link Video YouTube">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="image" class="w-3 h-3 text-gray-400"></i>
+                                <input type="text" id="conf-tutorial2Thumb" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs outline-none" placeholder="URL Miniatura">
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
             <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100 shrink-0">
-                <button onclick="closeConfigModal()" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900">Cancelar</button>
-                <button onclick="saveConfig()" class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg shadow-md hover:bg-black transition-all flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
+                <button onclick="window.closeConfigModal()" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900">Cancelar</button>
+                <button onclick="window.saveConfig()" class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg shadow-md hover:bg-black transition-all flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios del Sistema
                 </button>
             </div>
         </div>
@@ -886,8 +856,13 @@
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.44.4';
         
-        lucide.createIcons();
+        // Initialize Icons
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         
+        // Helper
+        const getEl = (id) => document.getElementById(id);
+
+        // --- SUPABASE CONFIGURATION ---
         const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA';
         
@@ -898,11 +873,185 @@
             }
         });
 
+        // --- GLOBAL STATE ---
         let currentConfig = {};
         let isLoggedIn = false;
         let isGodMode = false;
         let clickCount = 0;
+        let chatOpen = false;
+        let hasGreeted = false;
 
+        // --- CHATBOT LOGIC (Restored 2-Step Flow) ---
+        window.toggleChat = function() {
+            const chatWindow = getEl('chat-window');
+            const widget = getEl('olivia-widget');
+            
+            if (!chatWindow || !widget) return;
+
+            chatOpen = !chatOpen;
+            if (chatOpen) {
+                chatWindow.classList.remove('hidden');
+                widget.style.opacity = '0'; 
+                widget.style.pointerEvents = 'none';
+                
+                // Trigger greeting flow only once
+                if (!hasGreeted) {
+                    hasGreeted = true;
+                    // Step 1: Greeting
+                    setTimeout(() => window.addBotMessage("¡Hola! Soy Olivia, tu asistente de ventas. 👋"), 500);
+                    // Step 2: Show Options after a delay
+                    setTimeout(() => window.addBotMessage("Estoy aquí para ayudarte a digitalizar tu negocio. ¿Qué te gustaría saber?", true), 1200);
+                }
+            } else {
+                chatWindow.classList.add('hidden');
+                widget.style.opacity = '1'; 
+                widget.style.pointerEvents = 'auto';
+            }
+        };
+
+        window.addBotMessage = function(text, showOptions = false) {
+            const messagesContainer = getEl('chat-messages');
+            if (!messagesContainer) return;
+
+            // Create Typing Indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex gap-2 items-end mb-3';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-sm"><i data-lucide="bot" class="w-4 h-4"></i></div>
+                <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm text-gray-600 flex gap-1">
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Wait then show message
+            setTimeout(() => {
+                typingDiv.remove();
+                
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'flex gap-2 items-end animate-fade-in-up mb-3';
+                msgDiv.innerHTML = `
+                    <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-sm flex-shrink-0"><i data-lucide="bot" class="w-4 h-4"></i></div>
+                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm text-gray-800 leading-relaxed">
+                        ${text}
+                    </div>
+                `;
+                messagesContainer.appendChild(msgDiv);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // Add Options Buttons if requested
+                if (showOptions) {
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.className = 'flex flex-col gap-2 pl-10 mt-2 animate-fade-in-up mb-4';
+                    optionsDiv.innerHTML = `
+                        <button onclick="window.handleOption('features')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-pink-50 text-gray-700 hover:text-pink-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-pink-200 shadow-sm flex items-center gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-pink-500"></i> ¿Qué hace el Asistente Virtual?</button>
+                        <button onclick="window.handleOption('pricing')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-blue-200 shadow-sm flex items-center gap-2"><i data-lucide="credit-card" class="w-3 h-3 text-blue-500"></i> Ver Precios y Planes</button>
+                        <button onclick="window.handleOption('ai')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-purple-200 shadow-sm flex items-center gap-2"><i data-lucide="bot" class="w-3 h-3 text-purple-500"></i> ¿Cómo funciona la IA?</button>
+                    `;
+                    messagesContainer.appendChild(optionsDiv);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1000);
+        };
+
+        window.handleOption = function(option) {
+            const messagesContainer = getEl('chat-messages');
+            if (!messagesContainer) return;
+
+            // Hide buttons after click
+            const lastOptions = messagesContainer.lastElementChild;
+            if(lastOptions && lastOptions.innerHTML.includes('button')) lastOptions.style.display = 'none';
+
+            let userText = "";
+            if(option === 'features') userText = "⚡ ¿Qué hace el Asistente?";
+            if(option === 'pricing') userText = "💰 Precios";
+            if(option === 'ai') userText = "🤖 Sobre la IA";
+
+            const userDiv = document.createElement('div');
+            userDiv.className = 'flex justify-end animate-fade-in-up mb-3';
+            userDiv.innerHTML = `
+                <div class="bg-gray-900 px-4 py-2 rounded-2xl rounded-br-none text-white text-sm font-medium shadow-md">
+                    ${userText}
+                </div>
+            `;
+            messagesContainer.appendChild(userDiv);
+
+            if (option === 'features') {
+                setTimeout(() => window.addBotMessage("Mi IA integrada te ayuda en dos áreas clave para ahorrarte tiempo:"), 500);
+                const featuresHTML = `
+                    <div class="space-y-3 mt-2">
+                        <div class="p-2 rounded bg-purple-50 border border-purple-100">
+                            <p class="text-xs font-bold text-purple-700 uppercase mb-1">🗣️ Comunicaciones</p>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                <li>• <strong>Reunión:</strong> Envía invitaciones de calendario automáticas.</li>
+                                <li>• <strong>Correo:</strong> Redacta emails profesionales con un clic.</li>
+                            </ul>
+                        </div>
+                        <div class="p-2 rounded bg-blue-50 border border-blue-100">
+                            <p class="text-xs font-bold text-blue-700 uppercase mb-1">⚙️ Gestión Interna</p>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                <li>• <strong>Llamadas:</strong> Te recuerda a quién llamar y cuándo.</li>
+                                <li>• <strong>Tareas:</strong> Guarda pendientes normales o urgentes.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => window.addBotMessage(featuresHTML, true), 1500);
+            } 
+            else if (option === 'pricing') {
+                setTimeout(() => window.addBotMessage("Tenemos un plan para cada etapa de tu negocio:"), 500);
+                setTimeout(() => window.addBotMessage("🆓 <strong>Plan Gratis:</strong> 5 cotizaciones al mes.<br>💎 <strong>Plan PRO (S/ 29.90):</strong> Ilimitado, sin marca de agua y envíos directos.", true), 1500);
+            } 
+            else if (option === 'ai') {
+                setTimeout(() => window.addBotMessage("¡Es magia! ✨ Solo subes un PDF o Excel de tu proveedor, y mi IA extrae los productos y precios automáticamente."), 500);
+                setTimeout(() => window.addBotMessage("Así no tienes que escribir nada a mano. ¿Quieres ver una demo en vivo?", true), 1500);
+            }
+        };
+
+        // --- YOUTUBE HELPER ---
+        window.playMainVideo = function() {
+            if (!currentConfig.mainVideoUrl) return;
+            
+            let videoId = "";
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = currentConfig.mainVideoUrl.match(regExp);
+            
+            if (match && match[2].length == 11) {
+                videoId = match[2];
+            } else {
+                console.warn("Invalid YouTube URL");
+                return;
+            }
+
+            const placeholder = getEl('video-placeholder');
+            const iframeContainer = getEl('video-frame');
+            
+            if(placeholder) placeholder.classList.add('hidden');
+            if(iframeContainer) {
+                iframeContainer.classList.remove('hidden');
+                iframeContainer.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+            }
+        }
+
+        window.scrollToVideo = function(e) {
+            e.preventDefault();
+            const section = document.getElementById('demos');
+            const videoContainer = document.getElementById('video-container');
+            section.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                videoContainer.classList.add('highlight-effect');
+                setTimeout(() => {
+                    videoContainer.classList.remove('highlight-effect');
+                }, 1500);
+            }, 800);
+        };
+
+        // --- CONFIGURATION & LANDING LOGIC ---
         window.handleLogoClick = function(e) {
             e.preventDefault();
             clickCount++;
@@ -913,7 +1062,7 @@
                     if (password === "Luis2021.") {
                         isGodMode = true; 
                         alert("✅ Modo Edición Activado");
-                        openConfigModal();
+                        window.openConfigModal();
                     } else {
                         if (password !== null) alert("Acceso denegado");
                     }
@@ -924,30 +1073,33 @@
         };
 
         async function loadLandingConfig() {
-            const { data: { session } } = await supabase.auth.getSession();
-            isLoggedIn = !!session;
-            updateAuthStatus();
+            try {
+                const { data } = await supabase.auth.getSession();
+                isLoggedIn = !!data?.session;
+                updateAuthStatus();
+            } catch(e) { console.warn("Auth check skipped"); }
 
             try {
                 const localOverride = localStorage.getItem('olivia_landing_config_override');
                 let localParsed = {};
                 if (localOverride) {
                     localParsed = JSON.parse(localOverride);
-                    console.log("Loading config from Local Storage override");
                     applyConfig(localParsed);
                     currentConfig = localParsed;
                 }
 
-                const { data, error } = await supabase
+                // FIX: Fetch multiple admin profiles and find the most recently updated one with valid landing config
+                const { data: dbData } = await supabase
                     .from('profiles')
-                    .select('settings') 
+                    .select('settings, updated_at') 
                     .eq('is_admin', true)
                     .neq('settings', null) 
+                    .order('updated_at', { ascending: false }) // Get most recent update first
                     .limit(5);
 
-                if (data && data.length > 0) {
+                if (dbData && dbData.length > 0) {
                     let validProfile = null;
-                    for (const p of data) {
+                    for (const p of dbData) {
                         if (p.settings && p.settings.system_config && p.settings.system_config.landing) {
                             validProfile = p;
                             break; 
@@ -966,15 +1118,14 @@
                             youtubeUrl: landingConfig.youtubeUrl,
                             contactEmail: landingConfig.contactEmail,
                             salesPhone: sysConfig.salesPhoneNumber,
-                            // Video Configs
                             mainVideoUrl: landingConfig.mainVideoUrl,
+                            mainVideoThumbnail: landingConfig.mainVideoThumbnail,
                             tutorial1Url: landingConfig.tutorial1Url,
                             tutorial1Thumbnail: landingConfig.tutorial1Thumbnail,
                             tutorial2Url: landingConfig.tutorial2Url,
                             tutorial2Thumbnail: landingConfig.tutorial2Thumbnail,
                         };
                         
-                        // Merge local overrides with DB data
                         const finalConfig = { ...mergedConfig, ...localParsed };
                         applyConfig(finalConfig);
                         currentConfig = finalConfig;
@@ -986,74 +1137,82 @@
         }
 
         function applyConfig(config) {
-            if (config.facebookUrl) document.getElementById('social-fb').href = config.facebookUrl;
-            if (config.instagramUrl) document.getElementById('social-ig').href = config.instagramUrl;
-            if (config.tiktokUrl) document.getElementById('social-tk').href = config.tiktokUrl;
-            if (config.youtubeUrl) document.getElementById('social-yt').href = config.youtubeUrl;
+            const setHref = (id, val) => { const el = getEl(id); if(el && val) el.href = val; };
+            
+            setHref('social-fb', config.facebookUrl);
+            setHref('social-ig', config.instagramUrl);
+            setHref('social-tk', config.tiktokUrl);
+            setHref('social-yt', config.youtubeUrl);
             
             if (config.contactEmail) {
-                const emailBtn = document.getElementById('contact-email');
+                const emailBtn = getEl('contact-email');
                 if(emailBtn) {
                     emailBtn.href = `mailto:${config.contactEmail}`;
                     emailBtn.innerHTML = `<i data-lucide="mail" class="w-4 h-4"></i> ${config.contactEmail}`;
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                 }
             }
 
             if (config.appUrl) {
                 const ids = ['btn-login-nav', 'btn-login-mobile-nav', 'btn-cta-nav', 'btn-cta-mobile-menu', 'btn-cta-hero', 'btn-cta-free', 'btn-cta-pro'];
-                ids.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.href = config.appUrl;
-                });
+                ids.forEach(id => setHref(id, config.appUrl));
             }
 
             if (config.salesPhone) {
-                const waLink = document.getElementById('social-wa');
+                const waLink = getEl('social-wa');
                 if(waLink) waLink.href = `https://wa.me/${config.salesPhone}`;
             }
 
-            // --- VIDEO CONFIG APPLIER ---
-            if (config.mainVideoUrl) {
-                const mainPlayer = document.getElementById('video-main-player');
-                if (mainPlayer) mainPlayer.href = config.mainVideoUrl;
+            // setHref('video-main-player', config.mainVideoUrl);
+            setHref('tutorial-1-link', config.tutorial1Url);
+            setHref('tutorial-2-link', config.tutorial2Url);
+            
+            if (config.mainVideoThumbnail) {
+                const el = getEl('video-main-bg');
+                if(el) el.style.backgroundImage = `url('${config.mainVideoThumbnail}')`;
             }
-            if (config.tutorial1Url) {
-                const t1Link = document.getElementById('tutorial-1-link');
-                if (t1Link) t1Link.href = config.tutorial1Url;
-            }
+
             if (config.tutorial1Thumbnail) {
-                const t1Thumb = document.getElementById('tutorial-1-thumb');
-                if (t1Thumb) t1Thumb.style.backgroundImage = `url('${config.tutorial1Thumbnail}')`;
-            }
-            if (config.tutorial2Url) {
-                const t2Link = document.getElementById('tutorial-2-link');
-                if (t2Link) t2Link.href = config.tutorial2Url;
+                const el = getEl('tutorial-1-thumb');
+                if(el) el.style.backgroundImage = `url('${config.tutorial1Thumbnail}')`;
             }
             if (config.tutorial2Thumbnail) {
-                const t2Thumb = document.getElementById('tutorial-2-thumb');
-                if (t2Thumb) t2Thumb.style.backgroundImage = `url('${config.tutorial2Thumbnail}')`;
+                const el = getEl('tutorial-2-thumb');
+                if(el) el.style.backgroundImage = `url('${config.tutorial2Thumbnail}')`;
             }
+            
+            currentConfig.mainVideoUrl = config.mainVideoUrl;
         }
         
+        // --- MODAL ---
         window.openConfigModal = async function() {
-            const { data: { session } } = await supabase.auth.getSession();
-            isLoggedIn = !!session;
-            updateAuthStatus();
+            try {
+                const { data } = await supabase.auth.getSession();
+                isLoggedIn = !!data?.session;
+                updateAuthStatus();
+            } catch(e) {}
 
-            document.getElementById('config-modal').classList.remove('hidden');
+            getEl('config-modal').classList.remove('hidden');
             
-            if (currentConfig.appUrl) document.getElementById('conf-appUrl').value = currentConfig.appUrl;
-            if (currentConfig.facebookUrl) document.getElementById('conf-facebookUrl').value = currentConfig.facebookUrl;
-            if (currentConfig.instagramUrl) document.getElementById('conf-instagramUrl').value = currentConfig.instagramUrl;
-            if (currentConfig.tiktokUrl) document.getElementById('conf-tiktokUrl').value = currentConfig.tiktokUrl;
-            if (currentConfig.youtubeUrl) document.getElementById('conf-youtubeUrl').value = currentConfig.youtubeUrl;
-            if (currentConfig.salesPhone) document.getElementById('conf-salesPhone').value = currentConfig.salesPhone;
-            if (currentConfig.contactEmail) document.getElementById('conf-email').value = currentConfig.contactEmail;
+            const setVal = (id, val) => { const el = getEl(id); if(el) el.value = val || ''; }
+            
+            setVal('conf-appUrl', currentConfig.appUrl);
+            setVal('conf-facebookUrl', currentConfig.facebookUrl);
+            setVal('conf-instagramUrl', currentConfig.instagramUrl);
+            setVal('conf-tiktokUrl', currentConfig.tiktokUrl);
+            setVal('conf-youtubeUrl', currentConfig.youtubeUrl);
+            setVal('conf-salesPhone', currentConfig.salesPhone);
+            setVal('conf-email', currentConfig.contactEmail);
+            setVal('conf-mainVideo', currentConfig.mainVideoUrl);
+            setVal('conf-mainVideoThumb', currentConfig.mainVideoThumbnail);
+            setVal('conf-tutorial1Url', currentConfig.tutorial1Url);
+            setVal('conf-tutorial1Thumb', currentConfig.tutorial1Thumbnail);
+            setVal('conf-tutorial2Url', currentConfig.tutorial2Url);
+            setVal('conf-tutorial2Thumb', currentConfig.tutorial2Thumbnail);
         };
 
         window.closeConfigModal = function() {
-            document.getElementById('config-modal').classList.add('hidden');
+            getEl('config-modal').classList.add('hidden');
         };
         
         window.goToLogin = function() {
@@ -1061,8 +1220,9 @@
         };
 
         function updateAuthStatus() {
-            const statusText = document.getElementById('auth-status-text');
-            const loginBtn = document.getElementById('auth-login-btn');
+            const statusText = getEl('auth-status-text');
+            const loginBtn = getEl('auth-login-btn');
+            if(!statusText || !loginBtn) return;
             
             if (isLoggedIn) {
                 statusText.className = "flex items-center gap-2 text-green-600";
@@ -1080,37 +1240,31 @@
         }
 
         window.saveConfig = async function() {
+            const getVal = (id) => { const el = getEl(id); return el ? el.value : ''; }
+
             const newConfig = {
-                appUrl: document.getElementById('conf-appUrl').value,
-                facebookUrl: document.getElementById('conf-facebookUrl').value,
-                instagramUrl: document.getElementById('conf-instagramUrl').value,
-                tiktokUrl: document.getElementById('conf-tiktokUrl').value,
-                youtubeUrl: document.getElementById('conf-youtubeUrl').value,
-                contactEmail: document.getElementById('conf-email').value,
-                salesPhone: document.getElementById('conf-salesPhone').value
+                appUrl: getVal('conf-appUrl'),
+                facebookUrl: getVal('conf-facebookUrl'),
+                instagramUrl: getVal('conf-instagramUrl'),
+                tiktokUrl: getVal('conf-tiktokUrl'),
+                youtubeUrl: getVal('conf-youtubeUrl'),
+                contactEmail: getVal('conf-email'),
+                salesPhone: getVal('conf-salesPhone'),
+                mainVideoUrl: getVal('conf-mainVideo'),
+                mainVideoThumbnail: getVal('conf-mainVideoThumb'),
+                tutorial1Url: getVal('conf-tutorial1Url'),
+                tutorial1Thumbnail: getVal('conf-tutorial1Thumb'),
+                tutorial2Url: getVal('conf-tutorial2Url'),
+                tutorial2Thumbnail: getVal('conf-tutorial2Thumb'),
             };
 
-            // 1. Always Save Locally
             localStorage.setItem('olivia_landing_config_override', JSON.stringify(newConfig));
             applyConfig(newConfig);
             
-            // 2. Try to Sync to Cloud
             if (isLoggedIn) {
                 try {
                     const { data: { session } } = await supabase.auth.getSession();
                     if (session && session.user) {
-                        const fullSystemConfig = {
-                            salesPhoneNumber: newConfig.salesPhone,
-                            landing: {
-                                appUrl: newConfig.appUrl,
-                                facebookUrl: newConfig.facebookUrl,
-                                instagramUrl: newConfig.instagramUrl,
-                                tiktokUrl: newConfig.tiktokUrl,
-                                youtubeUrl: newConfig.youtubeUrl,
-                                contactEmail: newConfig.contactEmail
-                            }
-                        };
-
                         const { data: existingData } = await supabase.from('profiles').select('settings').eq('id', session.user.id).single();
                         const currentSettings = existingData?.settings || {};
                         const existingSystemConfig = currentSettings.system_config || {};
@@ -1119,15 +1273,15 @@
                             ...currentSettings,
                             system_config: {
                                 ...existingSystemConfig,
-                                ...fullSystemConfig,
+                                salesPhoneNumber: newConfig.salesPhone,
                                 landing: {
                                     ...(existingSystemConfig.landing || {}),
-                                    ...fullSystemConfig.landing
+                                    ...newConfig
                                 }
                             }
                         };
 
-                        const { error } = await supabase.from('profiles').update({ settings: mergedSettings }).eq('id', session.user.id);
+                        const { error } = await supabase.from('profiles').update({ settings: mergedSettings, updated_at: new Date().toISOString() }).eq('id', session.user.id);
                         
                         if (error) {
                             console.error("Cloud sync error:", error);
@@ -1146,38 +1300,25 @@
             closeConfigModal();
         };
         
-        loadLandingConfig();
-
+        // TABS & ROTATION
         window.switchTab = function(stepId) {
             if (window.stopAutoRotate) window.stopAutoRotate();
-            
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.classList.remove('active');
-                el.style.display = 'none';
-            });
+            document.querySelectorAll('.tab-content').forEach(el => { el.classList.remove('active'); el.style.display = 'none'; });
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-pink-600', 'text-white', 'shadow-lg', 'active');
                 btn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
                 const bar = btn.querySelector('.progress-bar');
                 if(bar) bar.style.width = '0%';
             });
-            
-            const activeContent = document.getElementById(stepId);
-            if (activeContent) {
-                activeContent.style.display = 'flex';
-                setTimeout(() => activeContent.classList.add('active'), 10);
-            }
-
-            const activeBtn = document.getElementById('tab-' + stepId);
+            const activeContent = getEl(stepId);
+            if (activeContent) { activeContent.style.display = 'flex'; setTimeout(() => activeContent.classList.add('active'), 10); }
+            const activeBtn = getEl('tab-' + stepId);
             if (activeBtn) {
                 activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
                 activeBtn.classList.add('bg-pink-600', 'text-white', 'shadow-lg', 'active');
             }
         };
-        
-        window.manualSwitchTab = function(stepId) {
-            window.switchTab(stepId);
-        };
+        window.manualSwitchTab = function(stepId) { window.switchTab(stepId); };
 
         let rotationInterval;
         let currentTab = 1;
@@ -1187,49 +1328,20 @@
         window.startAutoRotate = function() {
             if (window.stopAutoRotate) window.stopAutoRotate();
             animateProgressBar(currentTab);
-
             rotationInterval = setInterval(() => {
                 currentTab = currentTab < totalTabs ? currentTab + 1 : 1;
-                
-                document.querySelectorAll('.tab-content').forEach(el => {
-                    el.classList.remove('active');
-                    el.style.display = 'none';
-                });
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('bg-pink-600', 'text-white', 'shadow-lg', 'active');
-                    btn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
-                    const bar = btn.querySelector('.progress-bar');
-                    if(bar) { bar.style.width = '0%'; bar.style.transition = 'none'; }
-                });
-                
-                const stepId = 'step' + currentTab;
-                const activeContent = document.getElementById(stepId);
-                if(activeContent) {
-                    activeContent.style.display = 'flex';
-                    setTimeout(() => activeContent.classList.add('active'), 10);
-                }
-
-                const activeBtn = document.getElementById('tab-' + stepId);
-                if(activeBtn) {
-                    activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
-                    activeBtn.classList.add('bg-pink-600', 'text-white', 'shadow-lg', 'active');
-                }
-                
+                window.switchTab('step' + currentTab); 
                 animateProgressBar(currentTab);
-
             }, intervalTime);
         };
 
         window.stopAutoRotate = function() {
             clearInterval(rotationInterval);
-            document.querySelectorAll('.progress-bar').forEach(bar => {
-                bar.style.width = '0%';
-                bar.style.transition = 'none';
-            });
+            document.querySelectorAll('.progress-bar').forEach(bar => { bar.style.width = '0%'; bar.style.transition = 'none'; });
         };
 
         function animateProgressBar(tabIndex) {
-            const btn = document.getElementById('tab-step' + tabIndex);
+            const btn = getEl('tab-step' + tabIndex);
             if (btn) {
                 const bar = btn.querySelector('.progress-bar');
                 if (bar) {
@@ -1241,148 +1353,20 @@
                 }
             }
         }
-        
         window.startAutoRotate();
 
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-
-        if(mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-
-        window.closeMobileMenu = function() {
-            if(mobileMenu) mobileMenu.classList.add('hidden');
-        };
+        const mobileMenuBtn = getEl('mobile-menu-btn');
+        const mobileMenu = getEl('mobile-menu');
+        if(mobileMenuBtn) { mobileMenuBtn.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); }); }
+        window.closeMobileMenu = function() { if(mobileMenu) mobileMenu.classList.add('hidden'); };
 
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                }
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('active'); } });
         }, { threshold: 0.1 });
-
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        const messagesContainer = document.getElementById('chat-messages');
-        const chatWindow = document.getElementById('chat-window');
-        const widget = document.getElementById('olivia-widget');
-
-        window.toggleChat = function() {
-            chatOpen = !chatOpen;
-            if (chatOpen) {
-                chatWindow.classList.remove('hidden');
-                widget.style.opacity = '0'; 
-                widget.style.pointerEvents = 'none';
-                if (!hasGreeted) {
-                    setTimeout(() => addBotMessage("¡Hola! Soy Olivia, tu asistente de ventas. 👋"), 500);
-                    setTimeout(() => addBotMessage("Estoy aquí para ayudarte a digitalizar tu negocio. ¿Qué te gustaría saber?", true), 1500);
-                    hasGreeted = true;
-                }
-            } else {
-                chatWindow.classList.add('hidden');
-                widget.style.opacity = '1'; 
-                widget.style.pointerEvents = 'auto';
-            }
-        }
-
-        function addBotMessage(text, showOptions = false) {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'flex gap-2 items-end';
-            typingDiv.innerHTML = `
-                <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-sm"><i data-lucide="bot" class="w-4 h-4"></i></div>
-                <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm text-gray-600 flex gap-1">
-                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
-                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
-                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
-                </div>
-            `;
-            messagesContainer.appendChild(typingDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            lucide.createIcons();
-
-            setTimeout(() => {
-                typingDiv.remove();
-                
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'flex gap-2 items-end animate-fade-in-up';
-                msgDiv.innerHTML = `
-                    <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-sm flex-shrink-0"><i data-lucide="bot" class="w-4 h-4"></i></div>
-                    <div class="bg-white px-4 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm text-gray-800 leading-relaxed">
-                        ${text}
-                    </div>
-                `;
-                messagesContainer.appendChild(msgDiv);
-                lucide.createIcons();
-
-                if (showOptions) {
-                    const optionsDiv = document.createElement('div');
-                    optionsDiv.className = 'flex flex-col gap-2 pl-10 mt-2 animate-fade-in-up';
-                    optionsDiv.innerHTML = `
-                        <button onclick="handleOption('features')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-pink-50 text-gray-700 hover:text-pink-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-pink-200 shadow-sm flex items-center gap-2"><i data-lucide="sparkles" class="w-3 h-3 text-pink-500"></i> ¿Qué hace el Asistente Virtual?</button>
-                        <button onclick="handleOption('pricing')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-blue-200 shadow-sm flex items-center gap-2"><i data-lucide="credit-card" class="w-3 h-3 text-blue-500"></i> Ver Precios y Planes</button>
-                        <button onclick="handleOption('ai')" class="text-left px-4 py-2.5 bg-gray-50 hover:bg-purple-50 text-gray-700 hover:text-purple-700 text-xs font-bold rounded-xl transition-all border border-gray-200 hover:border-purple-200 shadow-sm flex items-center gap-2"><i data-lucide="bot" class="w-3 h-3 text-purple-500"></i> ¿Cómo funciona la IA?</button>
-                    `;
-                    messagesContainer.appendChild(optionsDiv);
-                    lucide.createIcons();
-                }
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, 1000);
-        }
-
-        window.handleOption = function(option) {
-            const lastOptions = messagesContainer.lastElementChild;
-            if(lastOptions) lastOptions.style.display = 'none';
-
-            let userText = "";
-            if(option === 'features') userText = "⚡ ¿Qué hace el Asistente?";
-            if(option === 'pricing') userText = "💰 Precios";
-            if(option === 'ai') userText = "🤖 Sobre la IA";
-
-            const userDiv = document.createElement('div');
-            userDiv.className = 'flex justify-end animate-fade-in-up mb-2';
-            userDiv.innerHTML = `
-                <div class="bg-gray-900 px-4 py-2 rounded-2xl rounded-br-none text-white text-sm font-medium shadow-md">
-                    ${userText}
-                </div>
-            `;
-            messagesContainer.appendChild(userDiv);
-
-            if (option === 'features') {
-                setTimeout(() => addBotMessage("Mi IA integrada te ayuda en dos áreas clave para ahorrarte tiempo:"), 500);
-                
-                const featuresHTML = `
-                    <div class="space-y-3">
-                        <div class="p-2 rounded bg-purple-50 border border-purple-100">
-                            <p class="text-xs font-bold text-purple-700 uppercase mb-1">🗣️ Comunicaciones</p>
-                            <ul class="text-xs text-gray-600 space-y-1">
-                                <li>• <strong>Reunión:</strong> Envía invitaciones de calendario automáticas.</li>
-                                <li>• <strong>Correo:</strong> Redacta emails profesionales con un clic.</li>
-                            </ul>
-                        </div>
-                        <div class="p-2 rounded bg-blue-50 border border-blue-100">
-                            <p class="text-xs font-bold text-blue-700 uppercase mb-1">⚙️ Gestión Interna</p>
-                            <ul class="text-xs text-gray-600 space-y-1">
-                                <li>• <strong>Llamadas:</strong> Te recuerda a quién llamar y cuándo.</li>
-                                <li>• <strong>Tareas:</strong> Guarda pendientes normales o urgentes.</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                setTimeout(() => addBotMessage(featuresHTML, true), 1500);
-            } 
-            else if (option === 'pricing') {
-                setTimeout(() => addBotMessage("Tenemos un plan para cada etapa de tu negocio:"), 500);
-                setTimeout(() => addBotMessage("🆓 <strong>Plan Gratis:</strong> 5 cotizaciones al mes.<br>💎 <strong>Plan PRO (S/ 29.90):</strong> Ilimitado, sin marca de agua y envíos directos.", true), 1500);
-            } 
-            else if (option === 'ai') {
-                setTimeout(() => addBotMessage("¡Es magia! ✨ Solo subes un PDF o Excel de tu proveedor, y mi IA extrae los productos y precios automáticamente."), 500);
-                setTimeout(() => addBotMessage("Así no tienes que escribir nada a mano. ¿Quieres ver una demo en vivo?", true), 1500);
-            }
-        };
+        // Init
+        loadLandingConfig();
     </script>
 </body>
 </html>

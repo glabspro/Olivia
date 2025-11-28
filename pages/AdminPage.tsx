@@ -39,6 +39,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
           youtubeUrl: '',
           contactEmail: 'hola@olivia.com',
           mainVideoUrl: 'https://youtube.com',
+          mainVideoThumbnail: '',
           tutorial1Url: '',
           tutorial1Thumbnail: '',
           tutorial2Url: '',
@@ -398,6 +399,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
                                   <div>
                                      <label className="block text-xs font-bold text-textSecondary uppercase mb-1 flex items-center gap-1"><Video size={12}/> Video Principal (Demo URL)</label>
                                      <input type="text" value={sysConfigForm.landing?.mainVideoUrl || ''} onChange={e => updateLandingConfig('mainVideoUrl', e.target.value)} className="w-full px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm" placeholder="https://youtube.com/watch?v=..."/>
+                                     <input type="text" value={sysConfigForm.landing?.mainVideoThumbnail || ''} onChange={e => updateLandingConfig('mainVideoThumbnail', e.target.value)} className="w-full mt-2 px-3 py-2 bg-white dark:bg-black border border-border dark:border-dark-border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="URL Miniatura Personalizada (Opcional)"/>
                                  </div>
                              </div>
                              
