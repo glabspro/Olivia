@@ -45,31 +45,6 @@ export interface PaymentOption {
   details: string;
 }
 
-export interface Settings {
-  companyName: string;
-  companyLogo: string | null;
-  companyAddress?: string;
-  companyPhone?: string;
-  companyEmail?: string;
-  companyWebsite?: string;
-  companyDocumentType?: 'RUC' | 'DNI' | '';
-  companyDocumentNumber?: string;
-  currencySymbol: string;
-  defaultMarginType: MarginType;
-  defaultMarginValue: number;
-  defaultTemplate: Template;
-  paymentTerms: PaymentOption[];
-  paymentMethods: PaymentOption[];
-  quotationPrefix: string;
-  quotationNextNumber: number;
-  quotationPadding?: number; 
-  themeColor: string;
-  headerImage: string | null;
-  taxType: TaxType;
-  taxRate: number;
-  calComLink?: string; 
-}
-
 // Landing Page specific configuration
 export interface LandingConfig {
     // Domain Settings
@@ -98,6 +73,32 @@ export interface SystemConfig {
     mercadoPagoAccessToken?: string;
     isMaintenanceMode?: boolean;
     landing?: LandingConfig; // New field for landing page dynamic data
+}
+
+export interface Settings {
+  companyName: string;
+  companyLogo: string | null;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  companyWebsite?: string;
+  companyDocumentType?: 'RUC' | 'DNI' | '';
+  companyDocumentNumber?: string;
+  currencySymbol: string;
+  defaultMarginType: MarginType;
+  defaultMarginValue: number;
+  defaultTemplate: Template;
+  paymentTerms: PaymentOption[];
+  paymentMethods: PaymentOption[];
+  quotationPrefix: string;
+  quotationNextNumber: number;
+  quotationPadding?: number; 
+  themeColor: string;
+  headerImage: string | null;
+  taxType: TaxType;
+  taxRate: number;
+  calComLink?: string; 
+  system_config?: SystemConfig; // Store system config here in DB
 }
 
 // Admin & Permissions Types

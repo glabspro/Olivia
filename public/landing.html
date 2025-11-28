@@ -849,14 +849,16 @@
                 // Strategy: Fetch the first user marked as Admin that HAS system_config data
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('system_config')
+                    .select('settings') // Select settings instead of system_config
                     .eq('is_admin', true)
-                    .not('system_config', 'is', null) // CRITICAL FIX: Ignore empty admins
+                    .neq('settings', null) // CRITICAL FIX: Ignore null settings
                     .limit(1)
                     .maybeSingle();
 
-                if (data && data.system_config && data.system_config.landing) {
-                    const config = data.system_config.landing;
+                // Extract config from settings column (JSONB)
+                if (data && data.settings && data.settings.system_config && data.settings.system_config.landing) {
+                    const config = data.settings.system_config.landing;
+                    const systemConfig = data.settings.system_config;
                     
                     // Update Social Links if present
                     if (config.facebookUrl) document.getElementById('social-fb').href = config.facebookUrl;
@@ -898,7 +900,7 @@
                     }
 
                     // Update WhatsApp Contact if present
-                    const salesPhone = data.system_config.salesPhoneNumber;
+                    const salesPhone = systemConfig.salesPhoneNumber;
                     if (salesPhone) {
                         const waLink = document.getElementById('social-wa');
                         if(waLink) waLink.href = `https://wa.me/${salesPhone}`;

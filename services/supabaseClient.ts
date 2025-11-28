@@ -88,6 +88,9 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
 
     if (data) {
         const updatedData = await checkAndEnforcePlan(data);
+        // Extract system_config from settings if available (nested structure for DB persistence)
+        const systemConfig = updatedData.settings?.system_config || updatedData.system_config;
+
         return {
             id: updatedData.id,
             fullName: updatedData.full_name,
@@ -100,7 +103,7 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
             is_verified: updatedData.is_verified,
             ai_usage_count: updatedData.ai_usage_count || 0,
             settings: updatedData.settings,
-            system_config: updatedData.system_config // Return system config if present
+            system_config: systemConfig
         };
     }
     return null;
@@ -198,6 +201,10 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
     const { data, error } = await supabase.from('profiles').select('*').eq('id', supabaseUser.id).single();
     if (error) return null;
     const updatedData = await checkAndEnforcePlan(data);
+    
+    // Extract system_config from settings if available (nested structure for DB persistence)
+    const systemConfig = updatedData.settings?.system_config || updatedData.system_config;
+
     return {
         id: updatedData.id,
         fullName: updatedData.full_name,
@@ -210,7 +217,7 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
         is_verified: updatedData.is_verified,
         ai_usage_count: updatedData.ai_usage_count || 0,
         settings: updatedData.settings,
-        system_config: updatedData.system_config
+        system_config: systemConfig
     };
 };
 
@@ -222,8 +229,24 @@ export const updateUserSettings = async (userId: string, settings: Settings) => 
 
 export const updateSystemConfig = async (userId: string, config: SystemConfig) => {
     if (!supabase) return;
-    const { error } = await supabase.from('profiles').update({ system_config: config }).eq('id', userId);
-    if (error) throw error;
+    
+    // 1. Fetch current settings to avoid partial updates destroying other data
+    const { data } = await supabase.from('profiles').select('settings').eq('id', userId).single();
+    const currentSettings = data?.settings || {};
+    
+    // 2. Nest system_config inside settings
+    const newSettings = { 
+        ...currentSettings, 
+        system_config: config 
+    };
+
+    // 3. Save back to the 'settings' column which is JSONB and definitely exists
+    const { error } = await supabase.from('profiles').update({ settings: newSettings }).eq('id', userId);
+    
+    if (error) {
+        console.error("Error updating system config in settings:", error);
+        throw error;
+    }
 };
 
 export const completeOnboarding = async (userId: string) => {
