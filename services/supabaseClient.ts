@@ -230,7 +230,7 @@ export const updateUserSettings = async (userId: string, settings: Settings) => 
 export const updateSystemConfig = async (userId: string, config: SystemConfig) => {
     if (!supabase) return;
     
-    // 1. Fetch current settings to avoid partial updates destroying other data
+    // 1. Fetch current settings first to initialize if null
     const { data, error: fetchError } = await supabase.from('profiles').select('settings').eq('id', userId).single();
     
     if (fetchError) {
@@ -238,15 +238,16 @@ export const updateSystemConfig = async (userId: string, config: SystemConfig) =
         throw fetchError;
     }
 
+    // Default to empty object if settings is null
     const currentSettings = data?.settings || {};
     
-    // 2. Nest system_config inside settings
+    // 2. Nest system_config inside settings (merge with existing)
     const newSettings = { 
         ...currentSettings, 
         system_config: config 
     };
 
-    // 3. Save back to the 'settings' column which is JSONB and definitely exists
+    // 3. Update the 'settings' column
     const { error } = await supabase.from('profiles').update({ settings: newSettings }).eq('id', userId);
     
     if (error) {

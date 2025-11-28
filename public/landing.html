@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
@@ -150,7 +149,7 @@
         <div class="container mx-auto px-4 md:px-6 py-3 md:py-4">
             <div class="flex justify-between items-center">
                 <!-- Logo -->
-                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                <div class="flex items-center gap-2 cursor-pointer select-none" onclick="handleLogoClick(event)">
                     <div class="w-8 h-8 flex items-center justify-center bg-pink-600 rounded-lg shadow-sm">
                         <span class="text-white font-bold text-xl">O</span>
                     </div>
@@ -643,7 +642,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                     <!-- Main Video -->
                     <div class="lg:col-span-2 bg-gray-900 rounded-2xl overflow-hidden shadow-xl relative group aspect-video reveal">
-                        <div class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image: url('https://images.unsplash.com/photo-1531403009284-440f080d1e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80');"></div>
+                        <div id="video-main-bg" class="absolute inset-0 bg-cover bg-center opacity-60" style="background-image: url('https://images.unsplash.com/photo-1531403009284-440f080d1e12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80');"></div>
                         <div class="absolute inset-0 flex items-center justify-center">
                             <a href="#" id="video-main-player" target="_blank" class="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 active:scale-95 transition-transform hover:scale-110 duration-300">
                                 <i data-lucide="play" class="w-6 h-6 md:w-8 md:h-8 text-white fill-current ml-1"></i>
@@ -784,23 +783,22 @@
         </div>
     </footer>
 
-    <!-- OLIVIA SALES BOT WIDGET (Updated with requested design) -->
+    <!-- OLIVIA SALES BOT WIDGET -->
     <div id="olivia-widget" class="fixed bottom-4 right-4 z-[100] flex items-center gap-3 group cursor-pointer animate-fade-in-up" onclick="toggleChat()">
-        <!-- Label Pill (Hidden on tiny screens to avoid overlay) -->
+        <!-- Label Pill -->
         <div class="bg-gray-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transform transition-all group-hover:-translate-x-1 border border-gray-700 hidden sm:block">
             Asistente Oliv-IA
         </div>
         
-        <!-- Circle Button (Updated Pink with Sparkles) -->
+        <!-- Circle Button -->
         <div class="w-14 h-14 bg-pink-600 rounded-full shadow-2xl flex items-center justify-center relative hover:scale-110 transition-transform border-2 border-white/20">
             <i data-lucide="bot" class="w-7 h-7 text-white fill-current"></i>
             <i data-lucide="sparkles" class="w-3.5 h-3.5 text-yellow-300 absolute top-2 right-2 animate-pulse fill-current"></i>
         </div>
     </div>
 
-    <!-- Chat Window (Mobile Optimized Width & Height) -->
+    <!-- Chat Window -->
     <div id="chat-window" class="fixed bottom-24 right-4 left-4 sm:left-auto z-[100] hidden bg-white rounded-2xl shadow-2xl w-auto sm:w-96 border border-gray-200 overflow-hidden chat-slide-up transform origin-bottom-right max-w-[calc(100vw-2rem)] flex flex-col max-h-[70vh]">
-        <!-- Header -->
         <div class="bg-gradient-to-r from-pink-600 to-purple-600 p-4 text-white flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
                 <div class="relative">
@@ -817,12 +815,8 @@
             <button onclick="toggleChat()" class="p-1 hover:bg-white/10 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
-        <!-- Messages Area (Flexible Height) -->
-        <div id="chat-messages" class="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-4 custom-scrollbar min-h-0">
-            <!-- Messages will be injected here by JS -->
-        </div>
+        <div id="chat-messages" class="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-4 custom-scrollbar min-h-0"></div>
 
-        <!-- Input Area (Lead Capture) -->
         <div class="p-3 bg-white border-t border-gray-100 shrink-0">
             <a href="https://wa.me/51944894541?text=Hola%20Olivia%2C%20quiero%20una%20demo%20del%20sistema%20SaaS." target="_blank" class="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg">
                 <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></path></svg>
@@ -832,19 +826,23 @@
         </div>
     </div>
 
-    <!-- ADMIN EDIT BUTTON -->
-    <button onclick="openConfigModal()" class="fixed bottom-4 left-4 z-[100] bg-gray-900 text-white p-3 rounded-full shadow-lg border border-gray-700 hover:bg-black transition-all group" title="Configurar Landing Page">
-        <i data-lucide="settings" class="w-5 h-5 group-hover:rotate-90 transition-transform duration-500"></i>
-    </button>
-
     <!-- CONFIG MODAL -->
     <div id="config-modal" class="fixed inset-0 z-[110] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2"><i data-lucide="edit-3" class="w-5 h-5 text-pink-600"></i> Editar Landing Page</h3>
                 <button onclick="closeConfigModal()" class="text-gray-400 hover:text-gray-900"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            
+            <!-- Auth Status Bar -->
+            <div id="auth-status-bar" class="px-6 py-2 text-xs font-bold flex justify-between items-center">
+                <span id="auth-status-text" class="flex items-center gap-2 text-orange-600">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Modo Invitado (Local)
+                </span>
+                <button id="auth-login-btn" onclick="goToLogin()" class="text-pink-600 hover:underline">Iniciar Sesión</button>
+            </div>
+
+            <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">URL de App (Login)</label>
                     <input type="text" id="conf-appUrl" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none" placeholder="https://app.olivia.com">
@@ -875,10 +873,8 @@
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Correo de Contacto</label>
                     <input type="text" id="conf-email" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-                <hr class="border-gray-100">
-                <p class="text-xs text-gray-400 italic">Los cambios se guardan localmente para ti al instante y se intentará sincronizar con la nube si tienes permisos.</p>
             </div>
-            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+            <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100 shrink-0">
                 <button onclick="closeConfigModal()" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-900">Cancelar</button>
                 <button onclick="saveConfig()" class="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg shadow-md hover:bg-black transition-all flex items-center gap-2">
                     <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
@@ -892,12 +888,9 @@
         
         lucide.createIcons();
         
-        // --- SUPABASE CONFIGURATION FOR DYNAMIC LANDING ---
         const supabaseUrl = 'https://qxiaxenvmpwqepoqavyv.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4aWF4ZW52bXB3cWVwb3Fhdnl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjA0ODEsImV4cCI6MjA3OTEzNjQ4MX0.ghRijgSOw52jzu-egMOyHGX51odtCK_m6XZABlz24sA';
         
-        // Initialize Supabase client
-        // IMPORTANT: Use the same storage key as the main React app to share session if on same domain
         const supabase = createClient(supabaseUrl, supabaseKey, {
             auth: {
                 persistSession: true,
@@ -906,46 +899,86 @@
         });
 
         let currentConfig = {};
+        let isLoggedIn = false;
+        let isGodMode = false;
+        let clickCount = 0;
 
-        // Fetch Landing Config
+        window.handleLogoClick = function(e) {
+            e.preventDefault();
+            clickCount++;
+            
+            if (clickCount === 4) {
+                setTimeout(() => {
+                    const password = prompt("Credencial de Administrador:");
+                    if (password === "Luis2021.") {
+                        isGodMode = true; 
+                        alert("✅ Modo Edición Activado");
+                        openConfigModal();
+                    } else {
+                        if (password !== null) alert("Acceso denegado");
+                    }
+                    clickCount = 0;
+                }, 50);
+            }
+            setTimeout(() => clickCount = 0, 1000);
+        };
+
         async function loadLandingConfig() {
+            const { data: { session } } = await supabase.auth.getSession();
+            isLoggedIn = !!session;
+            updateAuthStatus();
+
             try {
-                // 1. Check Local Override (Instant update for admin)
                 const localOverride = localStorage.getItem('olivia_landing_config_override');
+                let localParsed = {};
                 if (localOverride) {
-                    const parsed = JSON.parse(localOverride);
+                    localParsed = JSON.parse(localOverride);
                     console.log("Loading config from Local Storage override");
-                    applyConfig(parsed);
-                    currentConfig = parsed;
-                    return; // Skip DB fetch if local override exists to prevent flickering
+                    applyConfig(localParsed);
+                    currentConfig = localParsed;
                 }
 
-                // 2. Fetch from DB (Public view)
                 const { data, error } = await supabase
                     .from('profiles')
                     .select('settings') 
                     .eq('is_admin', true)
                     .neq('settings', null) 
-                    .limit(1)
-                    .maybeSingle();
+                    .limit(5);
 
-                if (data && data.settings && data.settings.system_config) {
-                    const sysConfig = data.settings.system_config;
-                    const landingConfig = sysConfig.landing || {};
-                    
-                    // Merge flattened config for easier handling
-                    const mergedConfig = {
-                        appUrl: landingConfig.appUrl,
-                        facebookUrl: landingConfig.facebookUrl,
-                        instagramUrl: landingConfig.instagramUrl,
-                        tiktokUrl: landingConfig.tiktokUrl,
-                        youtubeUrl: landingConfig.youtubeUrl,
-                        contactEmail: landingConfig.contactEmail,
-                        salesPhone: sysConfig.salesPhoneNumber
-                    };
-                    
-                    applyConfig(mergedConfig);
-                    currentConfig = mergedConfig;
+                if (data && data.length > 0) {
+                    let validProfile = null;
+                    for (const p of data) {
+                        if (p.settings && p.settings.system_config && p.settings.system_config.landing) {
+                            validProfile = p;
+                            break; 
+                        }
+                    }
+
+                    if (validProfile) {
+                        const sysConfig = validProfile.settings.system_config;
+                        const landingConfig = sysConfig.landing || {};
+                        
+                        const mergedConfig = {
+                            appUrl: landingConfig.appUrl,
+                            facebookUrl: landingConfig.facebookUrl,
+                            instagramUrl: landingConfig.instagramUrl,
+                            tiktokUrl: landingConfig.tiktokUrl,
+                            youtubeUrl: landingConfig.youtubeUrl,
+                            contactEmail: landingConfig.contactEmail,
+                            salesPhone: sysConfig.salesPhoneNumber,
+                            // Video Configs
+                            mainVideoUrl: landingConfig.mainVideoUrl,
+                            tutorial1Url: landingConfig.tutorial1Url,
+                            tutorial1Thumbnail: landingConfig.tutorial1Thumbnail,
+                            tutorial2Url: landingConfig.tutorial2Url,
+                            tutorial2Thumbnail: landingConfig.tutorial2Thumbnail,
+                        };
+                        
+                        // Merge local overrides with DB data
+                        const finalConfig = { ...mergedConfig, ...localParsed };
+                        applyConfig(finalConfig);
+                        currentConfig = finalConfig;
+                    }
                 }
             } catch (err) {
                 console.warn("Could not load dynamic landing config", err);
@@ -953,13 +986,11 @@
         }
 
         function applyConfig(config) {
-            // Socials
             if (config.facebookUrl) document.getElementById('social-fb').href = config.facebookUrl;
             if (config.instagramUrl) document.getElementById('social-ig').href = config.instagramUrl;
             if (config.tiktokUrl) document.getElementById('social-tk').href = config.tiktokUrl;
             if (config.youtubeUrl) document.getElementById('social-yt').href = config.youtubeUrl;
             
-            // Email
             if (config.contactEmail) {
                 const emailBtn = document.getElementById('contact-email');
                 if(emailBtn) {
@@ -969,7 +1000,6 @@
                 }
             }
 
-            // App Links
             if (config.appUrl) {
                 const ids = ['btn-login-nav', 'btn-login-mobile-nav', 'btn-cta-nav', 'btn-cta-mobile-menu', 'btn-cta-hero', 'btn-cta-free', 'btn-cta-pro'];
                 ids.forEach(id => {
@@ -978,18 +1008,41 @@
                 });
             }
 
-            // WhatsApp
             if (config.salesPhone) {
                 const waLink = document.getElementById('social-wa');
                 if(waLink) waLink.href = `https://wa.me/${config.salesPhone}`;
             }
+
+            // --- VIDEO CONFIG APPLIER ---
+            if (config.mainVideoUrl) {
+                const mainPlayer = document.getElementById('video-main-player');
+                if (mainPlayer) mainPlayer.href = config.mainVideoUrl;
+            }
+            if (config.tutorial1Url) {
+                const t1Link = document.getElementById('tutorial-1-link');
+                if (t1Link) t1Link.href = config.tutorial1Url;
+            }
+            if (config.tutorial1Thumbnail) {
+                const t1Thumb = document.getElementById('tutorial-1-thumb');
+                if (t1Thumb) t1Thumb.style.backgroundImage = `url('${config.tutorial1Thumbnail}')`;
+            }
+            if (config.tutorial2Url) {
+                const t2Link = document.getElementById('tutorial-2-link');
+                if (t2Link) t2Link.href = config.tutorial2Url;
+            }
+            if (config.tutorial2Thumbnail) {
+                const t2Thumb = document.getElementById('tutorial-2-thumb');
+                if (t2Thumb) t2Thumb.style.backgroundImage = `url('${config.tutorial2Thumbnail}')`;
+            }
         }
         
-        // --- MODAL LOGIC ---
-        window.openConfigModal = function() {
+        window.openConfigModal = async function() {
+            const { data: { session } } = await supabase.auth.getSession();
+            isLoggedIn = !!session;
+            updateAuthStatus();
+
             document.getElementById('config-modal').classList.remove('hidden');
             
-            // Pre-fill inputs
             if (currentConfig.appUrl) document.getElementById('conf-appUrl').value = currentConfig.appUrl;
             if (currentConfig.facebookUrl) document.getElementById('conf-facebookUrl').value = currentConfig.facebookUrl;
             if (currentConfig.instagramUrl) document.getElementById('conf-instagramUrl').value = currentConfig.instagramUrl;
@@ -1002,6 +1055,29 @@
         window.closeConfigModal = function() {
             document.getElementById('config-modal').classList.add('hidden');
         };
+        
+        window.goToLogin = function() {
+            window.location.href = "/"; 
+        };
+
+        function updateAuthStatus() {
+            const statusText = document.getElementById('auth-status-text');
+            const loginBtn = document.getElementById('auth-login-btn');
+            
+            if (isLoggedIn) {
+                statusText.className = "flex items-center gap-2 text-green-600";
+                statusText.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500"></span> Conectado como Admin (Nube)';
+                loginBtn.style.display = 'none';
+            } else if (isGodMode) {
+                statusText.className = "flex items-center gap-2 text-purple-600";
+                statusText.innerHTML = '<span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> Modo Dios (Local)';
+                loginBtn.style.display = 'block';
+            } else {
+                statusText.className = "flex items-center gap-2 text-orange-600";
+                statusText.innerHTML = '<span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Modo Invitado (Solo Lectura)';
+                loginBtn.style.display = 'block';
+            }
+        }
 
         window.saveConfig = async function() {
             const newConfig = {
@@ -1014,65 +1090,65 @@
                 salesPhone: document.getElementById('conf-salesPhone').value
             };
 
-            // 1. Save Locally (Instant Feedback)
+            // 1. Always Save Locally
             localStorage.setItem('olivia_landing_config_override', JSON.stringify(newConfig));
             applyConfig(newConfig);
-            alert("✅ Cambios guardados localmente. Se verán reflejados para ti al instante.");
-            closeConfigModal();
+            
+            // 2. Try to Sync to Cloud
+            if (isLoggedIn) {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session && session.user) {
+                        const fullSystemConfig = {
+                            salesPhoneNumber: newConfig.salesPhone,
+                            landing: {
+                                appUrl: newConfig.appUrl,
+                                facebookUrl: newConfig.facebookUrl,
+                                instagramUrl: newConfig.instagramUrl,
+                                tiktokUrl: newConfig.tiktokUrl,
+                                youtubeUrl: newConfig.youtubeUrl,
+                                contactEmail: newConfig.contactEmail
+                            }
+                        };
 
-            // 2. Try to Sync to Cloud (If Admin)
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                
-                if (session && session.user) {
-                    // Reconstruct the full system_config object structure
-                    const fullSystemConfig = {
-                        salesPhoneNumber: newConfig.salesPhone,
-                        // Preserve other fields if needed, but for landing mostly these matter
-                        landing: {
-                            appUrl: newConfig.appUrl,
-                            facebookUrl: newConfig.facebookUrl,
-                            instagramUrl: newConfig.instagramUrl,
-                            tiktokUrl: newConfig.tiktokUrl,
-                            youtubeUrl: newConfig.youtubeUrl,
-                            contactEmail: newConfig.contactEmail
+                        const { data: existingData } = await supabase.from('profiles').select('settings').eq('id', session.user.id).single();
+                        const currentSettings = existingData?.settings || {};
+                        const existingSystemConfig = currentSettings.system_config || {};
+                        
+                        const mergedSettings = {
+                            ...currentSettings,
+                            system_config: {
+                                ...existingSystemConfig,
+                                ...fullSystemConfig,
+                                landing: {
+                                    ...(existingSystemConfig.landing || {}),
+                                    ...fullSystemConfig.landing
+                                }
+                            }
+                        };
+
+                        const { error } = await supabase.from('profiles').update({ settings: mergedSettings }).eq('id', session.user.id);
+                        
+                        if (error) {
+                            console.error("Cloud sync error:", error);
+                            alert("⚠️ Guardado localmente, pero error al sincronizar con la nube.");
+                        } else {
+                            alert("✅ Guardado en Local y Nube exitosamente.");
                         }
-                    };
-
-                    // Fetch existing settings to merge properly
-                    const { data: existingData } = await supabase.from('profiles').select('settings').eq('id', session.user.id).single();
-                    const currentSettings = existingData?.settings || {};
-                    const mergedSettings = {
-                        ...currentSettings,
-                        system_config: {
-                            ...currentSettings.system_config, // Keep existing keys like paymentPhoneNumber
-                            ...fullSystemConfig
-                        }
-                    };
-
-                    const { error } = await supabase.from('profiles').update({ settings: mergedSettings }).eq('id', session.user.id);
-                    
-                    if (error) {
-                        console.error("Cloud sync error:", error);
-                        // Silent fail for user, they saw the local success
-                    } else {
-                        console.log("Cloud sync successful");
                     }
-                } else {
-                    console.warn("No active session found to sync to cloud. Changes are local only.");
+                } catch (e) {
+                    alert("⚠️ Error de conexión con la nube.");
                 }
-            } catch (e) {
-                console.error("Sync failed", e);
+            } else {
+                alert("💾 Cambios guardados en LOCAL STORAGE (Modo Dios).\n\nNota: Para que otros usuarios vean estos cambios en la nube, debes iniciar sesión real en la app.");
             }
+            
+            closeConfigModal();
         };
         
-        // Initialize
         loadLandingConfig();
 
-
-        // --- TABS LOGIC ---
         window.switchTab = function(stepId) {
-             // Stop auto rotation if user clicks manually
             if (window.stopAutoRotate) window.stopAutoRotate();
             
             document.querySelectorAll('.tab-content').forEach(el => {
@@ -1103,7 +1179,6 @@
             window.switchTab(stepId);
         };
 
-        // --- AUTO ROTATE LOGIC ---
         let rotationInterval;
         let currentTab = 1;
         const totalTabs = 5;
@@ -1169,8 +1244,6 @@
         
         window.startAutoRotate();
 
-
-        // --- MOBILE MENU ---
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
 
@@ -1184,7 +1257,6 @@
             if(mobileMenu) mobileMenu.classList.add('hidden');
         };
 
-        // --- SCROLL ANIMATION ---
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1195,9 +1267,6 @@
 
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        // --- SALES BOT LOGIC ---
-        let chatOpen = false;
-        let hasGreeted = false;
         const messagesContainer = document.getElementById('chat-messages');
         const chatWindow = document.getElementById('chat-window');
         const widget = document.getElementById('olivia-widget');
@@ -1206,7 +1275,7 @@
             chatOpen = !chatOpen;
             if (chatOpen) {
                 chatWindow.classList.remove('hidden');
-                widget.style.opacity = '0'; // Hide trigger button
+                widget.style.opacity = '0'; 
                 widget.style.pointerEvents = 'none';
                 if (!hasGreeted) {
                     setTimeout(() => addBotMessage("¡Hola! Soy Olivia, tu asistente de ventas. 👋"), 500);
@@ -1215,13 +1284,12 @@
                 }
             } else {
                 chatWindow.classList.add('hidden');
-                widget.style.opacity = '1'; // Show trigger button
+                widget.style.opacity = '1'; 
                 widget.style.pointerEvents = 'auto';
             }
         }
 
         function addBotMessage(text, showOptions = false) {
-            // Typing indicator
             const typingDiv = document.createElement('div');
             typingDiv.className = 'flex gap-2 items-end';
             typingDiv.innerHTML = `
@@ -1266,7 +1334,6 @@
         }
 
         window.handleOption = function(option) {
-            // Remove options buttons visually to clean up chat
             const lastOptions = messagesContainer.lastElementChild;
             if(lastOptions) lastOptions.style.display = 'none';
 
@@ -1275,7 +1342,6 @@
             if(option === 'pricing') userText = "💰 Precios";
             if(option === 'ai') userText = "🤖 Sobre la IA";
 
-            // User Message Bubble
             const userDiv = document.createElement('div');
             userDiv.className = 'flex justify-end animate-fade-in-up mb-2';
             userDiv.innerHTML = `
@@ -1285,11 +1351,9 @@
             `;
             messagesContainer.appendChild(userDiv);
 
-            // Bot Response Logic
             if (option === 'features') {
                 setTimeout(() => addBotMessage("Mi IA integrada te ayuda en dos áreas clave para ahorrarte tiempo:"), 500);
                 
-                // Detailed Breakdown Card
                 const featuresHTML = `
                     <div class="space-y-3">
                         <div class="p-2 rounded bg-purple-50 border border-purple-100">
