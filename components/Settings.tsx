@@ -81,6 +81,54 @@ const templatePreviews = (themeColor: string) => ({
     },
 });
 
+// Extracted Component to prevent re-mounting on parent render
+interface PaymentOptionEditorProps {
+    label: string;
+    options: PaymentOption[];
+    type: 'paymentTerms' | 'paymentMethods';
+    onChange: (type: 'paymentTerms' | 'paymentMethods', index: number, field: 'name' | 'details', value: string) => void;
+    onAdd: (type: 'paymentTerms' | 'paymentMethods') => void;
+    onRemove: (type: 'paymentTerms' | 'paymentMethods', index: number) => void;
+    inputClasses: string;
+    labelClasses: string;
+}
+
+const PaymentOptionEditor: React.FC<PaymentOptionEditorProps> = ({ 
+    label, options, type, onChange, onAdd, onRemove, inputClasses, labelClasses 
+}) => (
+    <div>
+        <label className={labelClasses}>{label}</label>
+        <div className="space-y-2 mt-2">
+            {options.map((option, index) => (
+                <div key={option.id} className="p-2 border border-border dark:border-dark-border rounded-lg bg-background dark:bg-dark-background space-y-2">
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="Nombre (ej. Contado)"
+                            value={option.name}
+                            onChange={(e) => onChange(type, index, 'name', e.target.value)}
+                            className={inputClasses}
+                        />
+                        <button type="button" onClick={() => onRemove(type, index)} className="text-red-500 hover:text-red-400 p-1.5 rounded-full hover:bg-red-500/10 flex-shrink-0">
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                    <textarea
+                        placeholder="Detalles completos..."
+                        value={option.details}
+                        onChange={(e) => onChange(type, index, 'details', e.target.value)}
+                        className={`${inputClasses} h-16`}
+                    />
+                </div>
+            ))}
+             <button type="button" onClick={() => onAdd(type)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors">
+                <PlusCircle size={14} />
+                Agregar Opción
+            </button>
+        </div>
+    </div>
+);
+
 const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestIntegration }) => {
   const [settings, setSettings] = useState<Settings>(currentSettings);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -95,7 +143,7 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
     if (JSON.stringify(settings) !== JSON.stringify(currentSettings)) {
         const handler = setTimeout(() => {
             onSave(settings);
-        }, 500); // 500ms debounce
+        }, 1000); // Increased debounce to 1000ms for smoother typing
 
         return () => {
             clearTimeout(handler);
@@ -186,40 +234,6 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
   const labelClasses = "block text-xs font-medium text-textSecondary dark:text-dark-textSecondary mb-1";
   const generatedTemplatePreviews = templatePreviews(settings.themeColor || '#EC4899');
 
-
-  const PaymentOptionEditor = ({ label, options, type }: { label: string, options: PaymentOption[], type: 'paymentTerms' | 'paymentMethods' }) => (
-    <div>
-        <label className={labelClasses}>{label}</label>
-        <div className="space-y-2 mt-2">
-            {options.map((option, index) => (
-                <div key={option.id} className="p-2 border border-border dark:border-dark-border rounded-lg bg-background dark:bg-dark-background space-y-2">
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="text"
-                            placeholder="Nombre (ej. Contado)"
-                            value={option.name}
-                            onChange={(e) => handlePaymentOptionChange(type, index, 'name', e.target.value)}
-                            className={inputClasses}
-                        />
-                        <button type="button" onClick={() => removePaymentOption(type, index)} className="text-red-500 hover:text-red-400 p-1.5 rounded-full hover:bg-red-500/10 flex-shrink-0">
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                    <textarea
-                        placeholder="Detalles completos..."
-                        value={option.details}
-                        onChange={(e) => handlePaymentOptionChange(type, index, 'details', e.target.value)}
-                        className={`${inputClasses} h-16`}
-                    />
-                </div>
-            ))}
-             <button type="button" onClick={() => addPaymentOption(type)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-accent-teal bg-accent-teal/10 rounded-lg hover:bg-accent-teal/20 transition-colors">
-                <PlusCircle size={14} />
-                Agregar Opción
-            </button>
-        </div>
-    </div>
-  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -514,11 +528,21 @@ const AppSettings: React.FC<SettingsProps> = ({ currentSettings, onSave, onTestI
                 label="Términos de Pago (predefinidos)"
                 options={settings.paymentTerms}
                 type="paymentTerms"
+                onChange={handlePaymentOptionChange}
+                onAdd={addPaymentOption}
+                onRemove={removePaymentOption}
+                inputClasses={inputClasses}
+                labelClasses={labelClasses}
             />
             <PaymentOptionEditor
                 label="Métodos de Pago (predefinidos)"
                 options={settings.paymentMethods}
                 type="paymentMethods"
+                onChange={handlePaymentOptionChange}
+                onAdd={addPaymentOption}
+                onRemove={removePaymentOption}
+                inputClasses={inputClasses}
+                labelClasses={labelClasses}
             />
             
             <div>
