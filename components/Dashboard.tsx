@@ -43,27 +43,40 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
 
 const PlanBadge = ({ user }: { user: User }) => {
     const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
-    const trialEnds = user.permissions?.trial_ends_at ? new Date(user.permissions.trial_ends_at) : null;
+    // Check strictly for existence of trial date string. If null, it is false.
+    const trialDateStr = user.permissions?.trial_ends_at;
+    const isTrial = typeof trialDateStr === 'string' && trialDateStr.length > 0;
     
     // Calculate days left
     let daysLeft = 0;
-    if (trialEnds) {
+    if (isTrial && trialDateStr) {
+        const trialEnds = new Date(trialDateStr);
         const now = new Date();
         const diffTime = trialEnds.getTime() - now.getTime();
         daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
     if (isPro) {
+        // CRITICAL FIX: If trialEnds is NULL (Paid Pro), show Gold Badge. If it exists (Trial), show Orange Badge.
+        if (isTrial) {
+             return (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-100 text-orange-700 border border-orange-200">
+                    <Clock size={10} />
+                    {daysLeft > 0 ? `${daysLeft} Días Prueba` : 'Prueba Vencida'}
+                </div>
+            );
+        }
+        // Full Paid PRO
         return (
-            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${trialEnds ? 'bg-orange-100 text-orange-700' : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'}`}>
-                {trialEnds ? <Clock size={10} /> : <Crown size={10} />}
-                {trialEnds ? `${daysLeft} Días Prueba` : 'Plan PRO'}
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-sm">
+                <Crown size={10} fill="currentColor" />
+                PRO PLAN
             </div>
         );
     }
     
     return (
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-200 text-gray-600 text-[10px] font-bold uppercase">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-200 text-gray-600 text-[10px] font-bold uppercase border border-gray-300">
             Plan Free
         </div>
     );
@@ -99,7 +112,12 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
   }
 
   const isFree = user.permissions?.plan === 'free';
-  const isTrial = !!user.permissions?.trial_ends_at;
+  // Logic fix: Only consider it a trial if the date exists and is not null
+  const trialDateStr = user.permissions?.trial_ends_at;
+  const isTrial = !!trialDateStr; // if null/undefined/empty string -> false
+
+  // Show upgrade options ONLY if free OR in trial mode
+  const showUpgradeOptions = isFree || isTrial;
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-background text-textPrimary dark:bg-dark-background dark:text-dark-textPrimary">
@@ -112,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
             {navItems.map(item => <NavItem key={item.id} {...item} activePage={activePage} setActivePage={setActivePage} />)}
             
             {/* Upgrade Button in Nav (only if Free or Trial) */}
-            {(isFree || isTrial) && (
+            {showUpgradeOptions && (
                 <button
                     onClick={onShowPricing}
                     className="w-full flex items-center gap-3 px-3 py-2 font-medium rounded-lg transition-colors text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 mt-4 group"
@@ -161,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                <div className="flex-1 lg:hidden"></div>
 
               <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
-                {(isFree || isTrial) && (
+                {showUpgradeOptions && (
                     <button 
                         onClick={onShowPricing}
                         className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full text-xs font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
@@ -187,7 +205,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
                         <span className="text-sm font-semibold text-textPrimary dark:text-dark-textPrimary leading-tight max-w-[100px] truncate">{user.companyName}</span>
                         <div className="flex items-center gap-1">
                             <span className="text-xs text-textSecondary dark:text-dark-textSecondary">Propietario</span>
-                            {user.permissions?.plan === 'pro' && <Crown size={10} className="text-yellow-500" />}
+                            {!showUpgradeOptions && <Crown size={10} className="text-yellow-500" fill="currentColor" />}
                         </div>
                     </div>
                     <ChevronDown size={16} className="text-textSecondary hidden md:block"/>

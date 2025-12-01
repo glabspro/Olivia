@@ -58,7 +58,7 @@ const checkAndEnforcePlan = async (userProfile: any): Promise<any> => {
             const newPermissions: UserPermissions = {
                 ...userProfile.permissions,
                 plan: 'free',
-                trial_ends_at: undefined // Remove trial date so we know it ended
+                trial_ends_at: null // Expired trial becomes null
             };
 
             await supabase.from('profiles').update({ permissions: newPermissions }).eq('id', userProfile.id);
@@ -301,9 +301,8 @@ export const getAllUsers = async (): Promise<User[]> => {
 
 export const updateUserPermissions = async (userId: string, permissions: UserPermissions) => {
     if (!supabase) return;
-    const permsToSave = { ...permissions };
-    if (permissions.plan === 'pro' && !permissions.trial_ends_at) { delete permsToSave.trial_ends_at; }
-    const { data, error } = await supabase.from('profiles').update({ permissions: permsToSave }).eq('id', userId).select();
+    // CRITICAL FIX: Pass permission object directly to ensure nulls are respected
+    const { data, error } = await supabase.from('profiles').update({ permissions }).eq('id', userId).select();
     if (error) throw error;
     if (!data || data.length === 0) throw new Error("Permiso denegado: RLS.");
 };

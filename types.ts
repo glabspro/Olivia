@@ -108,7 +108,7 @@ export interface UserPermissions {
     can_download_pdf: boolean;
     plan: 'free' | 'pro' | 'enterprise';
     is_active: boolean;
-    trial_ends_at?: string; // ISO String date for trial expiration
+    trial_ends_at?: string | null; // ALLOW NULL explicitly
 }
 
 export interface User {

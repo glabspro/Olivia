@@ -97,14 +97,22 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, systemConfig, onUpda
 
   const handlePlanChange = async (userId: string, currentPermissions: UserPermissions | undefined, newPlan: 'free' | 'pro' | 'enterprise') => {
       const oldPerms = currentPermissions || { can_use_ai: true, can_download_pdf: true, plan: 'free', is_active: true };
-      const newPerms = { ...oldPerms, plan: newPlan };
+      const newPerms: UserPermissions = { ...oldPerms, plan: newPlan };
+      
+      // CRITICAL: If upgrading to paid tier manually, remove trial restrictions by sending null
+      if (newPlan === 'pro' || newPlan === 'enterprise') {
+          newPerms.trial_ends_at = null;
+      }
+
       setUsers(users.map(u => u.id === userId ? { ...u, permissions: newPerms } : u));
 
       try {
           await updateUserPermissions(userId, newPerms);
           showNotification('success', `Plan cambiado a ${newPlan.toUpperCase()}`);
       } catch (error: any) {
+          console.error(error);
           setUsers(users.map(u => u.id === userId ? { ...u, permissions: oldPerms } : u));
+          showNotification('error', 'Error al cambiar plan');
       }
   };
 
