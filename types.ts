@@ -108,7 +108,8 @@ export interface UserPermissions {
     can_download_pdf: boolean;
     plan: 'free' | 'pro' | 'enterprise';
     is_active: boolean;
-    trial_ends_at?: string | null; // ALLOW NULL explicitly
+    // IMPORTANT: Allow null explicitly to signify "No trial active / Paid Plan"
+    trial_ends_at?: string | null; 
 }
 
 export interface User {

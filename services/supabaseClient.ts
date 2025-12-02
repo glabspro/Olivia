@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 import { User, QuotationItem, SavedQuotation, DbClient, DbProduct, UserPermissions, CrmMeta, DbTask, Settings, SystemConfig } from '../types';
 
@@ -88,7 +87,6 @@ export const getUserByPhone = async (phone: string): Promise<User | null> => {
 
     if (data) {
         const updatedData = await checkAndEnforcePlan(data);
-        // Extract system_config from settings if available (nested structure for DB persistence)
         const systemConfig = updatedData.settings?.system_config || updatedData.system_config;
 
         return {
@@ -202,7 +200,6 @@ export const getProfile = async (supabaseUser: SupabaseUser): Promise<User | nul
     if (error) return null;
     const updatedData = await checkAndEnforcePlan(data);
     
-    // Extract system_config from settings if available (nested structure for DB persistence)
     const systemConfig = updatedData.settings?.system_config || updatedData.system_config;
 
     return {
@@ -230,7 +227,6 @@ export const updateUserSettings = async (userId: string, settings: Settings) => 
 export const updateSystemConfig = async (userId: string, config: SystemConfig) => {
     if (!supabase) return;
     
-    // 1. Fetch current settings first to initialize if null
     const { data, error: fetchError } = await supabase.from('profiles').select('settings').eq('id', userId).single();
     
     if (fetchError) {
@@ -238,16 +234,13 @@ export const updateSystemConfig = async (userId: string, config: SystemConfig) =
         throw fetchError;
     }
 
-    // Default to empty object if settings is null
     const currentSettings = data?.settings || {};
     
-    // 2. Nest system_config inside settings (merge with existing)
     const newSettings = { 
         ...currentSettings, 
         system_config: config 
     };
 
-    // 3. Update the 'settings' column
     const { error } = await supabase.from('profiles').update({ settings: newSettings }).eq('id', userId);
     
     if (error) {
@@ -403,43 +396,6 @@ export const deleteQuotation = async (quotationId: string) => {
     if (error) throw error;
 };
 
-export const getQuotations = async (userId: string): Promise<SavedQuotation[]> => {
-    if (!supabase) return [];
-    const { data, error } = await supabase.from('quotations').select(`id, quotation_number, total_amount, currency, status, created_at, discount, discount_type, tags, crm_meta, clients (id, name, phone, email, address, document), quotation_items (description)`).eq('user_id', userId).order('created_at', { ascending: false });
-    if (error) return [];
-    return data.map((q: any) => ({
-        id: q.id,
-        quotation_number: q.quotation_number,
-        total_amount: q.total_amount,
-        currency: q.currency,
-        status: q.status,
-        created_at: q.created_at,
-        discount: q.discount || 0,
-        discount_type: q.discount_type || 'amount',
-        tags: q.tags || [],
-        crm_meta: q.crm_meta || {},
-        client: { id: q.clients?.id, name: q.clients?.name || 'Cliente Desconocido', phone: q.clients?.phone, email: q.clients?.email, address: q.clients?.address, document: q.clients?.document },
-        items: q.quotation_items?.map((i: any) => ({ description: i.description }))
-    }));
-};
-
-export const getClientQuotations = async (clientId: string): Promise<SavedQuotation[]> => {
-    if (!supabase) return [];
-    const { data, error } = await supabase.from('quotations').select(`id, quotation_number, total_amount, currency, status, created_at, tags, quotation_items (description)`).eq('client_id', clientId).order('created_at', { ascending: false });
-    if (error) return [];
-    return data.map((q: any) => ({
-        id: q.id,
-        quotation_number: q.quotation_number,
-        total_amount: q.total_amount,
-        currency: q.currency,
-        status: q.status,
-        created_at: q.created_at,
-        tags: q.tags || [],
-        client: { id: clientId, name: '', phone: '' }, 
-        items: q.quotation_items?.map((i: any) => ({ description: i.description }))
-    }));
-};
-
 export const getQuotationById = async (quotationId: string) => {
     if (!supabase) return null;
     const { data: quote, error } = await supabase.from('quotations').select(`*, clients (*), quotation_items (*)`).eq('id', quotationId).single();
@@ -455,6 +411,62 @@ export const getQuotationById = async (quotationId: string) => {
         currency: quote.currency,
         status: quote.status
     };
+};
+
+export const getQuotations = async (userId: string): Promise<SavedQuotation[]> => {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+        .from('quotations')
+        .select(`*, clients (*)`)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching quotations:", error);
+        return [];
+    }
+
+    return (data || []).map((q: any) => ({
+        id: q.id,
+        quotation_number: q.quotation_number,
+        client: q.clients,
+        total_amount: q.total_amount,
+        currency: q.currency,
+        status: q.status,
+        created_at: q.created_at,
+        discount: q.discount,
+        discount_type: q.discount_type,
+        tags: q.tags,
+        crm_meta: q.crm_meta
+    }));
+};
+
+export const getClientQuotations = async (clientId: string): Promise<SavedQuotation[]> => {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+        .from('quotations')
+        .select(`*, clients (*)`)
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching client quotations:", error);
+        return [];
+    }
+
+    return (data || []).map((q: any) => ({
+        id: q.id,
+        quotation_number: q.quotation_number,
+        client: q.clients,
+        total_amount: q.total_amount,
+        currency: q.currency,
+        status: q.status,
+        created_at: q.created_at,
+        discount: q.discount,
+        discount_type: q.discount_type,
+        tags: q.tags,
+        crm_meta: q.crm_meta
+    }));
 };
 
 export const getTasks = async (userId: string): Promise<DbTask[]> => {

@@ -43,7 +43,7 @@ const NavItem = ({ id, label, icon: Icon, activePage, setActivePage, isMobile = 
 
 const PlanBadge = ({ user }: { user: User }) => {
     const isPro = user.permissions?.plan === 'pro' || user.permissions?.plan === 'enterprise';
-    // Check strictly for existence of trial date string. If null, it is false.
+    // Strict null check: if it's explicitly null, it's NOT a trial.
     const trialDateStr = user.permissions?.trial_ends_at;
     const isTrial = typeof trialDateStr === 'string' && trialDateStr.length > 0;
     
@@ -112,9 +112,9 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, theme, toggleTheme, act
   }
 
   const isFree = user.permissions?.plan === 'free';
-  // Logic fix: Only consider it a trial if the date exists and is not null
+  // Logic fix: Only consider it a trial if the date exists AND is not null/empty
   const trialDateStr = user.permissions?.trial_ends_at;
-  const isTrial = !!trialDateStr; // if null/undefined/empty string -> false
+  const isTrial = !!trialDateStr; 
 
   // Show upgrade options ONLY if free OR in trial mode
   const showUpgradeOptions = isFree || isTrial;
